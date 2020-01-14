@@ -12,7 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 
-use std::io;
+use std::{io, mem};
 use std::collections::{HashMap, BTreeMap};
 use super::{Commitment, Error};
 
@@ -20,7 +20,7 @@ use super::{Commitment, Error};
 impl<T> Commitment for Option<T> where T: Commitment {
     fn commitment_serialize<E: io::Write>(&self, mut e: E) -> Result<usize, Error> {
         Ok(match self {
-            None => commitment_serialize_list!(e; 0u8),
+            None => commitment_serialize_list!(e; 0u8, [0u8; mem::size_of::<T>()]),
             Some(val) => commitment_serialize_list!(e; 1u8, val),
         })
     }
@@ -64,5 +64,17 @@ impl<T> Commitment for HashMap<usize, T> where T: Commitment {
 
     fn commitment_deserialize<D: io::Read>(d: D) -> Result<Self, Error> {
         unimplemented!()
+    }
+}
+
+
+// Tests
+#[cfg(test)]
+mod tests {
+    //use super::*;
+
+    #[test]
+    fn test_option_serialize() {
+
     }
 }
