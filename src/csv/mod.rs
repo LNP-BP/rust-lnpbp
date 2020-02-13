@@ -15,9 +15,7 @@ pub mod data;
 pub mod commit;
 #[macro_use]
 pub mod serialize;
-pub mod multimsg;
 
 pub use data::*;
 pub use commit::*;
 pub use serialize::*;
-pub use multimsg::*;

@@ -18,6 +18,7 @@ pub mod lockscript;
 pub mod taproot;
 pub mod txout;
 pub mod tx;
+pub mod multimsg;
 
 pub use committable::*;
 pub use digests::*;
@@ -26,3 +27,4 @@ pub use lockscript::*;
 pub use taproot::*;
 pub use txout::*;
 pub use tx::*;
+pub use multimsg::*;

@@ -33,6 +33,9 @@
 
 #[macro_use]
 pub extern crate derive_wrapper;
+// TODO: Get rid of `bigint` dependency once `From<[u8; 16]>` and `Rem` will be impl for
+//       `bitcoin::util::uint` types
+pub extern crate bigint;
 extern crate rand;
 extern crate hex;
 extern crate num_integer;
