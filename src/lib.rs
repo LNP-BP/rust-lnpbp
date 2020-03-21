@@ -52,5 +52,6 @@ pub mod seals;
 #[macro_use]
 pub mod csv;
 pub mod rgb;
+pub mod dlc;
 
 pub use common::*;
