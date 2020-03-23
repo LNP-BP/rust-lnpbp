@@ -23,11 +23,6 @@ impl_hashencode!(MerkleNode);
 pub fn merklize(prefix: &str, data: &[MerkleNode], depth: u16) -> MerkleNode {
     let len = data.len();
 
-    let mut height: usize = 0;
-    while ((len + (1 << height) - 1) >> height) > 1 {
-        height += 1;
-    };
-
     let mut engine = MerkleNode::engine();
     let tag = format!("{}:merkle:{}", prefix, depth);
     let tag_hash = sha256::Hash::hash(tag.as_bytes());
