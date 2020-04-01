@@ -25,6 +25,8 @@ pub mod transition;
 pub mod serialize;
 pub mod commit;
 
+pub mod invoice;
+
 
 pub use schemata::*;
 
@@ -34,3 +36,9 @@ pub use metadata::Metadata;
 pub use script::Script;
 pub use seal::Seal;
 pub use transition::Transition;
+
+pub use invoice::Invoice;
+
+
+hash_newtype!(GenesisId, sha256d::Hash, 32, doc="Hash of genesis state");
+hash_newtype!(UTXOSecret, sha256d::Hash, 32, doc="Hash of UTXO pointer mixed with some entropy data");
