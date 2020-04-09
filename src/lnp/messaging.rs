@@ -44,7 +44,21 @@ impl Peer {
     }
 }
 
-pub struct TLV();
+
+pub trait NetworkSerialize {
+
+}
+
+
+pub struct TLVType(pub u64);
+
+pub trait TLVRecord: Sized + Send {
+    type Value: Send;
+    fn get_type(&self) -> TLVType;
+    fn get_value(&self) -> Self::Value;
+}
+
+pub struct TLVStream(Vec<dyn TLVRecord>);
 
 pub struct MessageType(pub u16);
 
@@ -52,7 +66,7 @@ pub struct MessageType(pub u16);
 pub struct Message {
     pub type_id: MessageType,
     pub payload: Vec<u8>,
-    pub extension: TLV,
+    pub extension: TLVStream,
 }
 
 pub trait Messageable: From<Message> + Into<Message> {

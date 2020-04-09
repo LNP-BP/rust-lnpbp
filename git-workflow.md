@@ -6,7 +6,7 @@ The main library development happens in the `master` branch. This branch must al
 
 Each commitment within a PR to the `master` must 
 * compile without errors;
-* contain all neccesary tests for the introduced functional;
+* contain all neccessary tests for the introduced functional;
 * contain all docs.
 
 Additionally to the `master` branch the repository has `develop` branch for any experimental developments. This branch may not compile and should not be used by any projects depending on `lnpbp` library.
@@ -18,6 +18,7 @@ This library depends on a number of external Rust libraries managed by different
 LNP/BP Standards Association maintains a fork of the following external libraries:
 * bitcoin_hashes
 * rust-bitcoin
+* rust-lightning
 * rust-miniscript
 
 Functionality, specific to LNP/BP and not merged into the upstream `master` branches is kept in `staging` branch of each of these forks, which is defined as a default branch in GitHub. Parties wanting to contribute to it must fork the repo, create a branch per each feature (starting with `feat-` prefix) or bugfix (starting with `fix-` prefix) and do a PR to the `staging` branch.

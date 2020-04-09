@@ -15,10 +15,10 @@
 ///! Module that systematizes all Lightning network-related APIs from the
 ///! `lightning` library into layered & modular design
 
-mod peer;
+mod messaging;
 mod transport;
 
-pub use peer::*;
+pub use messaging::*;
 pub use transport::{NodeAddr, ConnectionError};
 
 pub const LIGHTNING_P2P_DEFAULT_PORT: u16 = 9735;
