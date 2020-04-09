@@ -68,5 +68,6 @@ pub mod seals;
 pub mod csv;
 #[cfg(feature="use-rgb")]
 pub mod rgb;
+pub mod client;
 
 pub use common::*;
