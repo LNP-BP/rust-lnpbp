@@ -14,6 +14,7 @@
 
 use super::{State, Metadata, Script};
 
+#[derive(Clone, Debug)]
 pub struct Transition {
     pub id: usize,
     pub meta: Metadata,
