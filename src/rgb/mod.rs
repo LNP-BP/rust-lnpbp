@@ -21,7 +21,7 @@ pub mod seal;
 pub mod state;
 pub mod script;
 pub mod transition;
-pub mod validation;
+pub mod history;
 
 pub mod serialize;
 pub mod commit;
