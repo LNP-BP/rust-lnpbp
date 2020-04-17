@@ -48,6 +48,10 @@ impl Seal {
             block_offset: None
         }
     }
+
+    pub fn compare(&self, other: &Self) -> bool {
+        self.txid == other.txid && self.vout == other.vout
+    }
 }
 
 impl TryFrom<bitcoin::OutPoint> for Seal {
