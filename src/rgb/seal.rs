@@ -14,6 +14,7 @@
 
 use std::convert::TryFrom;
 
+use bitcoin::OutPoint;
 use bitcoin::hash_types::Txid;
 
 
@@ -21,7 +22,8 @@ use bitcoin::hash_types::Txid;
 #[derive(Clone, PartialEq, PartialOrd, Debug, Display)]
 #[display_from(Debug)]
 pub enum Error {
-    VoutOverflow
+    VoutOverflow,
+    UnspentNoneTxidSeal,
 }
 
 
@@ -51,6 +53,13 @@ impl Seal {
 
     pub fn compare(&self, other: &Self) -> bool {
         self.txid == other.txid && self.vout == other.vout
+    }
+
+    pub fn as_outpoint(&self, spending_txid: Option<Txid>) -> Result<OutPoint, Error> {
+        let txid = self.txid.or(spending_txid).ok_or(Error::UnspentNoneTxidSeal)?;
+        let vout = self.vout as u32;
+
+        Ok(OutPoint { txid, vout })
     }
 }
 
