@@ -65,7 +65,7 @@ impl_commitment_enum!(DigestAlgorithm);
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Display, ToPrimitive, FromPrimitive)]
 #[display_from(Debug)]
 pub enum SignatureAlgorithm {
-    EcdsaDer = 0,
+    Ecdsa = 0,
     SchnorrBip,
 }
 

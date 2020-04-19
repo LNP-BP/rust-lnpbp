@@ -62,6 +62,8 @@ const TAG_F32: u8 = 0x44u8;
 const TAG_F64: u8 = 0x48u8;
 const TAG_BYTES: u8 = 0x60u8;
 const TAG_STR: u8 = 0x61u8;
+const TAG_ECPOINT: u8 = 0x80u8;
+const TAG_SIGNATURE: u8 = 0x80u8;
 
 impl csv::serialize::Commitment for rgb::metadata::Value {
     fn commitment_serialize<E: io::Write>(&self, mut e: E) -> Result<usize, csv::serialize::Error> {

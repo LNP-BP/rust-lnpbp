@@ -158,6 +158,8 @@ impl Schemata for Rgb1 {
                             Field(FieldFormat::Unsigned { bits: Bit256, min: None, max: None }, NoneOrOnce),
                             // Network
                             Field(FieldFormat::Enum { values: Network::all_u8() }, Once),
+                            // Signature
+                            Field(FieldFormat::Signature(SignatureAlgorithm::Ecdsa), NoneOrOnce),
                         ],
                         binds: map!{
                             Self::BALANCE_SEAL => OnceOrUpTo(None),
