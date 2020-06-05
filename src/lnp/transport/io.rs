@@ -14,7 +14,6 @@
 use core::borrow::Borrow;
 
 use super::Error;
-use crate::Bipolar;
 
 pub trait Input {
     type Reader: Read;
@@ -26,7 +25,7 @@ pub trait Output {
     fn writer(&mut self) -> &mut Self::Writer;
 }
 
-pub trait Bidirect: Input + Output + Bipolar {
+pub trait Bidirect {
     type Input: Input;
     type Output: Output;
 }
@@ -36,7 +35,7 @@ pub trait Read {
 }
 
 pub trait Write {
-    fn write(&mut self, data: impl Borrow<[u8]>) -> Result<usize, Error>;
+    fn write(&mut self, data: &dyn Borrow<[u8]>) -> Result<usize, Error>;
 }
 
 #[cfg(feature = "tokio")]
@@ -48,5 +47,5 @@ pub trait AsyncRead {
 #[cfg(feature = "tokio")]
 #[async_trait]
 pub trait AsyncWrite {
-    async fn write(&mut self, data: impl Borrow<[u8]>) -> Result<usize, Error>;
+    async fn write(&mut self, data: &dyn Borrow<[u8]>) -> Result<usize, Error>;
 }

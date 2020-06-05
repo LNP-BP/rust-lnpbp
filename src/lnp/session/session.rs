@@ -21,31 +21,26 @@ use crate::{AsAny, Bipolar};
 
 pub trait SessionTrait: Bipolar + AsAny {}
 
-pub struct Session<T, S>
-where
-    T: Transcode,
-    S: Bidirect,
-{
-    transcoder: T,
-    stream: S,
+type TranscodeFull = dyn Transcode<
+    Encryptor = dyn Encrypt,
+    Decryptor = dyn Decrypt<Error = dyn ::std::error::Error>,
+>;
+
+pub struct Session {
+    transcoder: Arc<TranscodeFull>,
+    stream: Arc<
+        dyn Bidirect<Input = dyn Input<Reader = dyn Read>, Output = dyn Output<Writer = dyn Write>>,
+    >,
 }
 
-pub struct Inbound<D, I>
-where
-    D: Decrypt,
-    I: Input,
-{
-    pub(self) decryptor: D,
-    pub(self) input: I,
+pub struct Inbound {
+    pub(self) decryptor: Arc<dyn Decrypt<Error = dyn ::std::error::Error>>,
+    pub(self) input: Arc<dyn Input<Reader = dyn Read>>,
 }
 
-pub struct Outbound<E, O>
-where
-    E: Encrypt,
-    O: Output,
-{
-    pub(self) encryptor: E,
-    pub(self) output: O,
+pub struct Outbound {
+    pub(self) encryptor: Arc<dyn Encrypt>,
+    pub(self) output: Arc<dyn Output<Writer = dyn Write>>,
 }
 
 impl<T, S> Session<T, S>
@@ -56,9 +51,7 @@ where
     pub fn new(_node_locator: NodeLocator) -> Result<Self, Error> {
         unimplemented!()
     }
-}
 
-impl Session<NoEncryption, transport::zmq::Connection> {
     pub fn new_zmq_unencrypted(
         zmq_type: ZmqType,
         context: &mut zmq::Context,
@@ -66,23 +59,21 @@ impl Session<NoEncryption, transport::zmq::Connection> {
         local: Option<SocketLocator>,
     ) -> Result<Self, Error> {
         Ok(Self {
-            transcoder: NoEncryption,
-            stream: Connection::new(zmq_type, context, remote, local)?,
+            transcoder: Arc::new(NoEncryption)
+                as Arc<
+                    dyn Transcode<
+                        Encryptor = dyn Encrypt,
+                        Decryptor = dyn Decrypt<Error = dyn ::std::error::Error>,
+                    >,
+                >,
+            stream: Arc::new(Connection::new(zmq_type, context, remote, local)?),
         })
     }
 }
 
-impl<T, S> Bipolar for Session<T, S>
-where
-    T: Transcode,
-    T::Left: Decrypt,
-    T::Right: Encrypt,
-    S: Bidirect,
-    S::Left: Input,
-    S::Right: Output,
-{
-    type Left = Inbound<T::Left, S::Left>;
-    type Right = Outbound<T::Right, S::Right>;
+impl Bipolar for Session {
+    type Left = Inbound;
+    type Right = Outbound;
 
     fn join(_left: Self::Left, _right: Self::Right) -> Self {
         unimplemented!()

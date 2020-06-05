@@ -19,13 +19,13 @@ use lightning::ln::peers::conduit::{Conduit as Transcoder, Decryptor, Encryptor}
 use crate::Bipolar;
 
 pub trait Encrypt {
-    fn encrypt(&mut self, buffer: impl Borrow<[u8]>) -> Vec<u8>;
+    fn encrypt(&mut self, buffer: &dyn Borrow<[u8]>) -> Vec<u8>;
 }
 
 pub trait Decrypt {
     type Error: ::std::error::Error;
 
-    fn decrypt(&mut self, buffer: impl Borrow<[u8]>) -> Result<Vec<u8>, Self::Error>;
+    fn decrypt(&mut self, buffer: &dyn Borrow<[u8]>) -> Result<Vec<u8>, Self::Error>;
 }
 
 pub trait Transcode: Bipolar + Encrypt + Decrypt {
@@ -38,7 +38,7 @@ pub trait Transcode: Bipolar + Encrypt + Decrypt {
 pub struct DecryptionError;
 
 impl Encrypt for Encryptor {
-    fn encrypt(&mut self, buffer: impl Borrow<[u8]>) -> Vec<u8> {
+    fn encrypt(&mut self, buffer: &dyn Borrow<[u8]>) -> Vec<u8> {
         self.encrypt_buf(buffer.borrow())
     }
 }
@@ -46,7 +46,7 @@ impl Encrypt for Encryptor {
 impl Decrypt for Decryptor {
     type Error = DecryptionError;
 
-    fn decrypt(&mut self, buffer: impl Borrow<[u8]>) -> Result<Vec<u8>, Self::Error> {
+    fn decrypt(&mut self, buffer: &dyn Borrow<[u8]>) -> Result<Vec<u8>, Self::Error> {
         match self.decrypt_buf(buffer.borrow()) {
             (Some(data), _) => Ok(data),
             (None, _) => Err(DecryptionError),
@@ -55,7 +55,7 @@ impl Decrypt for Decryptor {
 }
 
 impl Encrypt for Transcoder {
-    fn encrypt(&mut self, buffer: impl Borrow<[u8]>) -> Vec<u8> {
+    fn encrypt(&mut self, buffer: &dyn Borrow<[u8]>) -> Vec<u8> {
         self.encrypt_buf(buffer.borrow())
     }
 }
@@ -63,7 +63,7 @@ impl Encrypt for Transcoder {
 impl Decrypt for Transcoder {
     type Error = DecryptionError;
 
-    fn decrypt(&mut self, buffer: impl Borrow<[u8]>) -> Result<Vec<u8>, Self::Error> {
+    fn decrypt(&mut self, buffer: &dyn Borrow<[u8]>) -> Result<Vec<u8>, Self::Error> {
         match self.decrypt_buf(buffer.borrow()) {
             (Some(data), _) => Ok(data),
             (None, _) => Err(DecryptionError),
@@ -96,14 +96,14 @@ impl Bipolar for Transcoder {
 pub struct NoEncryption;
 
 impl Encrypt for NoEncryption {
-    fn encrypt(&mut self, buffer: impl Borrow<[u8]>) -> Vec<u8> {
+    fn encrypt(&mut self, buffer: &dyn Borrow<[u8]>) -> Vec<u8> {
         buffer.borrow().to_vec()
     }
 }
 
 impl Decrypt for NoEncryption {
     type Error = !;
-    fn decrypt(&mut self, buffer: impl Borrow<[u8]>) -> Result<Vec<u8>, Self::Error> {
+    fn decrypt(&mut self, buffer: &dyn Borrow<[u8]>) -> Result<Vec<u8>, Self::Error> {
         Ok(buffer.borrow().to_vec())
     }
 }

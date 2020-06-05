@@ -35,7 +35,7 @@ impl Read for dyn AsRef<::std::net::TcpStream> {
 }
 
 impl Write for dyn AsRef<::std::net::TcpStream> {
-    fn write(&mut self, data: impl Borrow<[u8]>) -> Result<usize, Error> {
+    fn write(&mut self, data: &dyn Borrow<[u8]>) -> Result<usize, Error> {
         self.as_ref().write_all(data.borrow())?;
         Ok(data.borrow().len())
     }
