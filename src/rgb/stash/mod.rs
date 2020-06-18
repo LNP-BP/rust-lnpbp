@@ -11,10 +11,14 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-//! Module defines interfaces for external data providers used by RGB
+mod anchor;
+mod consignment;
+mod disclosure;
+mod stash;
 
-pub trait TxResolver {}
+pub use anchor::Anchor;
+pub use consignment::Consignment;
+pub use disclosure::Disclosure;
+pub use stash::Stash;
 
-pub trait TxConductor {}
-
-pub trait Coordinator {}
+pub(self) use super::*;
