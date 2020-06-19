@@ -20,5 +20,3 @@ pub use anchor::Anchor;
 pub use consignment::Consignment;
 pub use disclosure::Disclosure;
 pub use stash::Stash;
-
-pub(self) use super::*;
