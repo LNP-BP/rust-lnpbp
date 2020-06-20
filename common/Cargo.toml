@@ -1,0 +1,21 @@
+[package]
+name = "lnpbp_common"
+version = "0.1.0-beta"
+license = "MIT"
+authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
+description = "LNP/BP Core Library common components"
+repository = "https://github.com/LNP-BP/rust-lnpbp"
+homepage = "https://github.com/LNP-BP"
+keywords = ["bitcoin", "lightning", "lnp-bp", "layer-3", "cryptography"]
+readme = "README.md"
+edition = "2018"
+
+[lib]
+name = "lnpbp_common"
+
+[dependencies]
+amplify = "~0.1.6"
+derive_wrapper = "~0.1.6"
+num-traits = "~0.2.11"
+num-derive = "~0.3.0"
+lnpbp_paradigms = { path = "../paradigms" }

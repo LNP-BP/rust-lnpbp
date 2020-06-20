@@ -74,5 +74,5 @@ keygen = ["bitcoin/rand"]
 websockets = []
 
 [workspace]
-members = ["derive", "."]
-default-members = ["derive", "."]
+members = ["derive", "paradigms", "common", "."]
+default-members = ["derive", "paradigms", "common", "."]

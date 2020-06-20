@@ -13,6 +13,18 @@
 
 //! Common data types, structures and functions for LNPBPs
 
+#![feature(pattern)]
+
+#[macro_use]
+extern crate amplify;
+#[macro_use]
+extern crate derive_wrapper;
+#[macro_use]
+extern crate num_derive;
+
+#[macro_use]
+extern crate lnpbp_paradigms;
+
 mod bipolar;
 pub mod data_format;
 pub mod internet;

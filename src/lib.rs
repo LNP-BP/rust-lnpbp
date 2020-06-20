@@ -70,7 +70,6 @@ pub extern crate miniscript;
 #[macro_use]
 mod paradigms;
 #[macro_use]
-mod common;
 mod lnpbps;
 #[macro_use]
 pub mod bp;
