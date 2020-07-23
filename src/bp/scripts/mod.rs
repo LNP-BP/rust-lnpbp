@@ -1,5 +1,5 @@
 // LNP/BP Core Library implementing LNPBP specifications & standards
-// Written in 2019 by
+// Written in 2020 by
 //     Dr. Maxim Orlovsky <orlovsky@pandoracore.com>
 //
 // To the extent possible under law, the author(s) have dedicated all
@@ -11,14 +11,13 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-//! Common data types, structures and functions for LNPBPs
+//mod error;
+mod pubkey_parser;
+mod script_pubkey;
+mod types;
 
-mod bipolar;
-pub mod data_format;
-pub mod internet;
-#[cfg(feature = "daemons")]
-pub mod service;
-
-pub use bipolar::Bipolar;
-#[cfg(feature = "daemons")]
-pub use service::{Service, TryService};
+//pub use error::Error;
+pub use pubkey_parser::*;
+pub use script_pubkey::Error;
+pub use script_pubkey::*;
+pub use types::*;

@@ -1,4 +1,4 @@
-// LNP/BP Rust Library
+// LNP/BP Core Library implementing LNPBP specifications & standards
 // Written in 2019 by
 //     Dr. Maxim Orlovsky <orlovsky@pandoracore.com>
 //
@@ -11,56 +11,66 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use bitcoin::hashes::{sha256d, Hash};
 
-pub type HashLock = sha256::Hash;
-pub type HashPreimage = sha256::Hash;
+#[macro_use]
+pub mod tagged256;
+pub mod blind;
+pub mod dbc;
+pub mod network;
+pub mod scripts;
+mod seals;
+pub mod short_id;
+mod strict_encoding;
 
+pub use network::{MagicNumber, Network};
+pub use scripts::*;
+pub use seals::*;
+pub use short_id::*;
 
-pub enum ScriptPubkeyType {
-    P2S(Script),
-    P2PK(PublicKey),
-    P2PKH(sha256d::Hash),
-    P2SH(hash160::Hash),
-    P2OR(Box<[u8]>),
-    P2WPKH(sha256d::Hash),
-    P2WSH(hash160::Hash),
-    P2TR(PublicKey),
+hash_newtype!(HashLock, sha256d::Hash, 32, doc = "Hashed locks in HTLC");
+hash_newtype!(
+    HashPreimage,
+    sha256d::Hash,
+    32,
+    doc = "Pre-images for hashed locks in HTLC"
+);
+
+#[derive(Clone, PartialEq, Eq, Debug, Display)]
+#[display_from(Debug)]
+#[non_exhaustive]
+pub enum Challenge {
+    Signature(bitcoin::PublicKey),
+    Multisig(u32, Vec<bitcoin::PublicKey>),
+    Custom(LockScript),
 }
 
-pub enum DeterministicScript {
-    MultiSig(u8, Vec<PublicKey>),
-    LNToRemote(u8, PublicKey),
-    LNHtlcSuccess(u8, HashLock, PublicKey, PublicKey),
-    LNHtlcTimeout(u8, HashLock, PublicKey, PublicKey),
-}
+#[cfg(test)]
+pub mod test {
+    use crate::SECP256K1;
+    use bitcoin::secp256k1;
 
-pub struct ScriptPubkey(Script);
+    pub fn gen_secp_pubkeys(n: usize) -> Vec<secp256k1::PublicKey> {
+        let mut ret = Vec::with_capacity(n);
+        let mut sk = [0; 32];
 
-impl ScriptPubkey {
-    fn get_type(&self) -> ScriptPubkeyType {
+        for i in 1..n + 1 {
+            sk[0] = i as u8;
+            sk[1] = (i >> 8) as u8;
+            sk[2] = (i >> 16) as u8;
 
+            ret.push(secp256k1::PublicKey::from_secret_key(
+                &SECP256K1,
+                &secp256k1::SecretKey::from_slice(&sk[..]).unwrap(),
+            ));
+        }
+        ret
     }
-}
 
-pub enum ScriptPubkeySuppl {
-    PubkeyHash(PublicKey),
-    ScriptHash(DeterministicScript),
-    Taproot(PublicKey),
-}
-
-pub enum Thing {
-    Pubkey(PublicKey),
-    TaprootPubkey(PublicKey),
-    Script(DeterministicScript, Vec<PublicKey>),
-    Unspendable(PublicKey),
-}
-
-impl Thing {
-    pub fn commit(&mut self, msg: &Message) -> Result<(), Error> { unimplemented!() }
-    pub fn verify(&self, msg: &Message) -> bool { unimplemented!() }
-}
-
-pub struct ThingCommitment {
-    pub thing: Thing,
-    pub commitment: Commitment,
+    pub fn gen_bitcoin_pubkeys(n: usize, compressed: bool) -> Vec<bitcoin::PublicKey> {
+        gen_secp_pubkeys(n)
+            .into_iter()
+            .map(|key| bitcoin::PublicKey { key, compressed })
+            .collect()
+    }
 }

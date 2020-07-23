@@ -1,6 +1,8 @@
 // LNP/BP Core Library implementing LNPBP specifications & standards
-// Written in 2019 by
+// Written in 2020 by
 //     Dr. Maxim Orlovsky <orlovsky@pandoracore.com>
+//  The convert.rs file written in 2020 by
+//     Martin Habovstiak <martin.habovstiak@gmail.com>
 //
 // To the extent possible under law, the author(s) have dedicated all
 // copyright and related and neighboring rights to this software to
@@ -11,14 +13,10 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-//! Common data types, structures and functions for LNPBPs
+pub trait Bipolar {
+    type Left;
+    type Right;
 
-mod bipolar;
-pub mod data_format;
-pub mod internet;
-#[cfg(feature = "daemons")]
-pub mod service;
-
-pub use bipolar::Bipolar;
-#[cfg(feature = "daemons")]
-pub use service::{Service, TryService};
+    fn join(left: Self::Left, right: Self::Right) -> Self;
+    fn split(self) -> (Self::Left, Self::Right);
+}

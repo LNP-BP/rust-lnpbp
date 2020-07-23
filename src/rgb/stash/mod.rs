@@ -1,5 +1,5 @@
-// LNP/BP Core Library implementing LNPBP specifications & standards
-// Written in 2019 by
+// LNP/BP Rust Library
+// Written in 2020 by
 //     Dr. Maxim Orlovsky <orlovsky@pandoracore.com>
 //
 // To the extent possible under law, the author(s) have dedicated all
@@ -11,14 +11,12 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-//! Common data types, structures and functions for LNPBPs
+mod anchor;
+mod consignment;
+mod disclosure;
+mod stash;
 
-mod bipolar;
-pub mod data_format;
-pub mod internet;
-#[cfg(feature = "daemons")]
-pub mod service;
-
-pub use bipolar::Bipolar;
-#[cfg(feature = "daemons")]
-pub use service::{Service, TryService};
+pub use anchor::{Anchor, AnchorId, PSBT_FEE_KEY, PSBT_PUBKEY_KEY};
+pub use consignment::{Consignment, ConsignmentData, ConsignmentEndpoints};
+pub use disclosure::Disclosure;
+pub use stash::Stash;
