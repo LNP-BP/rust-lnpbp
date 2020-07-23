@@ -100,7 +100,7 @@ impl StrictDecode for secp256k1::Signature {
 
     #[inline]
     fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, Self::Error> {
-        let mut buf = [0u8; secp256k1::constants::PUBLIC_KEY_SIZE];
+        let mut buf = [0u8; secp256k1::constants::COMPACT_SIGNATURE_SIZE];
         d.read_exact(&mut buf)?;
         Ok(Self::from_compact(&buf).map_err(|_| {
             Error::DataIntegrityError("Invalid secp256k1 signature data".to_string())
@@ -247,7 +247,7 @@ impl StrictDecode for OutpointReveal {
     #[inline]
     fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, Self::Error> {
         Ok(Self {
-            blinding: u32::strict_decode(&mut d)?,
+            blinding: u64::strict_decode(&mut d)?,
             txid: Txid::strict_decode(&mut d)?,
             vout: u16::strict_decode(&mut d)?,
         })
