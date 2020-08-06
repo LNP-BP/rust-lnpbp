@@ -33,6 +33,7 @@ use crate::strict_encoding::{self, StrictDecode, StrictEncode};
 
 pub const PSBT_FEE_KEY: &[u8] = b"\x03rgb\x01";
 pub const PSBT_PUBKEY_KEY: &[u8] = b"\x03rgb\x02";
+pub const PSBT_COMMITMENT_KEY: &[u8] = b"\x03rgb\x03";
 lazy_static! {
     static ref LNPBP4_TAG: bitcoin::hashes::sha256::Hash = sha256::Hash::hash(b"LNPBP4");
 }
@@ -84,6 +85,10 @@ impl Anchor {
             type_value: 0xFC,
             key: PSBT_PUBKEY_KEY.to_vec(),
         };
+        let commitment_key = Key {
+            type_value: 0xFC,
+            key: PSBT_COMMITMENT_KEY.to_vec(),
+        };
         let fee_key = Key {
             type_value: 0xFC,
             key: PSBT_FEE_KEY.to_vec(),
@@ -122,9 +127,8 @@ impl Anchor {
 
             let psbt_out = psbt
                 .outputs
-                .get(vout)
-                .ok_or(Error::NoRequiredOutputInformation(vout))?
-                .clone();
+                .get_mut(vout)
+                .ok_or(Error::NoRequiredOutputInformation(vout))?;
             let tx_out = &tx.output[vout];
 
             let pubkey = psbt_out
@@ -172,6 +176,9 @@ impl Anchor {
                 .collect();
             let mm_digest = sha256::Hash::commit(&mm_buffer);
             let commitment = TxCommitment::embed_commit(&container, &mm_digest).unwrap();
+            psbt_out
+                .unknown
+                .insert(commitment_key.clone(), mm_digest.into_inner().to_vec());
 
             *tx = commitment.into_inner().clone();
 
