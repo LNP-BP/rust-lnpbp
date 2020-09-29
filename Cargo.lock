@@ -585,6 +585,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "lnpbp_paradigms"
+version = "0.1.0"
+dependencies = [
+ "amplify",
+ "amplify_derive",
+ "bitcoin",
+ "bitcoin_hashes",
+]
+
+[[package]]
 name = "log"
 version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"

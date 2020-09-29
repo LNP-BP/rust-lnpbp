@@ -24,6 +24,24 @@
 //! standartizing typical workflow processes in a form of interfaces that
 //! will be nearly impossible to use in the wrong form.
 
+#![recursion_limit = "256"]
+#![deny(
+    non_upper_case_globals,
+    non_camel_case_types,
+    non_snake_case,
+    unused_mut,
+    unused_imports,
+    dead_code
+)]
+//#![deny(missing_docs)]
+
+#[macro_use]
+extern crate bitcoin;
+#[macro_use]
+extern crate bitcoin_hashes;
+#[macro_use]
+extern crate amplify_derive;
+
 #[macro_use]
 pub mod client_side_validation;
 pub mod commit_verify;
