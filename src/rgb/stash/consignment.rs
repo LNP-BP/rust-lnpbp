@@ -17,11 +17,14 @@ use std::io;
 use bitcoin::Txid;
 
 use crate::bp;
-use crate::rgb::{validation, Anchor, Genesis, Node, NodeId, Schema, Transition, Validator};
+use crate::rgb::{
+    validation, Anchor, Extension, Genesis, Node, NodeId, Schema, Transition, Validator,
+};
 use crate::strict_encoding::{self, StrictDecode, StrictEncode};
 
 pub type ConsignmentEndpoints = Vec<(NodeId, bp::blind::OutpointHash)>;
-pub type ConsignmentData = Vec<(Anchor, Transition)>;
+pub type OwnedData = Vec<(Anchor, Transition)>;
+pub type ExtensionData = Vec<Extension>;
 
 pub const RGB_CONSIGNMENT_VERSION: u16 = 0;
 
@@ -31,18 +34,21 @@ pub struct Consignment {
     version: u16,
     pub genesis: Genesis,
     pub endpoints: ConsignmentEndpoints,
-    pub data: ConsignmentData,
+    pub data: OwnedData,
+    pub extensions: ExtensionData,
 }
 
 impl Consignment {
     pub fn with(
         genesis: Genesis,
         endpoints: ConsignmentEndpoints,
-        data: ConsignmentData,
+        data: OwnedData,
+        extensions: ExtensionData,
     ) -> Consignment {
         Self {
             version: RGB_CONSIGNMENT_VERSION,
             genesis,
+            extensions,
             endpoints,
             data,
         }
@@ -55,8 +61,9 @@ impl Consignment {
 
     #[inline]
     pub fn node_ids(&self) -> BTreeSet<NodeId> {
-        let mut set: BTreeSet<NodeId> = self.data.iter().map(|(_, node)| node.node_id()).collect();
-        set.insert(self.genesis.node_id());
+        let mut set = bset![self.genesis.node_id()];
+        set.extend(self.data.iter().map(|(_, node)| node.node_id()));
+        set.extend(self.extensions.iter().map(Extension::node_id));
         set
     }
 
@@ -71,7 +78,9 @@ impl Consignment {
 
 impl StrictEncode for Consignment {
     fn strict_encode<E: io::Write>(&self, mut e: E) -> Result<usize, strict_encoding::Error> {
-        Ok(strict_encode_list!(e; self.version, self.genesis, self.endpoints, self.data))
+        Ok(
+            strict_encode_list!(e; self.version, self.genesis, self.endpoints, self.data, self.extensions),
+        )
     }
 }
 
@@ -81,7 +90,8 @@ impl StrictDecode for Consignment {
             version: u16::strict_decode(&mut d)?,
             genesis: Genesis::strict_decode(&mut d)?,
             endpoints: ConsignmentEndpoints::strict_decode(&mut d)?,
-            data: ConsignmentData::strict_decode(&mut d)?,
+            data: OwnedData::strict_decode(&mut d)?,
+            extensions: ExtensionData::strict_decode(&mut d)?,
         })
     }
 }
