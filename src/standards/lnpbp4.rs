@@ -13,7 +13,7 @@
 
 use std::collections::BTreeMap;
 
-use bitcoin::hashes::{sha256, Hash, HashEngine};
+use bitcoin::hashes::{sha256d, Hash, HashEngine};
 use bitcoin::secp256k1::rand::{thread_rng, Rng};
 use bitcoin::util::uint::Uint256;
 
@@ -21,8 +21,9 @@ use crate::commit_verify::TryCommitVerify;
 
 /// Source data for creation of multi-message commitments according to LNPBP-4
 /// procedure
-pub type MultiMsg = BTreeMap<sha256::Hash, sha256::Hash>;
-pub type Lnpbp4Hash = sha256::Hash;
+pub type ProtocolId = [u8; 32];
+pub type Commitment = sha256d::Hash;
+pub type MessageMap = BTreeMap<ProtocolId, Commitment>;
 
 #[derive(Copy, Clone, Error, Debug, Display)]
 #[display(Debug)]
@@ -42,12 +43,12 @@ pub struct TooManyMessagesError;
 #[strict_crate(crate)]
 #[display(Debug)]
 pub struct MultimsgCommitmentItem {
-    pub protocol: Option<sha256::Hash>,
-    pub commitment: Lnpbp4Hash,
+    pub protocol: Option<ProtocolId>,
+    pub commitment: Commitment,
 }
 
 impl MultimsgCommitmentItem {
-    pub fn new(protocol: Option<sha256::Hash>, commitment: Lnpbp4Hash) -> Self {
+    pub fn new(protocol: Option<ProtocolId>, commitment: Commitment) -> Self {
         Self {
             protocol,
             commitment,
@@ -75,10 +76,10 @@ pub struct MultimsgCommitment {
     pub entropy: Option<u64>,
 }
 
-impl TryCommitVerify<MultiMsg> for MultimsgCommitment {
+impl TryCommitVerify<MessageMap> for MultimsgCommitment {
     type Error = TooManyMessagesError;
 
-    fn try_commit(multimsg: &MultiMsg) -> Result<Self, TooManyMessagesError> {
+    fn try_commit(multimsg: &MessageMap) -> Result<Self, TooManyMessagesError> {
         const SORT_LIMIT: usize = 2 << 16;
 
         let mut n = multimsg.len();
@@ -86,18 +87,15 @@ impl TryCommitVerify<MultiMsg> for MultimsgCommitment {
         n = n.max(3);
         let ordered = loop {
             let mut ordered =
-                BTreeMap::<usize, (sha256::Hash, sha256::Hash)>::new();
+                BTreeMap::<usize, (ProtocolId, Commitment)>::new();
             // TODO: Modify arithmetics in LNPBP-4 spec
             //       <https://github.com/LNP-BP/LNPBPs/issues/19>
             if multimsg.into_iter().all(|(protocol, digest)| {
-                let rem = Uint256::from_be_bytes(protocol.into_inner())
+                let rem = Uint256::from_be_bytes(*protocol)
                     % Uint256::from_u64(n as u64)
                         .expect("Bitcoin U256 struct is broken");
                 ordered
-                    .insert(
-                        rem.low_u64() as usize,
-                        (protocol.clone(), digest.clone()),
-                    )
+                    .insert(rem.low_u64() as usize, (*protocol, *digest))
                     .is_none()
             }) {
                 break ordered;
@@ -114,22 +112,21 @@ impl TryCommitVerify<MultiMsg> for MultimsgCommitment {
             let mut rng = thread_rng();
             rng.gen::<u64>()
         };
-        let entropy_digest = {
-            let mut engine = sha256::Hash::engine();
-            engine.input(&entropy.to_le_bytes());
-            sha256::Hash::from_engine(engine)
-        };
 
         let mut commitments = Vec::<_>::with_capacity(n);
         for i in 0..n {
             match ordered.get(&i) {
                 None => {
-                    let mut engine = sha256::Hash::engine();
-                    engine.input(&i.to_le_bytes());
-                    engine.input(&entropy_digest[..]);
+                    let mut engine = Commitment::engine();
+                    // TODO: Make it hashed tag
+                    // Using 512 bytes input
+                    for _ in 0..4 {
+                        engine.input(&entropy.to_le_bytes());
+                        engine.input(&i.to_le_bytes());
+                    }
                     commitments.push(MultimsgCommitmentItem::new(
                         None,
-                        sha256::Hash::from_engine(engine),
+                        Commitment::from_engine(engine),
                     ))
                 }
                 Some((contract_id, commitment)) => {
