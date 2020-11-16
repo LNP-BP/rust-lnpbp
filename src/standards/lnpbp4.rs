@@ -41,6 +41,11 @@ pub struct TooManyMessagesError;
 )]
 #[lnpbp_crate(crate)]
 #[display(Debug)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 pub struct MultimsgCommitmentItem {
     pub protocol: Option<sha256::Hash>,
     pub commitment: Lnpbp4Hash,
@@ -70,6 +75,11 @@ impl MultimsgCommitmentItem {
 )]
 #[lnpbp_crate(crate)]
 #[display(Debug)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 pub struct MultimsgCommitment {
     pub commitments: Vec<MultimsgCommitmentItem>,
     pub entropy: Option<u64>,

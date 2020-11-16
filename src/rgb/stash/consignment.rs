@@ -31,6 +31,11 @@ pub const RGB_CONSIGNMENT_VERSION: u16 = 0;
 #[derive(Clone, PartialEq, Eq, Debug, Display, StrictEncode, StrictDecode)]
 #[lnpbp_crate(crate)]
 #[display(Debug)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 pub struct Consignment {
     version: u16,
     pub genesis: Genesis,

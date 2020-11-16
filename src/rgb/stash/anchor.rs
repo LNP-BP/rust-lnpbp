@@ -82,6 +82,11 @@ pub enum Error {
 #[derive(Clone, PartialEq, Eq, Debug, StrictEncode, StrictDecode)]
 #[cfg_attr(test, derive(Default))]
 #[lnpbp_crate(crate)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 pub struct Anchor {
     pub txid: Txid,
     pub commitment: MultimsgCommitment,

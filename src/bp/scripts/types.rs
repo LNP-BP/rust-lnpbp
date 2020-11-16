@@ -130,6 +130,11 @@ use crate::strict_encoding;
 )]
 #[display("{0}", alt = "{_0:x}")]
 #[wrapper(LowerHex, UpperHex)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 pub struct LockScript(Script);
 
 impl strict_encoding::Strategy for LockScript {

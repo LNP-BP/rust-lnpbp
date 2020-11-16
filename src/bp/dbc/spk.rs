@@ -58,6 +58,11 @@ pub enum ScriptEncodeMethod {
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display)]
 #[display(doc_comments)]
 #[non_exhaustive]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 pub enum ScriptEncodeData {
     /// Public key. Since we keep the original public key as a part of a proof,
     /// and value of the tweaked key can be reconstructed with DBC source data

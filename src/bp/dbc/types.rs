@@ -36,6 +36,11 @@ pub trait Container: Sized {
 )]
 #[lnpbp_crate(crate)]
 #[display(Debug)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 pub struct Proof {
     pub pubkey: secp256k1::PublicKey,
     pub source: ScriptEncodeData,
