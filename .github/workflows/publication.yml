@@ -1,0 +1,55 @@
+name: Publication
+
+on:
+  push:
+    branches:
+      - release
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  publication:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+      - name: install cargo-workspaces
+        uses: actions-rs/install@v0.1
+        with:
+          crate: cargo-workspaces
+      - name: publication
+        env:
+          COMMIT_MESSAGE: "${{ github.event.head_commit.message }}"
+          CRATES_IO_TOKEN: "${{ secrets.CRATES_IO_TOKEN }}"
+        run: |
+          # version update
+          ERR_MSG="'[...] new version <version>' expected in a commit message line"
+          export VERSION="$(echo $COMMIT_MESSAGE | awk '/new version/ {print $NF}')"
+          [ -n "$VERSION" ] || (echo "unable to determine version, $ERR_MSG" && exit 1)
+          echo "updating crate versions..."
+          cargo workspaces version -y --force '*' --no-git-commit --exact custom "$VERSION"
+          echo "creating publishing commit and tag..."
+          git config --global user.email "runner@gha.local"
+          git config --global user.name "Github Action"
+          git commit -am "publish version $VERSION"
+          git tag -a -m "v$VERSION update" "v$VERSION"
+          # publishing
+          echo "publishing crates..."
+          # we'll be able to use "cargo ws publish --token" from 0.2.16+
+          cargo login "$CRATES_IO_TOKEN"
+          cargo workspaces publish --from-git --skip-published
+          # update remote branches
+          echo "pushing changes to release branch..."
+          git push origin release:release
+          echo "pushing changes to master branch..."
+          git fetch --unshallow origin master
+          git checkout master
+          git merge "v$VERSION"
+          git push origin master:master
+          echo "done"
