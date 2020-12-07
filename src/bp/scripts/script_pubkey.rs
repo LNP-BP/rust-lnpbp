@@ -59,6 +59,7 @@ pub enum ScriptPubkeyFormat {
     /// Initial standard used by Bitcoin Core (also codenamed "P2PK")
     /// that uses uncompressed public key serialization followed with
     /// `OP_CHECKSIG` code
+    /// Custom (i.e. non-standard) output with arbitrary script
     KeyChecksig,
 
     /// Script pubkey serialization according to widely accepted standard
@@ -70,13 +71,6 @@ pub enum ScriptPubkeyFormat {
     /// Segwit script pubkey serialization according to BIP-141
     /// <https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki#Witness_program>
     Witness,
-
-    /// Outputs containing OP_RETURN serialized according to
-    /// [Bitcoin Core-defined rules](https://github.com/bitcoin/bitcoin/blob/master/doc/release-notes/release-notes-0.12.0.md#relay-any-sequence-of-pushdatas-in-op_return-outputs-now-allowed)
-    OpReturn,
-
-    /// Custom (i.e. non-standard) output with arbitrary script
-    Custom,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Display)]

@@ -17,6 +17,7 @@ pub mod blind;
 pub mod chain;
 pub mod dbc;
 pub mod hlc;
+mod invoice;
 pub mod lex_order;
 pub mod psbt;
 pub mod resolvers;
@@ -30,6 +31,7 @@ pub mod tagged_hash;
 pub use bip32::{DerivationInfo, DerivationTemplate};
 pub use chain::{Chain, P2pNetworkId};
 pub use hlc::{HashLock, HashPreimage};
+pub use invoice::Invoice;
 pub use lex_order::LexOrder;
 pub use psbt::Psbt;
 pub use scripts::{
