@@ -205,7 +205,7 @@ pub struct TxGraph {
     pub cmt_locktime: u32,
     pub cmt_sequence: u32,
     pub cmt_outs: Vec<TxOut>,
-    graph: BTreeMap<u16, BTreeMap<u64, Psbt>>,
+    pub graph: BTreeMap<u16, BTreeMap<u64, Psbt>>,
 }
 
 impl TxGraph {

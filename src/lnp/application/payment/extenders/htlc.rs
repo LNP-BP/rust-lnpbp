@@ -23,6 +23,10 @@ use crate::bp::{
 use crate::lnp::application::payment::ExtensionId;
 use crate::lnp::application::{channel, ChannelExtension, Extension, Messages};
 
+use crate::SECP256K1_PUBKEY_DUMB;
+
+use std::collections::BTreeMap;
+
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct HtlcKnown {
     pub preimage: HashPreimage,
@@ -86,7 +90,97 @@ impl ChannelExtension for Htlc {
         &mut self,
         tx_graph: &mut channel::TxGraph,
     ) -> Result<(), channel::Error> {
-        unimplemented!()
+        let mut htlc_timeout_txs = BTreeMap::new();
+        let mut htlc_success_txs = BTreeMap::new();
+
+        for (index, offered) in self.offered_htlc.iter().enumerate() {
+            // TODO, Dummy structures used here
+            // figure out how they should be used from HTLC data or global
+            // channel state data
+
+            let amount = 10u64;
+            let revocationpubkey = *SECP256K1_PUBKEY_DUMB;
+            let local_htlcpubkey = *SECP256K1_PUBKEY_DUMB;
+            let remote_htlcpubkey = *SECP256K1_PUBKEY_DUMB;
+            let payment_hash = HashLock::from(offered.preimage.clone()); // Calculation of payment hash not seems to be as per BOLT3
+
+            let htlc_output = TxOut::ln_offered_htlc(
+                amount,
+                revocationpubkey,
+                local_htlcpubkey,
+                remote_htlcpubkey,
+                payment_hash,
+            );
+            tx_graph.cmt_outs.push(htlc_output);
+
+            //Dummy variables, Figure out how to get them for a HTLC
+            // This will be an HTLC timeout transaction
+            let outpoint = OutPoint::default();
+            let cltv_expiry = offered.cltv_expiry;
+            let revocationpubkey = *SECP256K1_PUBKEY_DUMB;
+            let local_delayedpubkey = *SECP256K1_PUBKEY_DUMB;
+            let to_self_delay = 0u16;
+
+            let htlc_tx = Psbt::ln_htlc(
+                amount,
+                outpoint,
+                cltv_expiry,
+                revocationpubkey,
+                local_delayedpubkey,
+                to_self_delay,
+            );
+            htlc_timeout_txs.insert(index as u64, htlc_tx);
+        }
+
+        for (index, recieved) in self.received_htlc.iter().enumerate() {
+            // TODO, Dummy structures used here
+            // figure out how they should be used from HTLC structure
+            // Calculation of payment hash not seems to be as per BOLT3
+            let amount = 10u64;
+            let revocationpubkey = *SECP256K1_PUBKEY_DUMB;
+            let local_htlcpubkey = *SECP256K1_PUBKEY_DUMB;
+            let remote_htlcpubkey = *SECP256K1_PUBKEY_DUMB;
+            let payment_hash = recieved.hashlock.clone();
+            let cltv_expiry = 0;
+
+            let htlc_output = TxOut::ln_received_htlc(
+                amount,
+                revocationpubkey,
+                local_htlcpubkey,
+                remote_htlcpubkey,
+                cltv_expiry,
+                payment_hash,
+            );
+            tx_graph.cmt_outs.push(htlc_output);
+
+            //Dummy variables, Figure out how to get them for a HTLC
+            // This will be an HTLC success transaction, so cltv_expiry is 0
+            let outpoint = OutPoint::default();
+            let cltv_expiry = 0;
+            let revocationpubkey = *SECP256K1_PUBKEY_DUMB;
+            let local_delayedpubkey = *SECP256K1_PUBKEY_DUMB;
+            let to_self_delay = 0u16;
+
+            let htlc_tx = Psbt::ln_htlc(
+                amount,
+                outpoint,
+                cltv_expiry,
+                revocationpubkey,
+                local_delayedpubkey,
+                to_self_delay,
+            );
+            htlc_success_txs.insert(index as u64, htlc_tx);
+        }
+
+        // For now adding them into the txgraph map with Index=1 for timeout
+        // and Index=2 for success htlc Psbts
+        // Decide how should the Txrole and Txindex for each of them
+        // should be set.
+
+        tx_graph.graph.insert(1u16, htlc_timeout_txs);
+        tx_graph.graph.insert(2u16, htlc_success_txs);
+
+        Ok(())
     }
 }
 
