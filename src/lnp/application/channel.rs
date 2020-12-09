@@ -205,7 +205,7 @@ pub struct TxGraph {
     pub cmt_locktime: u32,
     pub cmt_sequence: u32,
     pub cmt_outs: Vec<TxOut>,
-    pub graph: BTreeMap<u16, BTreeMap<u64, Psbt>>,
+    graph: BTreeMap<u16, BTreeMap<u64, Psbt>>,
 }
 
 impl TxGraph {
@@ -227,6 +227,22 @@ impl TxGraph {
         self.graph
             .get_mut(&role.into())
             .and_then(|v| v.get_mut(&index.into()))
+    }
+
+    pub fn insert_tx<R, I>(
+        &mut self,
+        role: R,
+        index: I,
+        psbt: Psbt,
+    ) -> Option<Psbt>
+    where
+        R: TxRole,
+        I: TxIndex,
+    {
+        self.graph
+            .entry(role.into())
+            .or_insert(empty!())
+            .insert(index.into(), psbt)
     }
 
     pub fn len(&self) -> usize {

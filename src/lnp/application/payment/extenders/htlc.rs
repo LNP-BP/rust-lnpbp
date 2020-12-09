@@ -20,12 +20,10 @@ use crate::bp::{
     chain::AssetId, HashLock, HashPreimage, IntoPk, LockScript, PubkeyScript,
     WitnessScript,
 };
-use crate::lnp::application::payment::ExtensionId;
+use crate::lnp::application::payment::{ExtensionId, TxType};
 use crate::lnp::application::{channel, ChannelExtension, Extension, Messages};
 
 use crate::SECP256K1_PUBKEY_DUMB;
-
-use std::collections::BTreeMap;
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct HtlcKnown {
@@ -90,9 +88,6 @@ impl ChannelExtension for Htlc {
         &mut self,
         tx_graph: &mut channel::TxGraph,
     ) -> Result<(), channel::Error> {
-        let mut htlc_timeout_txs = BTreeMap::new();
-        let mut htlc_success_txs = BTreeMap::new();
-
         for (index, offered) in self.offered_htlc.iter().enumerate() {
             // TODO, Dummy structures used here
             // figure out how they should be used from HTLC data or global
@@ -129,7 +124,7 @@ impl ChannelExtension for Htlc {
                 local_delayedpubkey,
                 to_self_delay,
             );
-            htlc_timeout_txs.insert(index as u64, htlc_tx);
+            tx_graph.insert_tx(TxType::HtlcTimeout, index as u64, htlc_tx);
         }
 
         for (index, recieved) in self.received_htlc.iter().enumerate() {
@@ -169,16 +164,8 @@ impl ChannelExtension for Htlc {
                 local_delayedpubkey,
                 to_self_delay,
             );
-            htlc_success_txs.insert(index as u64, htlc_tx);
+            tx_graph.insert_tx(TxType::HtlcSuccess, index as u64, htlc_tx);
         }
-
-        // For now adding them into the txgraph map with Index=1 for timeout
-        // and Index=2 for success htlc Psbts
-        // Decide how should the Txrole and Txindex for each of them
-        // should be set.
-
-        tx_graph.graph.insert(1u16, htlc_timeout_txs);
-        tx_graph.graph.insert(2u16, htlc_success_txs);
 
         Ok(())
     }

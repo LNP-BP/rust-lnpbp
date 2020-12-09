@@ -22,8 +22,8 @@ use bitcoin::OutPoint;
 
 use crate::bp::chain::AssetId;
 use crate::bp::Slice32;
-use crate::lnp::application::extension;
-use crate::strict_encoding::{self, strict_deserialize, strict_serialize};
+use crate::lnp::application::{channel, extension};
+use crate::strict_encoding::{self, strict_decode, strict_encode};
 
 /// Shorthand for representing asset - amount pairs
 pub type AssetsBalance = BTreeMap<AssetId, u64>;
@@ -88,6 +88,50 @@ impl TryFrom<u16> for ExtensionId {
 }
 
 impl extension::Nomenclature for ExtensionId {}
+
+#[derive(
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Debug,
+    Display,
+    StrictEncode,
+    StrictDecode,
+)]
+#[lnpbp_crate(crate)]
+#[display(Debug)]
+#[non_exhaustive]
+pub enum TxType {
+    HtlcSuccess,
+    HtlcTimeout,
+    Unknown(u16),
+}
+
+impl From<TxType> for u16 {
+    fn from(ty: TxType) -> Self {
+        match ty {
+            TxType::HtlcSuccess => 0x0,
+            TxType::HtlcTimeout => 0x1,
+            TxType::Unknown(x) => x,
+        }
+    }
+}
+
+impl From<u16> for TxType {
+    fn from(ty: u16) -> Self {
+        match ty {
+            0x00 => TxType::HtlcSuccess,
+            0x01 => TxType::HtlcTimeout,
+            x => TxType::Unknown(x),
+        }
+    }
+}
+
+impl channel::TxRole for TxType {}
 
 #[cfg_attr(feature = "serde", serde_as(as = "DisplayFromStr"))]
 #[cfg_attr(
