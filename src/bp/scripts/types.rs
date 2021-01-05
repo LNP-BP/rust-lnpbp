@@ -110,10 +110,10 @@ use bitcoin::{
 use crate::bp::{Chain, CompactDescriptor};
 use crate::strict_encoding;
 
-/// Script which knowledge is required for spending some specific transaction
+/// Script whose knowledge is required for spending some specific transaction
 /// output. This is the deepest nested version of Bitcoin script containing no
 /// hashes of other scripts, including P2SH redeemScript hashes or
-/// witnessProgram (hash or witness script), or public keys
+/// witnessProgram (hash or witness script), or public key hashes
 #[derive(
     Wrapper,
     Clone,
