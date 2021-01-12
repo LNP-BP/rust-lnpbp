@@ -50,7 +50,7 @@ pub struct RawRecord(Vec<u8>);
 
 impl EvenOdd for Type {}
 
-#[derive(Debug, Display, Default)]
+#[derive(Debug, Display, Default, Clone)]
 #[display(Debug)]
 pub struct Stream(BTreeMap<Type, Arc<dyn Any>>);
 

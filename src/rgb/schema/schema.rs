@@ -767,7 +767,7 @@ mod _validation {
                         }
                     })
                     .collect()
-            };
+            }
 
             for (type_id, indexes) in details {
                 match parent_node.owned_rights_by_type(*type_id) {
