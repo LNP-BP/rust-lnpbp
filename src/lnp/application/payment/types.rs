@@ -17,6 +17,7 @@ use serde_with::{As, DisplayFromStr};
 use std::collections::BTreeMap;
 use std::convert::TryFrom;
 use std::fmt::Debug;
+use std::io;
 
 use bitcoin::hashes::hex::{Error, FromHex};
 use bitcoin::hashes::Hash;
@@ -25,8 +26,12 @@ use bitcoin::OutPoint;
 use crate::bp::chain::AssetId;
 use crate::bp::Slice32;
 use crate::lnp::application::extension;
-use crate::strict_encoding::{self, strict_deserialize, strict_serialize};
-
+use crate::lnp::presentation::encoding::{
+    Error as ln_error, LightningDecode, LightningEncode,
+};
+use crate::paradigms::strict_encoding::{
+    self, strict_deserialize, strict_serialize,
+};
 /// Shorthand for representing asset - amount pairs
 pub type AssetsBalance = BTreeMap<AssetId, u64>;
 
@@ -254,5 +259,100 @@ impl TempChannelId {
 impl DumbDefault for TempChannelId {
     fn dumb_default() -> Self {
         Self(Default::default())
+    }
+}
+
+/// Lightning network short channel Id as per BIP7
+#[cfg_attr(feature = "serde", serde_as(as = "DisplayFromStr"))]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
+#[derive(
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Debug,
+    Default,
+    From,
+    StrictEncode,
+    StrictDecode,
+)]
+#[lnpbp_crate(crate)]
+pub struct ShortChannelId {
+    pub block_height: u32,
+    pub tx_index: u32,
+    pub output_index: u16,
+}
+
+impl LightningEncode for ShortChannelId {
+    fn lightning_encode<E: io::Write>(
+        &self,
+        mut e: E,
+    ) -> Result<usize, io::Error> {
+        let mut result = 0;
+
+        // representing block height as 3 bytes
+        let block_height: [u8; 3] = [
+            (self.block_height >> 16 & 0xFF) as u8,
+            (self.block_height >> 8 & 0xFF) as u8,
+            (self.block_height & 0xFF) as u8,
+        ];
+        result += e.write(&block_height[..])?;
+
+        // representing transaction index as 3 bytes
+        let tx_index: [u8; 3] = [
+            (self.tx_index >> 16 & 0xFF) as u8,
+            (self.tx_index >> 8 & 0xFF) as u8,
+            (self.tx_index & 0xFF) as u8,
+        ];
+        result += e.write(&tx_index[..])?;
+
+        // represents output index as 2 bytes
+        let output_index: [u8; 2] = [
+            (self.output_index >> 8 & 0xFF) as u8,
+            (self.output_index & 0xFF) as u8,
+        ];
+        result += e.write(&output_index[..])?;
+
+        Ok(result)
+    }
+}
+
+impl LightningDecode for ShortChannelId {
+    fn lightning_decode<D: io::Read>(mut d: D) -> Result<Self, ln_error> {
+        // read the block height
+        let mut block_height_bytes = [0u8; 3];
+        d.read_exact(&mut block_height_bytes[..])?;
+
+        let blokc_height = ((block_height_bytes[0] as u32) << 16)
+            + ((block_height_bytes[1] as u32) << 8)
+            + (block_height_bytes[2] as u32);
+
+        // read the transaction index
+        let mut transaction_index_bytes = [0u8; 3];
+        d.read_exact(&mut transaction_index_bytes[..])?;
+
+        let transaction_index = ((transaction_index_bytes[0] as u32) << 16)
+            + ((transaction_index_bytes[1] as u32) << 8)
+            + (transaction_index_bytes[2] as u32);
+
+        // read the output index
+        let mut output_index = [0u8; 2];
+        d.read_exact(&mut output_index[..])?;
+
+        let output_index =
+            ((output_index[0] as u16) << 8) + (output_index[1] as u16);
+
+        Ok(Self {
+            block_height: blokc_height,
+            tx_index: transaction_index,
+            output_index: output_index,
+        })
     }
 }

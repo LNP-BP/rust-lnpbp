@@ -395,6 +395,24 @@ mod byte_strings {
         }
     }
 
+    impl LightningEncode for [u8; 3] {
+        fn lightning_encode<E: io::Write>(
+            &self,
+            mut e: E,
+        ) -> Result<usize, io::Error> {
+            e.write_all(self)?;
+            Ok(self.len())
+        }
+    }
+
+    impl LightningDecode for [u8; 3] {
+        fn lightning_decode<D: io::Read>(mut d: D) -> Result<Self, Error> {
+            let mut ret = [0u8; 3];
+            d.read_exact(&mut ret)?;
+            Ok(ret)
+        }
+    }
+
     impl LightningEncode for Box<[u8]> {
         fn lightning_encode<E: io::Write>(
             &self,
