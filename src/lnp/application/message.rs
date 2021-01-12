@@ -12,7 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use amplify::DumbDefault;
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use std::fmt::{self, Display, Formatter};
 use std::io;
 
@@ -20,7 +20,7 @@ use bitcoin::hashes::{sha256, Hmac};
 use bitcoin::secp256k1::{PublicKey, Signature};
 use bitcoin::{OutPoint, Script, Txid};
 
-use super::payment::{ChannelId, TempChannelId};
+use super::payment::{ChannelId, ShortChannelId, TempChannelId};
 use super::Features;
 use crate::bp::chain::AssetId;
 use crate::bp::{HashLock, HashPreimage};
@@ -139,7 +139,48 @@ pub enum Messages {
     #[display("channel_reestablish(...)")]
     ChannelReestablish(ChannelReestablish),
 
-    // 3. RGB
+    // 3. Bolt 7 Gossip
+    // -----------------
+    #[lnp_api(type = 259)]
+    #[display("announcement_signatures(...)")]
+    AnnouncementSignatures(AnnouncementSignatures),
+
+    #[lnp_api(type = 256)]
+    #[display("channel_announcement(...)")]
+    ChannelAnnouncements(ChannelAnnouncements),
+
+    #[lnp_api(type = 257)]
+    #[display("node_announcement(...)")]
+    NodeAnnouncements(NodeAnnouncements),
+
+    #[lnp_api(type = 258)]
+    #[display("channel_update(...)")]
+    ChannelUpdate(ChannelUpdate),
+
+    /// Extended Gossip queries
+    /// Negotiating the gossip_queries option via init enables a number of
+    /// extended queries for gossip synchronization.
+    #[lnp_api(type = 261)]
+    #[display("query_short_channel_ids(...)")]
+    QueryShortChannelIds(QueryShortChannelIds),
+
+    #[lnp_api(type = 262)]
+    #[display("reply_short_channel_ids_end(...)")]
+    ReplyShortChannelIdsEnd(ReplyShortChannelIdsEnd),
+
+    #[lnp_api(type = 263)]
+    #[display("query_channel_range(...)")]
+    QueryChannelRange(QueryChannelRange),
+
+    #[lnp_api(type = 264)]
+    #[display("reply_channel_range(...)")]
+    ReplyChannelRange(ReplyChannelRange),
+
+    #[lnp_api(type = 265)]
+    #[display("gossip_timestamp_filter(...)")]
+    GossipTimestampFilter(GossipTimestampFilter),
+
+    // 4. RGB
     // ------
     #[cfg(feature = "rgb")]
     #[lnp_api(type = 57156)]
@@ -589,6 +630,237 @@ pub struct ChannelReestablish {
     /// The sender's per-commitment point for their current commitment
     /// transaction
     pub my_current_per_commitment_point: PublicKey,
+}
+
+/// Bolt 7 Gossip messages
+#[derive(
+    Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
+)]
+#[lnpbp_crate(crate)]
+#[display(Debug)]
+pub struct AnnouncementSignatures {
+    /// The channel ID
+    pub channel_id: ChannelId,
+
+    /// Short channel Id
+    pub short_channel_id: ShortChannelId, //TODO
+
+    /// Node Signature
+    pub node_signature: Signature,
+
+    /// Bitcoin Signature
+    pub bitcoin_signature: Signature,
+}
+
+#[derive(
+    Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
+)]
+#[lnpbp_crate(crate)]
+#[display(Debug)]
+pub struct ChannelAnnouncements {
+    /// Node Signature 1
+    pub node_signature_1: Signature,
+
+    /// Node Signature 2
+    pub node_signature_2: Signature,
+
+    /// Bitcoin Signature 1
+    pub bitcoin_signature_1: Signature,
+
+    /// Bitcoin Signature 2
+    pub bitcoin_signature_2: Signature,
+
+    /// length of feature bytes
+    pub len: u16,
+
+    /// feature bytes
+    pub features: Vec<u8>,
+
+    /// chain hash
+    pub chain_hash: AssetId,
+
+    /// Short channel ID
+    pub short_channel_id: ShortChannelId,
+
+    /// Node Id 1
+    pub node_id_1: PublicKey,
+
+    /// Node Id 2
+    pub node_id_2: PublicKey,
+
+    /// Bitcoin key 1
+    pub bitcoin_key_1: PublicKey,
+
+    /// Bitcoin key 2
+    pub bitcoin_key_2: PublicKey,
+}
+
+#[derive(
+    Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
+)]
+#[lnpbp_crate(crate)]
+#[display(Debug)]
+pub struct NodeAnnouncements {
+    /// Signature
+    pub signature: Signature,
+
+    /// length of feature bytes
+    pub flen: u16,
+
+    /// feature bytes
+    pub features: Vec<u8>,
+
+    /// time stapm
+    pub timestamp: u32,
+
+    /// Node Id
+    pub node_id: PublicKey,
+
+    /// RGB colour code
+    pub rgb_color: [u8; 3],
+
+    /// Node Alias
+    pub alias: [u8; 3],
+
+    /// length of node address bytes
+    pub addrlen: u16,
+
+    /// Node address
+    pub address: Vec<u8>,
+}
+
+#[derive(
+    Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
+)]
+#[lnpbp_crate(crate)]
+#[display(Debug)]
+pub struct ChannelUpdate {
+    /// Signature
+    pub signature: Signature,
+
+    /// Chainhash
+    pub chain_hash: AssetId,
+
+    /// Short Channel Id
+    pub short_channel_id: ShortChannelId,
+
+    /// Time stamp
+    pub timestamp: u32,
+
+    /// message flags
+    pub message_flags: u8,
+
+    /// channel flags
+    pub channle_flags: u8,
+
+    /// cltv expiry delta
+    pub cltv_expiry_delta: u16,
+
+    /// minimum HTLC in msat
+    pub htlc_minimum_msal: u64,
+
+    /// base fee in msat
+    pub fee_base_msat: u32,
+
+    /// fee proportional millionth
+    pub fee_proportional_millionths: u32,
+
+    /// if option_channel_htlc_max is set
+    pub htlc_maximum_msat: u64,
+}
+
+/// Extended Gossip messages
+#[derive(
+    Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
+)]
+#[lnpbp_crate(crate)]
+#[display(Debug)]
+pub struct QueryShortChannelIds {
+    /// chain hash
+    pub chain_hash: AssetId,
+
+    /// short ids to query
+    pub short_ids: Vec<ShortChannelId>,
+
+    /// short id tlv stream
+    #[tlv(type = 1)]
+    pub short_id_tlvs: BTreeMap<u8, Vec<u8>>, /* is this the correct way to
+                                               * write tlv streams? */
+}
+
+#[derive(
+    Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
+)]
+#[lnpbp_crate(crate)]
+#[display(Debug)]
+pub struct ReplyShortChannelIdsEnd {
+    /// chain hash
+    pub chain_hash: AssetId,
+
+    /// full information
+    pub full_information: u8,
+}
+
+#[derive(
+    Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
+)]
+#[lnpbp_crate(crate)]
+#[display(Debug)]
+pub struct QueryChannelRange {
+    /// chain hash
+    pub chain_hash: AssetId,
+
+    /// first block number
+    pub first_block_num: u32,
+
+    /// number of blocks
+    pub number_of_blocks: u32,
+
+    /// channel range queries
+    #[tlv(type = 1)]
+    pub query_channel_range_tlvs: BTreeMap<u8, Vec<u8>>,
+}
+
+#[derive(
+    Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
+)]
+#[lnpbp_crate(crate)]
+#[display(Debug)]
+pub struct ReplyChannelRange {
+    /// chain hash
+    pub chain_hash: AssetId,
+
+    /// first block number
+    pub first_blocknum: u32,
+
+    /// number of blocks
+    pub number_of_blocks: u32,
+
+    /// full information
+    pub full_information: u8,
+
+    /// encoded short ids
+    pub encoded_short_ids: Vec<ShortChannelId>,
+
+    /// reply channel range tlvs
+    #[tlv(type = 1)]
+    pub reply_channel_range_tlvs: BTreeMap<u8, Vec<u8>>,
+}
+
+#[derive(
+    Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
+)]
+#[lnpbp_crate(crate)]
+#[display(Debug)]
+pub struct GossipTimestampFilter {
+    /// chain hash
+    pub chain_hash: AssetId,
+
+    /// first timestamp
+    pub first_timestamp: u32,
+
+    /// timestamp range
+    pub timestamp_range: u32,
 }
 
 #[cfg(feature = "rgb")]
