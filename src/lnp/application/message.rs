@@ -20,7 +20,9 @@ use bitcoin::hashes::{sha256, Hmac};
 use bitcoin::secp256k1::{PublicKey, Signature};
 use bitcoin::{OutPoint, Script, Txid};
 
-use super::payment::{ChannelId, ShortChannelId, TempChannelId};
+use super::payment::{
+    Alias, ChannelId, RGBColor, ShortChannelId, TempChannelId,
+};
 use super::Features;
 use crate::bp::chain::AssetId;
 use crate::bp::{HashLock, HashPreimage};
@@ -717,10 +719,10 @@ pub struct NodeAnnouncements {
     pub node_id: PublicKey,
 
     /// RGB colour code
-    pub rgb_color: [u8; 3],
+    pub rgb_color: RGBColor,
 
     /// Node Alias
-    pub alias: [u8; 3],
+    pub alias: Alias,
 
     /// length of node address bytes
     pub addrlen: u16,
