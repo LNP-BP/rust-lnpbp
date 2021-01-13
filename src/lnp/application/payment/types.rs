@@ -27,7 +27,8 @@ use crate::bp::chain::AssetId;
 use crate::bp::Slice32;
 use crate::lnp::application::extension;
 use crate::lnp::presentation::encoding::{
-    Error as ln_error, LightningDecode, LightningEncode,
+    strategies, Error as LightningError, LightningDecode, LightningEncode,
+    Strategy,
 };
 use crate::paradigms::strict_encoding::{
     self, strict_deserialize, strict_serialize,
@@ -262,13 +263,21 @@ impl DumbDefault for TempChannelId {
     }
 }
 
+#[derive(Wrapper, Clone, Debug, From, PartialEq, Eq)]
+pub struct RGBColor([u8; 3]);
+
+impl Strategy for RGBColor {
+    type Strategy = strategies::AsWrapped;
+}
+
+#[derive(Wrapper, Clone, Debug, From, PartialEq, Eq)]
+pub struct Alias([u8; 3]);
+
+impl Strategy for Alias {
+    type Strategy = strategies::AsWrapped;
+}
+
 /// Lightning network short channel Id as per BIP7
-#[cfg_attr(feature = "serde", serde_as(as = "DisplayFromStr"))]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(crate = "serde_crate")
-)]
 #[derive(
     Clone,
     Copy,
@@ -325,7 +334,7 @@ impl LightningEncode for ShortChannelId {
 }
 
 impl LightningDecode for ShortChannelId {
-    fn lightning_decode<D: io::Read>(mut d: D) -> Result<Self, ln_error> {
+    fn lightning_decode<D: io::Read>(mut d: D) -> Result<Self, LightningError> {
         // read the block height
         let mut block_height_bytes = [0u8; 3];
         d.read_exact(&mut block_height_bytes[..])?;
