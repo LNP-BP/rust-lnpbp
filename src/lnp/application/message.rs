@@ -21,7 +21,7 @@ use bitcoin::secp256k1::{PublicKey, Signature};
 use bitcoin::{OutPoint, Script, Txid};
 
 use super::payment::{
-    Alias, ChannelId, RGBColor, ShortChannelId, TempChannelId,
+    Alias, ChannelId, NodeColor, ShortChannelId, TempChannelId,
 };
 use super::Features;
 use crate::bp::chain::AssetId;
@@ -719,7 +719,7 @@ pub struct NodeAnnouncements {
     pub node_id: PublicKey,
 
     /// RGB colour code
-    pub rgb_color: RGBColor,
+    pub rgb_color: NodeColor,
 
     /// Node Alias
     pub alias: Alias,

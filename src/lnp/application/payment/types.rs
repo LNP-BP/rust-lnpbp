@@ -27,8 +27,7 @@ use crate::bp::chain::AssetId;
 use crate::bp::Slice32;
 use crate::lnp::application::extension;
 use crate::lnp::presentation::encoding::{
-    strategies, Error as LightningError, LightningDecode, LightningEncode,
-    Strategy,
+    Error as LightningError, LightningDecode, LightningEncode,
 };
 use crate::paradigms::strict_encoding::{
     self, strict_deserialize, strict_serialize,
@@ -264,17 +263,45 @@ impl DumbDefault for TempChannelId {
 }
 
 #[derive(Wrapper, Clone, Debug, From, PartialEq, Eq)]
-pub struct RGBColor([u8; 3]);
+pub struct NodeColor([u8; 3]);
 
-impl Strategy for RGBColor {
-    type Strategy = strategies::AsWrapped;
+impl LightningEncode for NodeColor {
+    fn lightning_encode<E: io::Write>(
+        &self,
+        mut e: E,
+    ) -> Result<usize, io::Error> {
+        let len = e.write(self.as_inner())?;
+        Ok(len)
+    }
+}
+
+impl LightningDecode for NodeColor {
+    fn lightning_decode<D: io::Read>(mut d: D) -> Result<Self, LightningError> {
+        let mut buf = [0u8; 3];
+        d.read_exact(&mut buf)?;
+        Ok(Self::from_inner(buf))
+    }
 }
 
 #[derive(Wrapper, Clone, Debug, From, PartialEq, Eq)]
 pub struct Alias([u8; 3]);
 
-impl Strategy for Alias {
-    type Strategy = strategies::AsWrapped;
+impl LightningEncode for Alias {
+    fn lightning_encode<E: io::Write>(
+        &self,
+        mut e: E,
+    ) -> Result<usize, io::Error> {
+        let len = e.write(self.as_inner())?;
+        Ok(len)
+    }
+}
+
+impl LightningDecode for Alias {
+    fn lightning_decode<D: io::Read>(mut d: D) -> Result<Self, LightningError> {
+        let mut buf = [0u8; 3];
+        d.read_exact(&mut buf)?;
+        Ok(Self::from_inner(buf))
+    }
 }
 
 /// Lightning network short channel Id as per BIP7
@@ -304,7 +331,7 @@ impl LightningEncode for ShortChannelId {
         &self,
         mut e: E,
     ) -> Result<usize, io::Error> {
-        let mut result = 0;
+        let mut len = 0;
 
         // representing block height as 3 bytes
         let block_height: [u8; 3] = [
@@ -312,7 +339,7 @@ impl LightningEncode for ShortChannelId {
             (self.block_height >> 8 & 0xFF) as u8,
             (self.block_height & 0xFF) as u8,
         ];
-        result += e.write(&block_height[..])?;
+        len += e.write(&block_height[..])?;
 
         // representing transaction index as 3 bytes
         let tx_index: [u8; 3] = [
@@ -320,16 +347,16 @@ impl LightningEncode for ShortChannelId {
             (self.tx_index >> 8 & 0xFF) as u8,
             (self.tx_index & 0xFF) as u8,
         ];
-        result += e.write(&tx_index[..])?;
+        len += e.write(&tx_index[..])?;
 
         // represents output index as 2 bytes
         let output_index: [u8; 2] = [
             (self.output_index >> 8 & 0xFF) as u8,
             (self.output_index & 0xFF) as u8,
         ];
-        result += e.write(&output_index[..])?;
+        len += e.write(&output_index[..])?;
 
-        Ok(result)
+        Ok(len)
     }
 }
 
@@ -339,7 +366,7 @@ impl LightningDecode for ShortChannelId {
         let mut block_height_bytes = [0u8; 3];
         d.read_exact(&mut block_height_bytes[..])?;
 
-        let blokc_height = ((block_height_bytes[0] as u32) << 16)
+        let block_height = ((block_height_bytes[0] as u32) << 16)
             + ((block_height_bytes[1] as u32) << 8)
             + (block_height_bytes[2] as u32);
 
@@ -359,7 +386,7 @@ impl LightningDecode for ShortChannelId {
             ((output_index[0] as u16) << 8) + (output_index[1] as u16);
 
         Ok(Self {
-            block_height: blokc_height,
+            block_height: block_height,
             tx_index: transaction_index,
             output_index: output_index,
         })
