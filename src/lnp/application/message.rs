@@ -12,7 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use amplify::DumbDefault;
-use std::collections::{BTreeMap, HashSet};
+use std::collections::HashSet;
 use std::fmt::{self, Display, Formatter};
 use std::io;
 
@@ -21,7 +21,7 @@ use bitcoin::secp256k1::{PublicKey, Signature};
 use bitcoin::{OutPoint, Script, Txid};
 
 use super::payment::{
-    Alias, ChannelId, NodeColor, ShortChannelId, TempChannelId,
+    AddressList, Alias, ChannelId, NodeColor, ShortChannelId, TempChannelId,
 };
 use super::Features;
 use crate::bp::chain::AssetId;
@@ -48,13 +48,13 @@ pub enum Messages {
     /// Once authentication is complete, the first message reveals the features
     /// supported or required by this node, even if this is a reconnection.
     #[lnp_api(type = 16)]
-    #[display("init(...)")]
+    #[display(inner)]
     Init(Init),
 
     /// For simplicity of diagnosis, it's often useful to tell a peer that
     /// something is incorrect.
     #[lnp_api(type = 17)]
-    #[display("error(...)")]
+    #[display(inner)]
     Error(Error),
 
     /// In order to allow for the existence of long-lived TCP connections, at
@@ -62,7 +62,7 @@ pub enum Messages {
     /// at the application level. Such messages also allow obfuscation of
     /// traffic patterns.
     #[lnp_api(type = 18)]
-    #[display("ping(...)")]
+    #[display(inner)]
     Ping(Ping),
 
     /// The pong message is to be sent whenever a ping message is received. It
@@ -71,7 +71,7 @@ pub enum Messages {
     /// Within the received ping message, the sender will specify the number of
     /// bytes to be included within the data payload of the pong message.
     #[lnp_api(type = 19)]
-    #[display("pong(...)")]
+    #[display(Debug)]
     Pong(Vec<u8>),
 
     // Part II: Channel management protocol
@@ -80,113 +80,113 @@ pub enum Messages {
     // 1. Channel establishment
     // ------------------------
     #[lnp_api(type = 32)]
-    #[display("open_channel(...)")]
+    #[display(inner)]
     OpenChannel(OpenChannel),
 
     #[lnp_api(type = 33)]
-    #[display("accept_channel(...)")]
+    #[display(inner)]
     AcceptChannel(AcceptChannel),
 
     #[lnp_api(type = 34)]
-    #[display("funding_created(...)")]
+    #[display(inner)]
     FundingCreated(FundingCreated),
 
     #[lnp_api(type = 35)]
-    #[display("funding_signed(...)")]
+    #[display(inner)]
     FundingSigned(FundingSigned),
 
     #[lnp_api(type = 36)]
-    #[display("funding_locked(...)")]
+    #[display(inner)]
     FundingLocked(FundingLocked),
 
     #[lnp_api(type = 38)]
-    #[display("shutdown(...)")]
+    #[display(inner)]
     Shutdown(Shutdown),
 
     #[lnp_api(type = 39)]
-    #[display("closing_signed(...)")]
+    #[display(inner)]
     ClosingSigned(ClosingSigned),
 
     // 2. Normal operations
     // --------------------
     #[lnp_api(type = 128)]
-    #[display("update_add_htlc(...)")]
+    #[display(inner)]
     UpdateAddHtlc(UpdateAddHtlc),
 
     #[lnp_api(type = 130)]
-    #[display("update_fulfill_htlc(...)")]
+    #[display(inner)]
     UpdateFulfillHtlc(UpdateFulfillHtlc),
 
     #[lnp_api(type = 131)]
-    #[display("update_fail_htlc(...)")]
+    #[display(inner)]
     UpdateFailHtlc(UpdateFailHtlc),
 
     #[lnp_api(type = 135)]
-    #[display("update_fail_malformed_htlc(...)")]
+    #[display(inner)]
     UpdateFailMalformedHtlc(UpdateFailMalformedHtlc),
 
     #[lnp_api(type = 132)]
-    #[display("commitment_signed(...)")]
+    #[display(inner)]
     CommitmentSigned(CommitmentSigned),
 
     #[lnp_api(type = 133)]
-    #[display("revoke_and_ack(...)")]
+    #[display(inner)]
     RevokeAndAck(RevokeAndAck),
 
     #[lnp_api(type = 134)]
-    #[display("update_fee(...)")]
+    #[display(inner)]
     UpdateFee(UpdateFee),
 
     #[lnp_api(type = 136)]
-    #[display("channel_reestablish(...)")]
+    #[display(inner)]
     ChannelReestablish(ChannelReestablish),
 
     // 3. Bolt 7 Gossip
     // -----------------
     #[lnp_api(type = 259)]
-    #[display("announcement_signatures(...)")]
+    #[display(inner)]
     AnnouncementSignatures(AnnouncementSignatures),
 
     #[lnp_api(type = 256)]
-    #[display("channel_announcement(...)")]
+    #[display(inner)]
     ChannelAnnouncements(ChannelAnnouncements),
 
     #[lnp_api(type = 257)]
-    #[display("node_announcement(...)")]
+    #[display(inner)]
     NodeAnnouncements(NodeAnnouncements),
 
     #[lnp_api(type = 258)]
-    #[display("channel_update(...)")]
+    #[display(inner)]
     ChannelUpdate(ChannelUpdate),
 
     /// Extended Gossip queries
     /// Negotiating the gossip_queries option via init enables a number of
     /// extended queries for gossip synchronization.
     #[lnp_api(type = 261)]
-    #[display("query_short_channel_ids(...)")]
+    #[display(inner)]
     QueryShortChannelIds(QueryShortChannelIds),
 
     #[lnp_api(type = 262)]
-    #[display("reply_short_channel_ids_end(...)")]
+    #[display(inner)]
     ReplyShortChannelIdsEnd(ReplyShortChannelIdsEnd),
 
     #[lnp_api(type = 263)]
-    #[display("query_channel_range(...)")]
+    #[display(inner)]
     QueryChannelRange(QueryChannelRange),
 
     #[lnp_api(type = 264)]
-    #[display("reply_channel_range(...)")]
+    #[display(inner)]
     ReplyChannelRange(ReplyChannelRange),
 
     #[lnp_api(type = 265)]
-    #[display("gossip_timestamp_filter(...)")]
+    #[display(inner)]
     GossipTimestampFilter(GossipTimestampFilter),
 
     // 4. RGB
     // ------
     #[cfg(feature = "rgb")]
     #[lnp_api(type = 57156)]
-    #[display("assign_funds(...)")]
+    #[display(inner)]
     AssignFunds(AssignFunds),
 }
 
@@ -264,7 +264,7 @@ impl Display for Error {
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display("open_channel({chain_hash}, {temporary_channel_id}, {funding_satoshis}, {channel_flags})")]
 pub struct OpenChannel {
     /// The genesis hash of the blockchain where the channel is to be opened
     pub chain_hash: AssetId,
@@ -275,8 +275,8 @@ pub struct OpenChannel {
     /// The channel value
     pub funding_satoshis: u64,
 
-    /// The amount to push to the counterparty as part of the open, in
-    /// milli-satoshi
+    /// The amount to push to the counter-party as part of the open, in
+    /// millisatoshi
     pub push_msat: u64,
 
     /// The threshold below which outputs on transactions broadcast by sender
@@ -284,7 +284,7 @@ pub struct OpenChannel {
     pub dust_limit_satoshis: u64,
 
     /// The maximum inbound HTLC value in flight towards sender, in
-    /// milli-satoshi
+    /// millisatoshi
     pub max_htlc_value_in_flight_msat: u64,
 
     /// The minimum value unencumbered by HTLCs for the counterparty to keep
@@ -341,7 +341,7 @@ pub struct OpenChannel {
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display("accept_channel({temporary_channel_id})")]
 pub struct AcceptChannel {
     /// A temporary channel ID, until the funding outpoint is announced
     pub temporary_channel_id: TempChannelId,
@@ -405,7 +405,7 @@ pub struct AcceptChannel {
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display("funding_created({temporary_channel_id}, {funding_txid}, {funding_output_index})")]
 pub struct FundingCreated {
     /// A temporary channel ID, until the funding is established
     pub temporary_channel_id: TempChannelId,
@@ -425,7 +425,7 @@ pub struct FundingCreated {
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display("funding_signed({channel_id})")]
 pub struct FundingSigned {
     /// The channel ID
     pub channel_id: ChannelId,
@@ -438,7 +438,7 @@ pub struct FundingSigned {
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display("funding_locked({channel_id})")]
 pub struct FundingLocked {
     /// The channel ID
     pub channel_id: ChannelId,
@@ -451,7 +451,7 @@ pub struct FundingLocked {
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display("shutdown({channel_id})")]
 pub struct Shutdown {
     /// The channel ID
     pub channel_id: ChannelId,
@@ -465,7 +465,7 @@ pub struct Shutdown {
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display("closing_signed({channel_id})")]
 pub struct ClosingSigned {
     /// The channel ID
     pub channel_id: ChannelId,
@@ -481,7 +481,7 @@ pub struct ClosingSigned {
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display("update_add_htlc({channel_id}, {htlc_id}, {asset_id:#?})")]
 pub struct UpdateAddHtlc {
     /// The channel ID
     pub channel_id: ChannelId,
@@ -514,7 +514,7 @@ pub struct UpdateAddHtlc {
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display("update_fullfill_htlc({channel_id}, {htlc_id})")]
 pub struct UpdateFulfillHtlc {
     /// The channel ID
     pub channel_id: ChannelId,
@@ -530,7 +530,7 @@ pub struct UpdateFulfillHtlc {
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display("update_fail_htlc({channel_id}, {htlc_id})")]
 pub struct UpdateFailHtlc {
     /// The channel ID
     pub channel_id: ChannelId,
@@ -550,7 +550,7 @@ pub struct UpdateFailHtlc {
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display("update_fail_malformed_htlc({channel_id}, {htlc_id})")]
 pub struct UpdateFailMalformedHtlc {
     /// The channel ID
     pub channel_id: ChannelId,
@@ -569,7 +569,7 @@ pub struct UpdateFailMalformedHtlc {
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display("commitment_signed({channel_id})")]
 pub struct CommitmentSigned {
     /// The channel ID
     pub channel_id: ChannelId,
@@ -585,7 +585,7 @@ pub struct CommitmentSigned {
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display("revoke_and_ack({channel_id})")]
 pub struct RevokeAndAck {
     /// The channel ID
     pub channel_id: ChannelId,
@@ -601,7 +601,7 @@ pub struct RevokeAndAck {
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display("update_fee({channel_id}, {feerate_per_kw})")]
 pub struct UpdateFee {
     /// The channel ID
     pub channel_id: ChannelId,
@@ -614,7 +614,7 @@ pub struct UpdateFee {
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display("channel_reestablish({channel_id})")]
 pub struct ChannelReestablish {
     /// The channel ID
     pub channel_id: ChannelId,
@@ -639,7 +639,7 @@ pub struct ChannelReestablish {
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display("announcement_signature({channel_id}, {short_channel_id})")]
 pub struct AnnouncementSignatures {
     /// The channel ID
     pub channel_id: ChannelId,
@@ -658,7 +658,7 @@ pub struct AnnouncementSignatures {
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display("channel_announcement({chain_hash}, {short_channel_id})")]
 pub struct ChannelAnnouncements {
     /// Node Signature 1
     pub node_signature_1: Signature,
@@ -672,11 +672,8 @@ pub struct ChannelAnnouncements {
     /// Bitcoin Signature 2
     pub bitcoin_signature_2: Signature,
 
-    /// length of feature bytes
-    pub len: u16,
-
     /// feature bytes
-    pub features: Vec<u8>,
+    pub features: Features,
 
     /// chain hash
     pub chain_hash: AssetId,
@@ -701,18 +698,15 @@ pub struct ChannelAnnouncements {
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display("node_announcement({node_id}, {alias}, {addresses})")]
 pub struct NodeAnnouncements {
     /// Signature
     pub signature: Signature,
 
-    /// length of feature bytes
-    pub flen: u16,
-
     /// feature bytes
-    pub features: Vec<u8>,
+    pub features: Features,
 
-    /// time stapm
+    /// Time stamp
     pub timestamp: u32,
 
     /// Node Id
@@ -724,18 +718,15 @@ pub struct NodeAnnouncements {
     /// Node Alias
     pub alias: Alias,
 
-    /// length of node address bytes
-    pub addrlen: u16,
-
     /// Node address
-    pub address: Vec<u8>,
+    pub addresses: AddressList,
 }
 
 #[derive(
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display("channel_id({chain_hash}, {short_channel_id}, {timestamp})")]
 pub struct ChannelUpdate {
     /// Signature
     pub signature: Signature,
@@ -776,25 +767,23 @@ pub struct ChannelUpdate {
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display("query_short_channel_ids({chain_hash}, {short_ids:#?})")]
 pub struct QueryShortChannelIds {
     /// chain hash
     pub chain_hash: AssetId,
 
     /// short ids to query
     pub short_ids: Vec<ShortChannelId>,
-
-    /// short id tlv stream
-    #[tlv(type = 1)]
-    pub short_id_tlvs: BTreeMap<u8, Vec<u8>>, /* is this the correct way to
-                                               * write tlv streams? */
+    /*short id tlv stream
+     * TODO: uncomment once tlv implementation is complete
+     * pub short_id_tlvs: BTreeMap<u8, Vec<u8>>, */
 }
 
 #[derive(
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display("reply_short_channel_ids_end({chain_hash}, {full_information})")]
 pub struct ReplyShortChannelIdsEnd {
     /// chain hash
     pub chain_hash: AssetId,
@@ -807,27 +796,30 @@ pub struct ReplyShortChannelIdsEnd {
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display(
+    "querry_channel_range({chain_hash}, {first_blocknum}, {number_of_blocks})"
+)]
 pub struct QueryChannelRange {
     /// chain hash
     pub chain_hash: AssetId,
 
     /// first block number
-    pub first_block_num: u32,
+    pub first_blocknum: u32,
 
     /// number of blocks
     pub number_of_blocks: u32,
-
-    /// channel range queries
-    #[tlv(type = 1)]
-    pub query_channel_range_tlvs: BTreeMap<u8, Vec<u8>>,
+    /*channel range queries
+    TODO: uncomment once tlv implementation is complete
+     * pub query_channel_range_tlvs: BTreeMap<u8, Vec<u8>>, */
 }
 
 #[derive(
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display(
+    "reply_channel_range({chain_hash}, {first_blocknum}, {number_of_blocks})"
+)]
 pub struct ReplyChannelRange {
     /// chain hash
     pub chain_hash: AssetId,
@@ -843,17 +835,16 @@ pub struct ReplyChannelRange {
 
     /// encoded short ids
     pub encoded_short_ids: Vec<ShortChannelId>,
-
-    /// reply channel range tlvs
-    #[tlv(type = 1)]
-    pub reply_channel_range_tlvs: BTreeMap<u8, Vec<u8>>,
+    /* reply channel range tlvs
+     * TODO: uncomment once tlv implementation is complete
+     *pub reply_channel_range_tlvs: BTreeMap<u8, Vec<u8>>, */
 }
 
 #[derive(
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display("gossip_time_stamp_filter({chain_hash}, {first_timestamp}, {timestamp_range})")]
 pub struct GossipTimestampFilter {
     /// chain hash
     pub chain_hash: AssetId,
@@ -870,7 +861,7 @@ pub struct GossipTimestampFilter {
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display(Debug)]
+#[display("assign_funds({channel_id}, {outpoint})")]
 pub struct AssignFunds {
     /// The channel ID
     pub channel_id: ChannelId,
