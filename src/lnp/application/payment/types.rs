@@ -11,6 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use amplify::internet::InetSocketAddr;
 use amplify::{DumbDefault, Wrapper};
 #[cfg(feature = "serde")]
 use serde_with::{As, DisplayFromStr};
@@ -26,11 +27,10 @@ use bitcoin::OutPoint;
 use crate::bp::chain::AssetId;
 use crate::bp::Slice32;
 use crate::lnp::application::extension;
-use crate::lnp::presentation::encoding::{
-    Error as LightningError, LightningDecode, LightningEncode,
-};
+use crate::lnp::presentation::encoding::{strategies, Strategy};
 use crate::paradigms::strict_encoding::{
-    self, strict_deserialize, strict_serialize,
+    self, strict_deserialize, strict_serialize, Error as StrictError,
+    StrictDecode, StrictEncode,
 };
 /// Shorthand for representing asset - amount pairs
 pub type AssetsBalance = BTreeMap<AssetId, u64>;
@@ -265,46 +265,60 @@ impl DumbDefault for TempChannelId {
 #[derive(Wrapper, Clone, Debug, From, PartialEq, Eq)]
 pub struct NodeColor([u8; 3]);
 
-impl LightningEncode for NodeColor {
-    fn lightning_encode<E: io::Write>(
+impl StrictEncode for NodeColor {
+    fn strict_encode<E: io::Write>(
         &self,
         mut e: E,
-    ) -> Result<usize, io::Error> {
+    ) -> Result<usize, StrictError> {
         let len = e.write(self.as_inner())?;
         Ok(len)
     }
 }
 
-impl LightningDecode for NodeColor {
-    fn lightning_decode<D: io::Read>(mut d: D) -> Result<Self, LightningError> {
+impl StrictDecode for NodeColor {
+    fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, StrictError> {
         let mut buf = [0u8; 3];
         d.read_exact(&mut buf)?;
         Ok(Self::from_inner(buf))
     }
 }
 
-#[derive(Wrapper, Clone, Debug, From, PartialEq, Eq)]
-pub struct Alias([u8; 3]);
-
-impl LightningEncode for Alias {
-    fn lightning_encode<E: io::Write>(
-        &self,
-        mut e: E,
-    ) -> Result<usize, io::Error> {
-        let len = e.write(self.as_inner())?;
-        Ok(len)
-    }
+impl Strategy for NodeColor {
+    type Strategy = strategies::AsStrict;
 }
 
-impl LightningDecode for Alias {
-    fn lightning_decode<D: io::Read>(mut d: D) -> Result<Self, LightningError> {
-        let mut buf = [0u8; 3];
-        d.read_exact(&mut buf)?;
-        Ok(Self::from_inner(buf))
-    }
-}
+#[cfg_attr(
+    feature = "serde",
+    serde_as,
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate", transparent)
+)]
+#[derive(
+    Wrapper,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Debug,
+    Display,
+    From,
+    StrictEncode,
+    StrictDecode,
+    LightningEncode,
+    LightningDecode,
+)]
+#[lnpbp_crate(crate)]
+#[display(LowerHex)]
+#[wrapper(FromStr, LowerHex, UpperHex)]
+pub struct Alias(
+    #[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))]
+    Slice32,
+);
 
-/// Lightning network short channel Id as per BIP7
+/// Lightning network short channel Id as per BOLT7
 #[derive(
     Clone,
     Copy,
@@ -314,23 +328,41 @@ impl LightningDecode for Alias {
     Ord,
     Hash,
     Debug,
+    Display,
     Default,
     From,
-    StrictEncode,
-    StrictDecode,
+    Getters,
 )]
-#[lnpbp_crate(crate)]
+#[display("short_channel_id({block_height}x{tx_index}x{output_index})")]
 pub struct ShortChannelId {
-    pub block_height: u32,
-    pub tx_index: u32,
-    pub output_index: u16,
+    block_height: u32,
+    tx_index: u32,
+    output_index: u16,
 }
 
-impl LightningEncode for ShortChannelId {
-    fn lightning_encode<E: io::Write>(
+impl ShortChannelId {
+    pub fn new(
+        block_height: u32,
+        tx_index: u32,
+        output_index: u16,
+    ) -> Option<Self> {
+        if block_height > 2 << 23 || tx_index > 2 << 23 {
+            return None;
+        } else {
+            return Some(Self {
+                block_height: block_height,
+                tx_index: tx_index,
+                output_index: output_index,
+            });
+        }
+    }
+}
+
+impl StrictEncode for ShortChannelId {
+    fn strict_encode<E: io::Write>(
         &self,
         mut e: E,
-    ) -> Result<usize, io::Error> {
+    ) -> Result<usize, StrictError> {
         let mut len = 0;
 
         // representing block height as 3 bytes
@@ -360,8 +392,8 @@ impl LightningEncode for ShortChannelId {
     }
 }
 
-impl LightningDecode for ShortChannelId {
-    fn lightning_decode<D: io::Read>(mut d: D) -> Result<Self, LightningError> {
+impl StrictDecode for ShortChannelId {
+    fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, StrictError> {
         // read the block height
         let mut block_height_bytes = [0u8; 3];
         d.read_exact(&mut block_height_bytes[..])?;
@@ -391,4 +423,27 @@ impl LightningDecode for ShortChannelId {
             output_index: output_index,
         })
     }
+}
+
+impl Strategy for ShortChannelId {
+    type Strategy = strategies::AsStrict;
+}
+
+#[derive(
+    Wrapper,
+    Clone,
+    Debug,
+    Display,
+    From,
+    PartialEq,
+    Eq,
+    StrictEncode,
+    StrictDecode,
+)]
+#[lnpbp_crate(crate)]
+#[display(Debug)]
+pub struct AddressList(Vec<InetSocketAddr>);
+
+impl Strategy for AddressList {
+    type Strategy = strategies::AsStrict;
 }

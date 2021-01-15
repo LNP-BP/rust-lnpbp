@@ -21,8 +21,8 @@ mod modifiers;
 
 pub use invoice::Invoice;
 pub use types::{
-    Alias, AssetsBalance, ChannelId, ExtensionId, Lifecycle, NodeColor,
-    ShortChannelId, TempChannelId,
+    AddressList, Alias, AssetsBalance, ChannelId, ExtensionId, Lifecycle,
+    NodeColor, ShortChannelId, TempChannelId,
 };
 
 pub use constructors::{bolt3, eltoo, taproot, Bolt3};
