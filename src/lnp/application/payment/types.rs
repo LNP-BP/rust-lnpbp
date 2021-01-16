@@ -27,7 +27,9 @@ use bitcoin::OutPoint;
 use crate::bp::chain::AssetId;
 use crate::bp::Slice32;
 use crate::lnp::application::extension;
-use crate::lnp::presentation::encoding::{strategies, Strategy};
+use crate::lnp::presentation::encoding::{
+    strategies, Strategy as LNPEncodingStrategy,
+};
 use crate::paradigms::strict_encoding::{
     self, strict_deserialize, strict_serialize, Error as StrictError,
     StrictDecode, StrictEncode,
@@ -283,7 +285,7 @@ impl StrictDecode for NodeColor {
     }
 }
 
-impl Strategy for NodeColor {
+impl LNPEncodingStrategy for NodeColor {
     type Strategy = strategies::AsStrict;
 }
 
@@ -333,7 +335,7 @@ pub struct Alias(
     From,
     Getters,
 )]
-#[display("short_channel_id({block_height}x{tx_index}x{output_index})")]
+#[display("{block_height}x{tx_index}x{output_index}")]
 pub struct ShortChannelId {
     block_height: u32,
     tx_index: u32,
@@ -425,7 +427,7 @@ impl StrictDecode for ShortChannelId {
     }
 }
 
-impl Strategy for ShortChannelId {
+impl LNPEncodingStrategy for ShortChannelId {
     type Strategy = strategies::AsStrict;
 }
 
@@ -444,6 +446,6 @@ impl Strategy for ShortChannelId {
 #[display(Debug)]
 pub struct AddressList(Vec<InetSocketAddr>);
 
-impl Strategy for AddressList {
+impl LNPEncodingStrategy for AddressList {
     type Strategy = strategies::AsStrict;
 }
