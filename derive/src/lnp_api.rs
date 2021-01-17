@@ -272,15 +272,9 @@ impl EncodingSrategy {
 
     pub fn encode_fn(&self) -> TokenStream2 {
         match self {
-            Self::Strict => {
-                quote!(strict_encode)
-            }
-            Self::Bitcoin => {
-                quote!(consensus_encode)
-            }
-            Self::Lightning => {
-                quote!(lightning_encode)
-            }
+            Self::Strict => quote!(strict_encode),
+            Self::Bitcoin => quote!(consensus_encode),
+            Self::Lightning => quote!(lightning_encode),
         }
     }
 

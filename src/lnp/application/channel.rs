@@ -40,6 +40,9 @@ use super::Messages;
 pub enum Error {
     /// Extension-specific error: {0}
     Extension(String),
+
+    // HTLC Extension Errors
+    HTLC(String),
 }
 
 /// Marker trait for any data that can be used as a part of the channel state
@@ -201,6 +204,8 @@ pub struct TxGraph {
     funding_threshold: u8,
     funding_tx: Psbt,
     funding_outpoint: OutPoint,
+    commitment_outpoint: OutPoint, /* We should have a commitment outpoint
+                                    * for HTLC success and timeout Tx */
     pub cmt_version: i32,
     pub cmt_locktime: u32,
     pub cmt_sequence: u32,
@@ -229,10 +234,36 @@ impl TxGraph {
             .and_then(|v| v.get_mut(&index.into()))
     }
 
+    pub fn insert_tx<R, I>(
+        &mut self,
+        role: R,
+        index: I,
+        psbt: Psbt,
+    ) -> Option<Psbt>
+    where
+        R: TxRole,
+        I: TxIndex,
+    {
+        self.graph
+            .entry(role.into())
+            .or_insert(empty!())
+            .insert(index.into(), psbt)
+    }
+
     pub fn len(&self) -> usize {
         self.graph
             .iter()
             .fold(0usize, |sum, (_, map)| sum + map.len())
+    }
+
+    pub fn last_index<R>(&self, role: R) -> usize
+    where
+        R: TxRole,
+    {
+        match self.graph.get(&role.into()) {
+            Some(map) => map.len(),
+            None => 0usize,
+        }
     }
 
     pub fn render(&self) -> Vec<Psbt> {

@@ -20,11 +20,12 @@ use crate::bp::{
     chain::AssetId, HashLock, HashPreimage, IntoPk, LockScript, PubkeyScript,
     WitnessScript,
 };
-use crate::lnp::application::payment::ExtensionId;
+use crate::lnp::application::payment::{ChannelId, ExtensionId, TxType};
 use crate::lnp::application::{channel, ChannelExtension, Extension, Messages};
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct HtlcKnown {
+    pub amount: u64,
     pub preimage: HashPreimage,
     pub id: u64,
     pub cltv_expiry: u32,
@@ -33,6 +34,7 @@ pub struct HtlcKnown {
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct HtlcSecret {
+    pub amount: u64,
     pub hashlock: HashLock,
     pub id: u64,
     pub cltv_expiry: u32,
@@ -41,9 +43,28 @@ pub struct HtlcSecret {
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub struct Htlc {
-    offered_htlc: Vec<HtlcKnown>,
-    received_htlc: Vec<HtlcSecret>,
-    resolved_htlc: Vec<HtlcKnown>,
+    // Sets of HTLC informations
+    offered_htlcs: Vec<HtlcSecret>,
+    received_htlcs: Vec<HtlcSecret>,
+    resolved_htlcs: Vec<HtlcKnown>,
+
+    // Commitment round specific information
+    to_self_delay: u16,
+    revocation_pubkey: PublicKey,
+    local_htlc_pubkey: PublicKey,
+    remote_htlc_pubkey: PublicKey,
+    local_delayed_pubkey: PublicKey,
+
+    // Channel specific information
+    channel_id: ChannelId,
+    commitment_outpoint: OutPoint,
+    htlc_minimum_msat: u64,
+    max_htlc_value_in_flight_msat: u64,
+    total_htlc_value_in_flight_msat: u64,
+    max_accepted_htlcs: u16,
+    total_accepted_htlcs: u16,
+    last_recieved_htlc_id: u64,
+    last_offered_htlc_id: u64,
 }
 
 impl channel::State for Htlc {}
@@ -60,9 +81,116 @@ impl Extension for Htlc {
         message: &Messages,
     ) -> Result<(), channel::Error> {
         match message {
-            Messages::UpdateAddHtlc(_) => {}
-            Messages::UpdateFulfillHtlc(_) => {}
-            Messages::UpdateFailHtlc(_) => {}
+            Messages::UpdateAddHtlc(message) => {
+                if message.channel_id == self.channel_id {
+                    // Checks
+                    // 1. sending node should afford current fee rate after
+                    // adding this htlc to its local
+                    // commitment including anchor outputs
+                    // if opt in.
+                    if message.amount_msat == 0
+                        || message.amount_msat < self.htlc_minimum_msat
+                    {
+                        return Err(channel::Error::HTLC(
+                            "amount_msat has to be greaterthan 0".to_string(),
+                        ));
+                    } else if self.total_accepted_htlcs
+                        == self.max_accepted_htlcs
+                    {
+                        return Err(channel::Error::HTLC(
+                            "max no. of HTLC limit exceeded".to_string(),
+                        ));
+                    } else if message.amount_msat
+                        + self.total_htlc_value_in_flight_msat
+                        > self.max_htlc_value_in_flight_msat
+                    {
+                        return Err(channel::Error::HTLC(
+                            "max HTLC inflight amount limit exceeded"
+                                .to_string(),
+                        ));
+                    } else if message.cltv_expiry > 500000000 {
+                        return Err(channel::Error::HTLC(
+                            "cltv_expiry limit exceeded".to_string(),
+                        ));
+                    } else if message.amount_msat.leading_zeros() < 32 {
+                        return Err(channel::Error::HTLC(
+                            "Leading zeros not satisfied for Bitcoin network"
+                                .to_string(),
+                        ));
+                    } else if message.htlc_id <= self.last_recieved_htlc_id {
+                        return Err(channel::Error::HTLC(
+                            "HTLC id violation occured".to_string(),
+                        )); // TODO handle reconnection
+                    } else {
+                        let htlc = HtlcSecret {
+                            amount: message.amount_msat,
+                            hashlock: message.payment_hash,
+                            id: message.htlc_id,
+                            cltv_expiry: message.cltv_expiry,
+                            asset_id: message.asset_id,
+                        };
+                        self.received_htlcs.push(htlc);
+
+                        self.last_recieved_htlc_id += 1;
+                    }
+                } else {
+                    return Err(channel::Error::HTLC(
+                        "Missmatched channel_id, bad remote node".to_string(),
+                    ));
+                }
+            }
+            Messages::UpdateFulfillHtlc(message) => {
+                if message.channel_id == self.channel_id {
+                    // Get the corresponding offered htlc
+                    let (index, offered_htlc) = self
+                        .offered_htlcs
+                        .iter()
+                        .enumerate()
+                        .filter(|(index, htlc)| htlc.id == message.htlc_id)
+                        .next()
+                        .ok_or(channel::Error::HTLC(
+                            "HTLC id didn't match".to_string(),
+                        ))?;
+
+                    // Check for correct hash preimage in the message
+                    if offered_htlc.hashlock
+                        == HashLock::from(message.payment_preimage)
+                    {
+                        self.received_htlcs.remove(index);
+                        let resolved_htlc = HtlcKnown {
+                            amount: offered_htlc.amount,
+                            preimage: message.payment_preimage,
+                            id: message.htlc_id,
+                            cltv_expiry: offered_htlc.cltv_expiry,
+                            asset_id: offered_htlc.asset_id,
+                        };
+
+                        self.resolved_htlcs.push(resolved_htlc);
+                    }
+                } else {
+                    return Err(channel::Error::HTLC(
+                        "Missmatched channel_id, bad remote node".to_string(),
+                    ));
+                }
+            }
+            Messages::UpdateFailHtlc(message) => {
+                if message.channel_id == self.channel_id {
+                    // get the offered HTLC to fail
+                    let (index, offered_htlc) = self
+                        .offered_htlcs
+                        .iter()
+                        .enumerate()
+                        .filter(|(index, htlc)| htlc.id == message.htlc_id)
+                        .next()
+                        .ok_or(channel::Error::HTLC(
+                            "HTLC id didn't match".to_string(),
+                        ))?;
+
+                    self.offered_htlcs.remove(index);
+
+                    // TODO the failure reason should be handled here
+                }
+            }
             Messages::UpdateFailMalformedHtlc(_) => {}
             Messages::CommitmentSigned(_) => {}
             Messages::RevokeAndAck(_) => {}
@@ -86,7 +214,63 @@ impl ChannelExtension for Htlc {
         &mut self,
         tx_graph: &mut channel::TxGraph,
     ) -> Result<(), channel::Error> {
-        unimplemented!()
+        // Process offered HTLCs
+        for (index, offered) in self.offered_htlcs.iter().enumerate() {
+            let htlc_output = TxOut::ln_offered_htlc(
+                offered.amount,
+                self.revocation_pubkey,
+                self.local_htlc_pubkey,
+                self.remote_htlc_pubkey,
+                HashLock::from(offered.preimage.clone()),
+            );
+            tx_graph.cmt_outs.push(htlc_output); // Should htlc outputs be inside graph.cmt?
+
+            let htlc_tx = Psbt::ln_htlc(
+                offered.amount,
+                self.commitment_outpoint,
+                offered.cltv_expiry,
+                self.revocation_pubkey,
+                self.local_delayed_pubkey,
+                self.to_self_delay,
+            );
+            // Last index of transaction in graph
+            let last_index = tx_graph.last_index(TxType::HtlcTimeout) + 1;
+            tx_graph.insert_tx(
+                TxType::HtlcTimeout,
+                (last_index + index) as u64,
+                htlc_tx,
+            );
+        }
+
+        // Process recieved HTLCs
+        for (index, recieved) in self.received_htlcs.iter().enumerate() {
+            let htlc_output = TxOut::ln_received_htlc(
+                recieved.amount,
+                self.revocation_pubkey,
+                self.local_htlc_pubkey,
+                self.remote_htlc_pubkey,
+                recieved.cltv_expiry,
+                recieved.hashlock.clone(),
+            );
+            tx_graph.cmt_outs.push(htlc_output);
+
+            let htlc_tx = Psbt::ln_htlc(
+                recieved.amount,
+                self.commitment_outpoint,
+                recieved.cltv_expiry,
+                self.revocation_pubkey,
+                self.local_delayed_pubkey,
+                self.to_self_delay,
+            );
+            // Figure out the last index of transaction in graph
+            let last_index = tx_graph.last_index(TxType::HtlcSuccess) + 1;
+            tx_graph.insert_tx(
+                TxType::HtlcSuccess,
+                (last_index + index) as u64,
+                htlc_tx,
+            );
+        }
+        Ok(())
     }
 }
 

@@ -26,14 +26,15 @@ use bitcoin::OutPoint;
 
 use crate::bp::chain::AssetId;
 use crate::bp::Slice32;
-use crate::lnp::application::extension;
+use crate::lnp::application::{channel, extension};
 use crate::lnp::presentation::encoding::{
     strategies, Strategy as LNPEncodingStrategy,
 };
 use crate::paradigms::strict_encoding::{
-    self, strict_deserialize, strict_serialize, Error as StrictError,
+    self, strict_deserialize, strict_serialize, 
     StrictDecode, StrictEncode,
 };
+
 /// Shorthand for representing asset - amount pairs
 pub type AssetsBalance = BTreeMap<AssetId, u64>;
 
@@ -97,6 +98,50 @@ impl TryFrom<u16> for ExtensionId {
 }
 
 impl extension::Nomenclature for ExtensionId {}
+
+#[derive(
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Debug,
+    Display,
+    StrictEncode,
+    StrictDecode,
+)]
+#[lnpbp_crate(crate)]
+#[display(Debug)]
+#[non_exhaustive]
+pub enum TxType {
+    HtlcSuccess,
+    HtlcTimeout,
+    Unknown(u16),
+}
+
+impl From<TxType> for u16 {
+    fn from(ty: TxType) -> Self {
+        match ty {
+            TxType::HtlcSuccess => 0x0,
+            TxType::HtlcTimeout => 0x1,
+            TxType::Unknown(x) => x,
+        }
+    }
+}
+
+impl From<u16> for TxType {
+    fn from(ty: u16) -> Self {
+        match ty {
+            0x00 => TxType::HtlcSuccess,
+            0x01 => TxType::HtlcTimeout,
+            x => TxType::Unknown(x),
+        }
+    }
+}
+
+impl channel::TxRole for TxType {}
 
 #[cfg_attr(
     feature = "serde",
@@ -364,7 +409,7 @@ impl StrictEncode for ShortChannelId {
     fn strict_encode<E: io::Write>(
         &self,
         mut e: E,
-    ) -> Result<usize, StrictError> {
+    ) -> Result<usize, strict_encoding::Error> {
         let mut len = 0;
 
         // representing block height as 3 bytes
@@ -395,7 +440,7 @@ impl StrictEncode for ShortChannelId {
 }
 
 impl StrictDecode for ShortChannelId {
-    fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, StrictError> {
+    fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, strict_encoding::Error> {
         // read the block height
         let mut block_height_bytes = [0u8; 3];
         d.read_exact(&mut block_height_bytes[..])?;
