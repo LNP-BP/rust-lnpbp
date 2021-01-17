@@ -19,7 +19,6 @@ pub mod message;
 pub mod payment;
 pub mod peer_connection;
 pub mod prometheus;
-pub mod rpc_connection;
 pub mod storm;
 
 pub use extension::{
@@ -30,4 +29,3 @@ pub use message::{Messages, OnionPacket, LNPWP_UNMARSHALLER};
 pub use peer_connection::{
     PeerConnection, PeerReceiver, PeerSender, RecvMessage, SendMessage,
 };
-pub use rpc_connection::RpcConnection;

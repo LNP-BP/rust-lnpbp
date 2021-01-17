@@ -45,12 +45,6 @@ macro_rules! attr_err {
     };
 }
 
-macro_rules! err {
-    ( $span:expr, $msg:literal ) => {
-        Err(attr_err!($span, $msg))?
-    };
-}
-
 pub(crate) fn get_lnpbp_crate(input: &DeriveInput) -> Path {
     let name = "lnpbp_crate";
     let example = "#[lnpbp_crate(crate_path)]";
