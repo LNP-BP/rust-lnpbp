@@ -1,6 +1,12 @@
 Change Log
 ==========
 
+v0.3.0-alpha.1
+--------------
+- Serde encoding fixes (proper use of `serde_as` for wrapped types)
+- BIP32 & descriptor enhancements
+- Miniscript 4.0 migration
+
 v0.3.0-alpha.2
 --------------
 - RGB Core Library is extracted and externalized from LNP/BP Core Library

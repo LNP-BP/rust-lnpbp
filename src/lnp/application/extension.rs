@@ -46,7 +46,7 @@ pub trait Extension {
 
     fn identity(&self) -> Self::Identity;
 
-    /// Updates extension state from the data takend from the message received
+    /// Updates extension state from the data taken from the message received
     /// from the remote peer
     fn update_from_peer(
         &mut self,
