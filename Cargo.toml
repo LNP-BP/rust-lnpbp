@@ -115,7 +115,7 @@ all = [
        # Core rust
        "serde", "tokio", "async",
        # Cryptographic optionals
-       "keygen", "elgamal", "bulletproofs",
+       "keygen", "elgamal", "bulletproofs", "ed25519-dalek",
        # Networking
        "tor", "url", "websockets", "vendored_openssl"]
 # High-level library components

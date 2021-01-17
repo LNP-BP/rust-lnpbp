@@ -22,6 +22,7 @@ jobs:
           - keygen
           - elgamal
           - bulletproofs
+          - ed25519-dalek
           # Core rust optionals
           - serde
           - tokio
@@ -30,7 +31,7 @@ jobs:
           - url
           - websockets
           # Full LNP strength, but without Serde
-          - lnp,websockets,url,tokio,async,keygen,bulletproofs
+          - lnp,websockets,url,tokio,async,keygen,bulletproofs,ed25519-dalek
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies

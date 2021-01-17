@@ -6,14 +6,14 @@ DO_LINT=true
 # Library components
 FEATURES="lnp"
 # Cryptographic optionals
-FEATURES="${FEATURES} keygen bulletproofs elgamal"
+FEATURES="${FEATURES} keygen bulletproofs elgamal ed25519-dalek"
 # Core rust optionals
 FEATURES="${FEATURES} serde tokio async"
 # Networking
 FEATURES="${FEATURES} tor url websockets"
 FEATURES="${FEATURES} tor,url"
 # Full LNP strength, but without Serde
-FEATURES="${FEATURES} lnp,websockets,url,tokio,async,keygen,bulletproofs"
+FEATURES="${FEATURES} lnp,websockets,url,tokio,async,keygen,bulletproofs,ed25519-dalek"
 
 if [ "$DO_COV" = true ]
 then
