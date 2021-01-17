@@ -1,6 +1,6 @@
 [package]
 name = "lnpbp"
-version = "0.3.0-alpha.2"
+version = "0.3.0-alpha.3"
 license = "MIT"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 description = "LNP/BP Core Library implementing LNPBP specifications & standards"
@@ -139,6 +139,6 @@ tor = ["amplify/tor"] # Exposes dependency feature
 vendored_openssl = ["torut/vendored_openssl"]
 
 [workspace]
-members = [".", "derive", "services"]
-default-members = [".", "derive", "services"]
+members = [".", "derive"]
+default-members = [".", "derive"]
 exclude = ["dep_test"]
