@@ -514,7 +514,7 @@ pub struct UpdateAddHtlc {
     Clone, PartialEq, Eq, Debug, Display, LightningEncode, LightningDecode,
 )]
 #[lnpbp_crate(crate)]
-#[display("update_fullfill_htlc({channel_id}, {htlc_id}, ...hash_preimage)")]
+#[display("update_fullfill_htlc({channel_id}, {htlc_id}, ...preimages)")]
 pub struct UpdateFulfillHtlc {
     /// The channel ID
     pub channel_id: ChannelId,

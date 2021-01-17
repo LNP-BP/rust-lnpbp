@@ -221,7 +221,7 @@ impl ChannelExtension for Htlc {
                 self.revocation_pubkey,
                 self.local_htlc_pubkey,
                 self.remote_htlc_pubkey,
-                HashLock::from(offered.preimage.clone()),
+                offered.hashlock,
             );
             tx_graph.cmt_outs.push(htlc_output); // Should htlc outputs be inside graph.cmt?
 

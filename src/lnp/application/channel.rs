@@ -321,6 +321,7 @@ impl Default for TxGraph {
             })
             .expect(""),
             funding_outpoint: none!(),
+            commitment_outpoint: none!(),
             cmt_version: 2,
             cmt_locktime: 0,
             cmt_sequence: 0,

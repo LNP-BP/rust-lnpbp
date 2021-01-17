@@ -26,13 +26,10 @@ use bitcoin::OutPoint;
 
 use crate::bp::chain::AssetId;
 use crate::bp::Slice32;
+use crate::lnp;
 use crate::lnp::application::{channel, extension};
-use crate::lnp::presentation::encoding::{
-    strategies, Strategy as LNPEncodingStrategy,
-};
 use crate::paradigms::strict_encoding::{
-    self, strict_deserialize, strict_serialize, 
-    StrictDecode, StrictEncode,
+    self, strict_deserialize, strict_serialize, StrictDecode, StrictEncode,
 };
 
 /// Shorthand for representing asset - amount pairs
@@ -316,22 +313,24 @@ impl StrictEncode for NodeColor {
     fn strict_encode<E: io::Write>(
         &self,
         mut e: E,
-    ) -> Result<usize, StrictError> {
+    ) -> Result<usize, strict_encoding::Error> {
         let len = e.write(self.as_inner())?;
         Ok(len)
     }
 }
 
 impl StrictDecode for NodeColor {
-    fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, StrictError> {
+    fn strict_decode<D: io::Read>(
+        mut d: D,
+    ) -> Result<Self, strict_encoding::Error> {
         let mut buf = [0u8; 3];
         d.read_exact(&mut buf)?;
         Ok(Self::from_inner(buf))
     }
 }
 
-impl LNPEncodingStrategy for NodeColor {
-    type Strategy = strategies::AsStrict;
+impl lnp::encoding::Strategy for NodeColor {
+    type Strategy = lnp::encoding::strategies::AsStrict;
 }
 
 #[cfg_attr(
@@ -440,7 +439,9 @@ impl StrictEncode for ShortChannelId {
 }
 
 impl StrictDecode for ShortChannelId {
-    fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, strict_encoding::Error> {
+    fn strict_decode<D: io::Read>(
+        mut d: D,
+    ) -> Result<Self, strict_encoding::Error> {
         // read the block height
         let mut block_height_bytes = [0u8; 3];
         d.read_exact(&mut block_height_bytes[..])?;
@@ -472,8 +473,8 @@ impl StrictDecode for ShortChannelId {
     }
 }
 
-impl LNPEncodingStrategy for ShortChannelId {
-    type Strategy = strategies::AsStrict;
+impl lnp::encoding::Strategy for ShortChannelId {
+    type Strategy = lnp::encoding::strategies::AsStrict;
 }
 
 #[derive(
@@ -491,6 +492,7 @@ impl LNPEncodingStrategy for ShortChannelId {
 #[display(Debug)]
 pub struct AddressList(Vec<InetSocketAddr>);
 
-impl LNPEncodingStrategy for AddressList {
-    type Strategy = strategies::AsStrict;
+// TODO: Fix since this will not work; LN encoding uses BigSize for array length
+impl lnp::encoding::Strategy for AddressList {
+    type Strategy = lnp::encoding::strategies::AsStrict;
 }
