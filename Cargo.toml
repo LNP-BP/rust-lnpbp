@@ -139,6 +139,6 @@ tor = ["amplify/tor"] # Exposes dependency feature
 vendored_openssl = ["torut/vendored_openssl"]
 
 [workspace]
-members = [".", "derive", "services", "rgb"]
-default-members = [".", "derive", "services", "rgb"]
+members = [".", "derive", "services"]
+default-members = [".", "derive", "services"]
 exclude = ["dep_test"]

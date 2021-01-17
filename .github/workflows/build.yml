@@ -171,7 +171,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: check
-          args: --workspace --all-targets --features=rgb,lnp,websockets,url,keygen,serde
+          args: --workspace --all-targets --features=lnp,websockets,url,keygen,serde,bulletproofs
   dependency:
     runs-on: ubuntu-latest
     steps:
