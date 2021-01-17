@@ -14,7 +14,7 @@
 use core::cmp::Ordering;
 use core::ops::RangeInclusive;
 use regex::Regex;
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use std::fmt::{self, Display, Formatter};
 use std::io;
 use std::iter::FromIterator;
@@ -26,621 +26,217 @@ use bitcoin::util::bip32::{
     self, ChainCode, ChildNumber, DerivationPath, Error, ExtendedPrivKey,
     ExtendedPubKey, Fingerprint,
 };
-use bitcoin::Network;
 use bitcoin::{secp256k1, PublicKey};
 use miniscript::{DescriptorPublicKeyCtx, MiniscriptKey, ToPublicKey};
 
 use crate::strict_encoding::{self, StrictDecode, StrictEncode};
 
-/// Magical version bytes for xpub: bitcoin mainnet public key for P2PKH or P2SH
-pub const VERSION_MAGIC_XPUB: [u8; 4] = [0x04, 0x88, 0xB2, 0x1E];
-/// Magical version bytes for xprv: bitcoin mainnet private key for P2PKH or
-/// P2SH
-pub const VERSION_MAGIC_XPRV: [u8; 4] = [0x04, 0x88, 0xAD, 0xE4];
-/// Magical version bytes for ypub: bitcoin mainnet public key for P2WPKH in
-/// P2SH
-pub const VERSION_MAGIC_YPUB: [u8; 4] = [0x04, 0x9D, 0x7C, 0xB2];
-/// Magical version bytes for yprv: bitcoin mainnet private key for P2WPKH in
-/// P2SH
-pub const VERSION_MAGIC_YPRV: [u8; 4] = [0x04, 0x9D, 0x78, 0x78];
-/// Magical version bytes for zpub: bitcoin mainnet public key for P2WPKH
-pub const VERSION_MAGIC_ZPUB: [u8; 4] = [0x04, 0xB2, 0x47, 0x46];
-/// Magical version bytes for zprv: bitcoin mainnet private key for P2WPKH
-pub const VERSION_MAGIC_ZPRV: [u8; 4] = [0x04, 0xB2, 0x43, 0x0C];
-/// Magical version bytes for Ypub: bitcoin mainnet public key for
-/// multi-signature P2WSH in P2SH
-pub const VERSION_MAGIC_YPUB_MULTISIG: [u8; 4] = [0x02, 0x95, 0xb4, 0x3f];
-/// Magical version bytes for Yprv: bitcoin mainnet private key for
-/// multi-signature P2WSH in P2SH
-pub const VERSION_MAGIC_YPRV_MULTISIG: [u8; 4] = [0x02, 0x95, 0xb0, 0x05];
-/// Magical version bytes for Zpub: bitcoin mainnet public key for
-/// multi-signature P2WSH
-pub const VERSION_MAGIC_ZPUB_MULTISIG: [u8; 4] = [0x02, 0xaa, 0x7e, 0xd3];
-/// Magical version bytes for Zprv: bitcoin mainnet private key for
-/// multi-signature P2WSH
-pub const VERSION_MAGIC_ZPRV_MULTISIG: [u8; 4] = [0x02, 0xaa, 0x7a, 0x99];
+/// Constant determining BIP32 boundary for u32 values after which index
+/// is treated as hardened
+pub const HARDENED_INDEX_BOUNDARY: u32 = 1 << 31;
 
-/// Magical version bytes for tpub: bitcoin testnet/regtest public key for
-/// P2PKH or P2SH
-pub const VERSION_MAGIC_TPUB: [u8; 4] = [0x04, 0x35, 0x87, 0xCF];
-/// Magical version bytes for tprv: bitcoin testnet/regtest private key for
-/// P2PKH or P2SH
-pub const VERSION_MAGIC_TPRV: [u8; 4] = [0x04, 0x35, 0x83, 0x94];
-/// Magical version bytes for upub: bitcoin testnet/regtest public key for
-/// P2WPKH in P2SH
-pub const VERSION_MAGIC_UPUB: [u8; 4] = [0x04, 0x4A, 0x52, 0x62];
-/// Magical version bytes for uprv: bitcoin testnet/regtest private key for
-/// P2WPKH in P2SH
-pub const VERSION_MAGIC_UPRV: [u8; 4] = [0x04, 0x4A, 0x4E, 0x28];
-/// Magical version bytes for vpub: bitcoin testnet/regtest public key for
-/// P2WPKH
-pub const VERSION_MAGIC_VPUB: [u8; 4] = [0x04, 0x5F, 0x1C, 0xF6];
-/// Magical version bytes for vprv: bitcoin testnet/regtest private key for
-/// P2WPKH
-pub const VERSION_MAGIC_VPRV: [u8; 4] = [0x04, 0x5F, 0x18, 0xBC];
-/// Magical version bytes for Upub: bitcoin testnet/regtest public key for
-/// multi-signature P2WSH in P2SH
-pub const VERSION_MAGIC_UPUB_MULTISIG: [u8; 4] = [0x02, 0x42, 0x89, 0xef];
-/// Magical version bytes for Uprv: bitcoin testnet/regtest private key for
-/// multi-signature P2WSH in P2SH
-pub const VERSION_MAGIC_UPRV_MULTISIG: [u8; 4] = [0x02, 0x42, 0x85, 0xb5];
-/// Magical version bytes for Zpub: bitcoin testnet/regtest public key for
-/// multi-signature P2WSH
-pub const VERSION_MAGIC_VPUB_MULTISIG: [u8; 4] = [0x02, 0x57, 0x54, 0x83];
-/// Magical version bytes for Zprv: bitcoin testnet/regtest private key for
-/// multi-signature P2WSH
-pub const VERSION_MAGIC_VPRV_MULTISIG: [u8; 4] = [0x02, 0x57, 0x50, 0x48];
-
-/// Structure holding 4 verion bytes with magical numbers representing different
-/// versions of extended public and private keys according to BIP-32.
-/// Key version stores raw bytes without their check, interpretation or
-/// verification; for these purposes special helpers structures implementing
-/// [VersionResolver] are used.
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-pub struct KeyVersion([u8; 4]);
-
-/// Trait which must be implemented by helpers which do construction,
-/// interpretation, verification and cross-conversion of extended public and
-/// private key version magic bytes from [KeyVersion]
-pub trait VersionResolver:
-    Copy
-    + Clone
-    + PartialEq
-    + Eq
-    + PartialOrd
-    + Ord
-    + ::std::hash::Hash
-    + fmt::Debug
-{
-    /// Type that defines recognized network options
-    type Network;
-
-    /// Type that defines possible applications fro public and private keys
-    /// (types of scriptPubkey descriptors in which they can be used)
-    type Application;
-
-    /// Constructor for [KeyVersion] with given network, application scope and
-    /// key type (public or private)
-    fn resolve(
-        network: Self::Network,
-        applicable_for: Self::Application,
-        is_priv: bool,
-    ) -> KeyVersion;
-
-    /// Detects whether provided version corresponds to an extended public key.
-    /// Returns `None` if the version is not recognized/unknown to the resolver.
-    fn is_pub(_: &KeyVersion) -> Option<bool> {
-        return None;
-    }
-
-    /// Detects whether provided version corresponds to an extended private key.
-    /// Returns `None` if the version is not recognized/unknown to the resolver.
-    fn is_prv(_: &KeyVersion) -> Option<bool> {
-        return None;
-    }
-
-    /// Detects network used by the provided key version bytes.
-    /// Returns `None` if the version is not recognized/unknown to the resolver.
-    fn network(_: &KeyVersion) -> Option<Self::Network> {
-        return None;
-    }
-
-    /// Detects application scope defined by the provided key version bytes.
-    /// Application scope is a types of scriptPubkey descriptors in which given
-    /// extended public/private keys can be used.
-    /// Returns `None` if the version is not recognized/unknown to the resolver.
-    fn application(_: &KeyVersion) -> Option<Self::Application> {
-        return None;
-    }
-
-    /// Returns BIP 32 derivation path for the provided key version.
-    /// Returns `None` if the version is not recognized/unknown to the resolver.
-    fn derivation_path(_: &KeyVersion) -> Option<DerivationPath> {
-        return None;
-    }
-
-    /// Converts version into version corresponding to an extended public key.
-    /// Returns `None` if the resolver does not know how to perform conversion.
-    fn make_pub(_: &KeyVersion) -> Option<KeyVersion> {
-        return None;
-    }
-
-    /// Converts version into version corresponding to an extended private key.
-    /// Returns `None` if the resolver does not know how to perform conversion.
-    fn make_prv(_: &KeyVersion) -> Option<KeyVersion> {
-        return None;
-    }
-}
-
-impl KeyVersion {
-    /// Detects whether provided version corresponds to an extended public key.
-    /// Returns `None` if the version is not recognized/unknown to the resolver.
-    pub fn is_pub<R: VersionResolver>(&self) -> Option<bool> {
-        R::is_pub(&self)
-    }
-
-    /// Detects whether provided version corresponds to an extended private key.
-    /// Returns `None` if the version is not recognized/unknown to the resolver.
-    pub fn is_prv<R: VersionResolver>(&self) -> Option<bool> {
-        R::is_prv(&self)
-    }
-
-    /// Detects network used by the provided key version bytes.
-    /// Returns `None` if the version is not recognized/unknown to the resolver.
-    pub fn network<R: VersionResolver>(&self) -> Option<R::Network> {
-        R::network(&self)
-    }
-
-    /// Detects application scope defined by the provided key version bytes.
-    /// Application scope is a types of scriptPubkey descriptors in which given
-    /// extended public/private keys can be used.
-    /// Returns `None` if the version is not recognized/unknown to the resolver.
-    pub fn application<R: VersionResolver>(&self) -> Option<R::Application> {
-        R::application(&self)
-    }
-
-    /// Returns BIP 32 derivation path for the provided key version.
-    /// Returns `None` if the version is not recognized/unknown to the resolver.
-    pub fn derivation_path<R: VersionResolver>(
-        &self,
-    ) -> Option<DerivationPath> {
-        R::derivation_path(&self)
-    }
-
-    /// Converts version into version corresponding to an extended public key.
-    /// Returns `None` if the resolver does not know how to perform conversion.
-    pub fn try_to_pub<R: VersionResolver>(&self) -> Option<KeyVersion> {
-        R::make_pub(&self)
-    }
-
-    /// Converts version into version corresponding to an extended private key.
-    /// Returns `None` if the resolver does not know how to perform conversion.
-    pub fn try_to_prv<R: VersionResolver>(&self) -> Option<KeyVersion> {
-        R::make_prv(&self)
-    }
-}
-
-/// Default resolver knowing native [bitcoin::network::constants::Network]
-/// and BIP 32 and SLIP 132-defined key applications with [KeyApplications]
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-pub struct DefaultResolver;
-
-/// SLIP 132-defined key applications defining types of scriptPubkey descriptors
-/// in which they can be used
-#[cfg_attr(feature = "serde", serde_as(as = "DisplayFromStr"))]
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(crate = "serde_crate")
+/// Derivation path index is outside of the allowed range: 0..2^31 for
+/// unhardened derivation and 2^31..2^32 for hardened
+#[derive(
+    Clone,
+    Copy,
+    Ord,
+    PartialOrd,
+    Eq,
+    PartialEq,
+    Debug,
+    Default,
+    Display,
+    Error,
+    From,
 )]
-pub enum KeyApplication {
-    /// xprv/xpub: keys that can be used for P2PKH and multisig P2SH
-    /// scriptPubkey descriptors.
-    Legacy,
-    /// zprv/zpub: keys that can be used for P2WPKH scriptPubkey descriptors
-    SegWitV0Singlesig,
-    /// yprv/ypub: keys that can be used for P2WPKH-in-P2SH scriptPubkey
-    /// descriptors
-    SegWitLegacySinglesig,
-    /// Zprv/Zpub: keys that can be used for multisig P2WSH scriptPubkey
-    /// descriptors
-    SegWitV0Miltisig,
-    /// Yprv/Ypub: keys that can be used for multisig P2WSH-in-P2SH
-    /// scriptPubkey descriptors
-    SegWitLegacyMultisig,
-}
+#[display(doc_comments)]
+#[from(bitcoin::util::bip32::Error)]
+pub struct IndexOverflowError;
 
-impl StrictEncode for KeyApplication {
-    fn strict_encode<E: io::Write>(
-        &self,
-        e: E,
-    ) -> Result<usize, strict_encoding::Error> {
-        let val = match self {
-            KeyApplication::Legacy => 0u8,
-            KeyApplication::SegWitLegacySinglesig => 1u8,
-            KeyApplication::SegWitLegacyMultisig => 2u8,
-            KeyApplication::SegWitV0Singlesig => 3u8,
-            KeyApplication::SegWitV0Miltisig => 4u8,
-        };
-        val.strict_encode(e)
-    }
-}
+/// Index for unhardened children derivation; ensures that the wrapped value
+/// < 2^31
+#[derive(
+    Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Debug, Default, Display, From,
+)]
+#[display(inner)]
+pub struct UnhardenedIndex(
+    #[from(u8)]
+    #[from(u16)]
+    u32,
+);
 
-impl StrictDecode for KeyApplication {
-    fn strict_decode<D: io::Read>(
-        d: D,
-    ) -> Result<Self, strict_encoding::Error> {
-        Ok(match u8::strict_decode(d)? {
-            0 => KeyApplication::Legacy,
-            1 => KeyApplication::SegWitLegacySinglesig,
-            2 => KeyApplication::SegWitLegacyMultisig,
-            3 => KeyApplication::SegWitV0Singlesig,
-            4 => KeyApplication::SegWitV0Miltisig,
-            other => Err(strict_encoding::Error::EnumValueNotKnown(
-                s!("KeyApplication"),
-                other,
-            ))?,
-        })
-    }
-}
-
-/// Error for an unknown enum representation; either string or numeric
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Display, Error)]
-#[display(Debug)]
-pub struct EnumReprError;
-
-impl FromStr for KeyApplication {
-    type Err = EnumReprError;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(match s.to_lowercase().as_str() {
-            "pkh" => KeyApplication::Legacy,
-            "sh" => KeyApplication::Legacy,
-            "wpkh" => KeyApplication::SegWitV0Singlesig,
-            "wsh" => KeyApplication::SegWitV0Miltisig,
-            "wpkh-sh" => KeyApplication::SegWitLegacySinglesig,
-            "wsh-sh" => KeyApplication::SegWitLegacyMultisig,
-            _ => Err(EnumReprError)?,
-        })
-    }
-}
-
-impl KeyVersion {
-    /// Tries to construct [KeyVersion] object from a byte slice. If byte slice
-    /// length is not equal to 4, returns `None`
-    pub fn from_slice(version_slice: &[u8]) -> Option<KeyVersion> {
-        if version_slice.len() != 4 {
-            return None;
-        }
-        let mut bytes = [0u8; 4];
-        bytes.copy_from_slice(version_slice);
-        Some(KeyVersion::from_bytes(bytes))
+impl UnhardenedIndex {
+    pub fn zero() -> Self {
+        Self(0)
     }
 
-    /// Constructs [KeyVersion] from a fixed 4 bytes values
-    pub fn from_bytes(version_bytes: [u8; 4]) -> KeyVersion {
-        KeyVersion(version_bytes)
+    pub fn one() -> Self {
+        Self(1)
     }
 
-    /// Constructs [KeyVersion from a `u32`-representation of the version
-    /// bytes (the representation must be in bing endian format)
-    pub fn from_u32(version: u32) -> KeyVersion {
-        KeyVersion(version.to_be_bytes())
-    }
-
-    /// Converts version bytes into `u32` representation in big endian format
-    pub fn to_u32(&self) -> u32 {
-        u32::from_be_bytes(self.0)
-    }
-
-    /// Returns slice representing internal version bytes
-    pub fn as_slice(&self) -> &[u8] {
-        &self.0
-    }
-
-    /// Returns internal representation of version bytes
-    pub fn as_bytes(&self) -> &[u8; 4] {
-        &self.0
-    }
-
-    /// Constructs 4-byte array containing version byte values
-    pub fn to_bytes(&self) -> [u8; 4] {
+    pub fn into_u32(self) -> u32 {
         self.0
     }
 
-    /// Converts into 4-byte array containing version byte values
-    pub fn into_bytes(self) -> [u8; 4] {
+    pub fn try_increment(self) -> Result<Self, IndexOverflowError> {
+        if self.0 >= HARDENED_INDEX_BOUNDARY {
+            return Err(IndexOverflowError);
+        }
+        Ok(Self(self.0 + 1))
+    }
+
+    pub fn try_decrement(self) -> Result<Self, IndexOverflowError> {
+        if self.0 == 0 {
+            return Err(IndexOverflowError);
+        }
+        Ok(Self(self.0 - 1))
+    }
+}
+
+// TODO: Replace with `#[derive(Into)]` & `#[into(u32)]` once apmplify_derive
+//       will support into derivations
+impl Into<u32> for UnhardenedIndex {
+    fn into(self) -> u32 {
         self.0
     }
 }
 
-impl VersionResolver for DefaultResolver {
-    type Network = Network;
-    type Application = KeyApplication;
+impl TryFrom<u32> for UnhardenedIndex {
+    type Error = IndexOverflowError;
 
-    fn resolve(
-        network: Self::Network,
-        applicable_for: Self::Application,
-        is_priv: bool,
-    ) -> KeyVersion {
-        match (network, applicable_for, is_priv) {
-            (Network::Bitcoin, KeyApplication::Legacy, false) => {
-                KeyVersion(VERSION_MAGIC_XPUB)
-            }
-            (Network::Bitcoin, KeyApplication::Legacy, true) => {
-                KeyVersion(VERSION_MAGIC_XPRV)
-            }
-            (
-                Network::Bitcoin,
-                KeyApplication::SegWitLegacySinglesig,
-                false,
-            ) => KeyVersion(VERSION_MAGIC_YPUB),
-            (Network::Bitcoin, KeyApplication::SegWitLegacySinglesig, true) => {
-                KeyVersion(VERSION_MAGIC_YPRV)
-            }
-            (Network::Bitcoin, KeyApplication::SegWitV0Singlesig, false) => {
-                KeyVersion(VERSION_MAGIC_ZPUB)
-            }
-            (Network::Bitcoin, KeyApplication::SegWitV0Singlesig, true) => {
-                KeyVersion(VERSION_MAGIC_ZPRV)
-            }
-            (Network::Bitcoin, KeyApplication::SegWitLegacyMultisig, false) => {
-                KeyVersion(VERSION_MAGIC_YPUB_MULTISIG)
-            }
-            (Network::Bitcoin, KeyApplication::SegWitLegacyMultisig, true) => {
-                KeyVersion(VERSION_MAGIC_YPRV_MULTISIG)
-            }
-            (Network::Bitcoin, KeyApplication::SegWitV0Miltisig, false) => {
-                KeyVersion(VERSION_MAGIC_ZPUB_MULTISIG)
-            }
-            (Network::Bitcoin, KeyApplication::SegWitV0Miltisig, true) => {
-                KeyVersion(VERSION_MAGIC_ZPRV_MULTISIG)
-            }
-            (_, KeyApplication::Legacy, false) => {
-                KeyVersion(VERSION_MAGIC_TPUB)
-            }
-            (_, KeyApplication::Legacy, true) => KeyVersion(VERSION_MAGIC_TPRV),
-            (_, KeyApplication::SegWitLegacySinglesig, false) => {
-                KeyVersion(VERSION_MAGIC_UPUB)
-            }
-            (_, KeyApplication::SegWitLegacySinglesig, true) => {
-                KeyVersion(VERSION_MAGIC_UPRV)
-            }
-            (_, KeyApplication::SegWitV0Singlesig, false) => {
-                KeyVersion(VERSION_MAGIC_VPUB)
-            }
-            (_, KeyApplication::SegWitV0Singlesig, true) => {
-                KeyVersion(VERSION_MAGIC_VPRV)
-            }
-            (_, KeyApplication::SegWitLegacyMultisig, false) => {
-                KeyVersion(VERSION_MAGIC_UPUB_MULTISIG)
-            }
-            (_, KeyApplication::SegWitLegacyMultisig, true) => {
-                KeyVersion(VERSION_MAGIC_UPRV_MULTISIG)
-            }
-            (_, KeyApplication::SegWitV0Miltisig, false) => {
-                KeyVersion(VERSION_MAGIC_VPUB_MULTISIG)
-            }
-            (_, KeyApplication::SegWitV0Miltisig, true) => {
-                KeyVersion(VERSION_MAGIC_VPRV_MULTISIG)
-            }
+    fn try_from(value: u32) -> Result<Self, Self::Error> {
+        if value >= HARDENED_INDEX_BOUNDARY {
+            return Err(IndexOverflowError);
         }
+        Ok(UnhardenedIndex(value))
     }
+}
 
-    fn is_pub(kv: &KeyVersion) -> Option<bool> {
-        match kv.as_bytes() {
-            &VERSION_MAGIC_XPUB
-            | &VERSION_MAGIC_YPUB
-            | &VERSION_MAGIC_ZPUB
-            | &VERSION_MAGIC_TPUB
-            | &VERSION_MAGIC_UPUB
-            | &VERSION_MAGIC_VPUB
-            | &VERSION_MAGIC_YPUB_MULTISIG
-            | &VERSION_MAGIC_ZPUB_MULTISIG
-            | &VERSION_MAGIC_UPUB_MULTISIG
-            | &VERSION_MAGIC_VPUB_MULTISIG => Some(true),
-            &VERSION_MAGIC_XPRV
-            | &VERSION_MAGIC_YPRV
-            | &VERSION_MAGIC_ZPRV
-            | &VERSION_MAGIC_TPRV
-            | &VERSION_MAGIC_UPRV
-            | &VERSION_MAGIC_VPRV
-            | &VERSION_MAGIC_YPRV_MULTISIG
-            | &VERSION_MAGIC_ZPRV_MULTISIG
-            | &VERSION_MAGIC_UPRV_MULTISIG
-            | &VERSION_MAGIC_VPRV_MULTISIG => Some(false),
-            _ => None,
+impl TryFrom<u64> for UnhardenedIndex {
+    type Error = IndexOverflowError;
+
+    fn try_from(value: u64) -> Result<Self, Self::Error> {
+        if value > ::core::u32::MAX as u64 {
+            return Err(IndexOverflowError);
         }
+        (value as u32).try_into()
     }
+}
 
-    fn is_prv(kv: &KeyVersion) -> Option<bool> {
-        DefaultResolver::is_pub(kv).map(|v| !v)
-    }
+impl TryFrom<usize> for UnhardenedIndex {
+    type Error = IndexOverflowError;
 
-    fn network(kv: &KeyVersion) -> Option<Self::Network> {
-        match kv.as_bytes() {
-            &VERSION_MAGIC_XPRV
-            | &VERSION_MAGIC_XPUB
-            | &VERSION_MAGIC_YPRV
-            | &VERSION_MAGIC_YPUB
-            | &VERSION_MAGIC_ZPRV
-            | &VERSION_MAGIC_ZPUB
-            | &VERSION_MAGIC_YPRV_MULTISIG
-            | &VERSION_MAGIC_YPUB_MULTISIG
-            | &VERSION_MAGIC_ZPRV_MULTISIG
-            | &VERSION_MAGIC_ZPUB_MULTISIG => Some(Network::Bitcoin),
-            &VERSION_MAGIC_TPRV
-            | &VERSION_MAGIC_TPUB
-            | &VERSION_MAGIC_UPRV
-            | &VERSION_MAGIC_UPUB
-            | &VERSION_MAGIC_VPRV
-            | &VERSION_MAGIC_VPUB
-            | &VERSION_MAGIC_UPRV_MULTISIG
-            | &VERSION_MAGIC_UPUB_MULTISIG
-            | &VERSION_MAGIC_VPRV_MULTISIG
-            | &VERSION_MAGIC_VPUB_MULTISIG => Some(Network::Testnet),
-            _ => None,
+    fn try_from(value: usize) -> Result<Self, Self::Error> {
+        if value > ::core::u32::MAX as usize {
+            return Err(IndexOverflowError);
         }
+        (value as u32).try_into()
+    }
+}
+
+impl From<UnhardenedIndex> for ChildNumber {
+    fn from(idx: UnhardenedIndex) -> Self {
+        ChildNumber::Normal { index: idx.0 }
+    }
+}
+
+/// Index for hardened children derivation; ensures that the wrapped value
+/// >= 2^31
+#[derive(
+    Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Debug, Default, Display,
+)]
+#[display("{0}'")]
+pub struct HardenedIndex(u32);
+
+impl HardenedIndex {
+    pub fn zero() -> Self {
+        Self(HARDENED_INDEX_BOUNDARY)
     }
 
-    fn application(kv: &KeyVersion) -> Option<Self::Application> {
-        match kv.as_bytes() {
-            &VERSION_MAGIC_XPUB | &VERSION_MAGIC_XPRV | &VERSION_MAGIC_TPUB
-            | &VERSION_MAGIC_TPRV => Some(KeyApplication::Legacy),
-            &VERSION_MAGIC_YPUB | &VERSION_MAGIC_YPRV | &VERSION_MAGIC_UPUB
-            | &VERSION_MAGIC_UPRV => {
-                Some(KeyApplication::SegWitLegacySinglesig)
-            }
-            &VERSION_MAGIC_YPUB_MULTISIG
-            | &VERSION_MAGIC_YPRV_MULTISIG
-            | &VERSION_MAGIC_UPUB_MULTISIG
-            | &VERSION_MAGIC_UPRV_MULTISIG => {
-                Some(KeyApplication::SegWitLegacyMultisig)
-            }
-            &VERSION_MAGIC_ZPUB | &VERSION_MAGIC_ZPRV | &VERSION_MAGIC_VPUB
-            | &VERSION_MAGIC_VPRV => Some(KeyApplication::SegWitV0Singlesig),
-            &VERSION_MAGIC_ZPUB_MULTISIG
-            | &VERSION_MAGIC_ZPRV_MULTISIG
-            | &VERSION_MAGIC_VPUB_MULTISIG
-            | &VERSION_MAGIC_VPRV_MULTISIG => {
-                Some(KeyApplication::SegWitV0Miltisig)
-            }
-            _ => None,
+    pub fn one() -> Self {
+        Self(HARDENED_INDEX_BOUNDARY + 1)
+    }
+
+    pub fn from_ordinal(index: impl Into<u32>) -> Self {
+        Self(index.into() | HARDENED_INDEX_BOUNDARY)
+    }
+
+    pub fn into_u32(self) -> u32 {
+        self.0
+    }
+
+    pub fn into_ordinal(self) -> u32 {
+        self.0 ^ HARDENED_INDEX_BOUNDARY
+    }
+
+    pub fn try_increment(self) -> Result<Self, IndexOverflowError> {
+        if self.0 == ::core::u32::MAX {
+            return Err(IndexOverflowError);
         }
+        Ok(Self(self.0 + 1))
     }
 
-    fn derivation_path(kv: &KeyVersion) -> Option<DerivationPath> {
-        match kv.as_bytes() {
-            &VERSION_MAGIC_XPUB | &VERSION_MAGIC_XPRV => {
-                Some(DerivationPath::from(vec![
-                    ChildNumber::Hardened { index: 44 },
-                    ChildNumber::Hardened { index: 0 },
-                ]))
-            }
-            &VERSION_MAGIC_TPUB | &VERSION_MAGIC_TPRV => {
-                Some(DerivationPath::from(vec![
-                    ChildNumber::Hardened { index: 44 },
-                    ChildNumber::Hardened { index: 1 },
-                ]))
-            }
-            &VERSION_MAGIC_YPUB | &VERSION_MAGIC_YPRV => {
-                Some(DerivationPath::from(vec![
-                    ChildNumber::Hardened { index: 49 },
-                    ChildNumber::Hardened { index: 0 },
-                ]))
-            }
-            &VERSION_MAGIC_UPUB | &VERSION_MAGIC_UPRV => {
-                Some(DerivationPath::from(vec![
-                    ChildNumber::Hardened { index: 49 },
-                    ChildNumber::Hardened { index: 1 },
-                ]))
-            }
-            &VERSION_MAGIC_ZPUB | &VERSION_MAGIC_ZPRV => {
-                Some(DerivationPath::from(vec![
-                    ChildNumber::Hardened { index: 84 },
-                    ChildNumber::Hardened { index: 0 },
-                ]))
-            }
-            &VERSION_MAGIC_VPUB | &VERSION_MAGIC_VPRV => {
-                Some(DerivationPath::from(vec![
-                    ChildNumber::Hardened { index: 84 },
-                    ChildNumber::Hardened { index: 1 },
-                ]))
-            }
-            _ => None,
+    pub fn try_decrement(self) -> Result<Self, IndexOverflowError> {
+        if self.0 <= HARDENED_INDEX_BOUNDARY {
+            return Err(IndexOverflowError);
         }
+        Ok(Self(self.0 - 1))
     }
+}
 
-    fn make_pub(kv: &KeyVersion) -> Option<KeyVersion> {
-        match kv.as_bytes() {
-            &VERSION_MAGIC_XPRV => {
-                Some(KeyVersion::from_bytes(VERSION_MAGIC_XPUB))
-            }
-            &VERSION_MAGIC_YPRV => {
-                Some(KeyVersion::from_bytes(VERSION_MAGIC_YPUB))
-            }
-            &VERSION_MAGIC_ZPRV => {
-                Some(KeyVersion::from_bytes(VERSION_MAGIC_ZPUB))
-            }
-            &VERSION_MAGIC_TPRV => {
-                Some(KeyVersion::from_bytes(VERSION_MAGIC_TPUB))
-            }
-            &VERSION_MAGIC_UPRV => {
-                Some(KeyVersion::from_bytes(VERSION_MAGIC_UPUB))
-            }
-            &VERSION_MAGIC_VPRV => {
-                Some(KeyVersion::from_bytes(VERSION_MAGIC_VPUB))
-            }
-            &VERSION_MAGIC_YPRV_MULTISIG => {
-                Some(KeyVersion::from_bytes(VERSION_MAGIC_YPUB_MULTISIG))
-            }
-            &VERSION_MAGIC_ZPRV_MULTISIG => {
-                Some(KeyVersion::from_bytes(VERSION_MAGIC_ZPUB_MULTISIG))
-            }
-            &VERSION_MAGIC_UPRV_MULTISIG => {
-                Some(KeyVersion::from_bytes(VERSION_MAGIC_UPUB_MULTISIG))
-            }
-            &VERSION_MAGIC_VPRV_MULTISIG => {
-                Some(KeyVersion::from_bytes(VERSION_MAGIC_VPUB_MULTISIG))
-            }
-            &VERSION_MAGIC_XPUB
-            | &VERSION_MAGIC_YPUB
-            | &VERSION_MAGIC_ZPUB
-            | &VERSION_MAGIC_TPUB
-            | &VERSION_MAGIC_UPUB
-            | &VERSION_MAGIC_VPUB
-            | &VERSION_MAGIC_YPUB_MULTISIG
-            | &VERSION_MAGIC_ZPUB_MULTISIG
-            | &VERSION_MAGIC_UPUB_MULTISIG
-            | &VERSION_MAGIC_VPUB_MULTISIG => Some(kv.clone()),
-            _ => None,
+// TODO: Replace with `#[derive(Into)]` & `#[into(u32)]` once apmplify_derive
+//       will support into derivations
+impl Into<u32> for HardenedIndex {
+    fn into(self) -> u32 {
+        self.0
+    }
+}
+
+impl From<u8> for HardenedIndex {
+    fn from(index: u8) -> Self {
+        Self(index as u32 | HARDENED_INDEX_BOUNDARY)
+    }
+}
+
+impl From<u16> for HardenedIndex {
+    fn from(index: u16) -> Self {
+        Self(index as u32 | HARDENED_INDEX_BOUNDARY)
+    }
+}
+
+impl From<u32> for HardenedIndex {
+    fn from(index: u32) -> Self {
+        Self(index as u32 | HARDENED_INDEX_BOUNDARY)
+    }
+}
+
+impl TryFrom<u64> for HardenedIndex {
+    type Error = IndexOverflowError;
+
+    fn try_from(value: u64) -> Result<Self, Self::Error> {
+        if value > ::core::u32::MAX as u64 {
+            return Err(IndexOverflowError);
         }
+        Ok((value as u32).into())
     }
+}
 
-    fn make_prv(kv: &KeyVersion) -> Option<KeyVersion> {
-        match kv.as_bytes() {
-            &VERSION_MAGIC_XPUB => {
-                Some(KeyVersion::from_bytes(VERSION_MAGIC_XPRV))
-            }
-            &VERSION_MAGIC_YPUB => {
-                Some(KeyVersion::from_bytes(VERSION_MAGIC_YPRV))
-            }
-            &VERSION_MAGIC_ZPUB => {
-                Some(KeyVersion::from_bytes(VERSION_MAGIC_ZPRV))
-            }
-            &VERSION_MAGIC_TPUB => {
-                Some(KeyVersion::from_bytes(VERSION_MAGIC_TPRV))
-            }
-            &VERSION_MAGIC_UPUB => {
-                Some(KeyVersion::from_bytes(VERSION_MAGIC_UPRV))
-            }
-            &VERSION_MAGIC_VPUB => {
-                Some(KeyVersion::from_bytes(VERSION_MAGIC_VPRV))
-            }
-            &VERSION_MAGIC_YPUB_MULTISIG => {
-                Some(KeyVersion::from_bytes(VERSION_MAGIC_YPRV_MULTISIG))
-            }
-            &VERSION_MAGIC_ZPUB_MULTISIG => {
-                Some(KeyVersion::from_bytes(VERSION_MAGIC_ZPRV_MULTISIG))
-            }
-            &VERSION_MAGIC_UPUB_MULTISIG => {
-                Some(KeyVersion::from_bytes(VERSION_MAGIC_UPRV_MULTISIG))
-            }
-            &VERSION_MAGIC_VPUB_MULTISIG => {
-                Some(KeyVersion::from_bytes(VERSION_MAGIC_VPRV_MULTISIG))
-            }
-            &VERSION_MAGIC_XPRV
-            | &VERSION_MAGIC_YPRV
-            | &VERSION_MAGIC_ZPRV
-            | &VERSION_MAGIC_TPRV
-            | &VERSION_MAGIC_UPRV
-            | &VERSION_MAGIC_VPRV
-            | &VERSION_MAGIC_YPRV_MULTISIG
-            | &VERSION_MAGIC_ZPRV_MULTISIG
-            | &VERSION_MAGIC_UPRV_MULTISIG
-            | &VERSION_MAGIC_VPRV_MULTISIG => Some(kv.clone()),
-            _ => None,
+impl TryFrom<usize> for HardenedIndex {
+    type Error = IndexOverflowError;
+
+    fn try_from(value: usize) -> Result<Self, Self::Error> {
+        if value > ::core::u32::MAX as usize {
+            return Err(IndexOverflowError);
+        }
+        Ok((value as u32).into())
+    }
+}
+
+impl From<HardenedIndex> for ChildNumber {
+    fn from(index: HardenedIndex) -> Self {
+        ChildNumber::Hardened {
+            index: index.into_ordinal(),
         }
     }
 }
