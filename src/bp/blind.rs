@@ -111,6 +111,10 @@ hash_newtype!(
     doc = "Blind version of transaction outpoint"
 );
 
+impl strict_encoding::Strategy for OutpointHash {
+    type Strategy = strict_encoding::strategies::HashFixedBytes;
+}
+
 impl CommitEncodeWithStrategy for OutpointHash {
     type Strategy = commit_strategy::UsingStrict;
 }

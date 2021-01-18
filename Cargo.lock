@@ -189,7 +189,7 @@ dependencies = [
 
 [[package]]
 name = "client_side_validation"
-version = "1.0.0-rc.1"
+version = "1.0.0-rc.2"
 dependencies = [
  "amplify 3.0.0",
  "amplify_derive",
@@ -471,6 +471,7 @@ dependencies = [
  "bech32",
  "bitcoin",
  "bitcoin_hashes",
+ "client_side_validation",
  "lazy_static",
  "miniscript",
  "num-derive",
@@ -480,6 +481,7 @@ dependencies = [
  "serde_json",
  "serde_with",
  "serde_with_macros",
+ "strict_encoding 1.0.0-rc.3",
 ]
 
 [[package]]

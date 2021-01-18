@@ -11,13 +11,13 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::hash::{Hash, Hasher};
 use std::str::FromStr;
 
 use bitcoin::hashes::hash160;
 use bitcoin::secp256k1;
 use miniscript::descriptor::{DescriptorKeyParseError, DescriptorPublicKey};
 use miniscript::{MiniscriptKey, ToPublicKey};
-use std::hash::{Hash, Hasher};
 
 use crate::SECP256K1;
 

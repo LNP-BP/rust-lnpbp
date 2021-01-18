@@ -12,40 +12,17 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 #[allow(unused_variables)]
-pub mod bip32;
 pub mod blind;
 pub mod chain;
 pub mod dbc;
-pub mod descriptor;
-pub mod hlc;
-pub mod lex_order;
-pub mod psbt;
-pub mod resolvers;
-pub mod scripts;
 pub mod seals;
 pub mod short_id;
-mod slice32;
-pub mod slip32;
 mod strict_encoding;
 pub mod tagged_hash;
 
-pub use bip32::{
-    DerivationComponents, DerivationInfo, DerivationPathMaster,
-    DerivationRange, DerivationTemplate, HardenedNormalSplit,
-};
 pub use chain::{Chain, P2pNetworkId};
-pub use descriptor::DeriveLockScript;
-pub use hlc::{HashLock, HashPreimage};
-pub use lex_order::LexOrder;
-pub use psbt::Psbt;
-pub use scripts::{
-    LockScript, PubkeyParseError, PubkeyScript, RedeemScript, ScriptSet,
-    SigScript, TapScript, ToLockScript, ToPubkeyScript, ToScripts, Witness,
-    WitnessProgram, WitnessScript, WitnessVersion,
-};
 pub use seals::TxoutSeal;
 pub use short_id::ShortId;
-pub use slice32::Slice32;
 pub use tagged_hash::TaggedHash;
 
 use bitcoin::secp256k1;
@@ -69,15 +46,6 @@ impl IntoPk for secp256k1::PublicKey {
             key: self,
         }
     }
-}
-
-#[derive(Clone, PartialEq, Eq, Debug, Display)]
-#[display(Debug)]
-#[non_exhaustive]
-pub enum Challenge {
-    Signature(bitcoin::PublicKey),
-    Multisig(u32, Vec<bitcoin::PublicKey>),
-    Custom(LockScript),
 }
 
 #[cfg(test)]

@@ -36,8 +36,8 @@ crate-type = ["dylib", "rlib", "staticlib"]
 # -----------------------------------------
 amplify = { version = "2.4", features = ["stringly_conversions"] }
 amplify_derive = "2.4.3"
-# strict_encoding = "1.0.0-rc.3"
-# client_side_validation = ""
+strict_encoding = { version = "1.0.0-rc.3", path = "./strict_encoding", features = ["miniscript", "derive"] }
+client_side_validation = { version = "1.0.0-rc.2", path = "./client_side_validation" }
 # Dependencies on core rust-bitcoin ecosystem projects
 # ----------------------------------------------------
 bitcoin = { version = "~0.26.0", features = ["rand"] }

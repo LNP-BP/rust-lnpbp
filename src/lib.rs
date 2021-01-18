@@ -23,9 +23,6 @@
     //missing_docs
 )]
 // TODO: when we will be ready for the release #![deny(missing_docs)]
-// This is required because of incomplete rust async implementation and can be
-// removed after async trait feature completion in rust compiler
-#![cfg_attr(feature = "async", allow(where_clauses_object_safety))]
 
 #[macro_use]
 extern crate amplify;
@@ -35,13 +32,6 @@ extern crate amplify_derive;
 extern crate lazy_static;
 #[macro_use]
 extern crate num_derive;
-
-extern crate chacha20poly1305;
-
-// Support for node & node clients development (include API helpers)
-#[cfg(feature = "async")]
-#[macro_use]
-extern crate async_trait;
 
 #[cfg(feature = "serde")]
 #[macro_use]
@@ -64,22 +54,10 @@ pub extern crate secp256k1zkp;
 #[macro_use]
 extern crate lnpbp_derive;
 
-#[macro_use]
-pub mod test_helpers;
-#[macro_use]
-mod paradigms;
 mod standards;
 #[macro_use]
 pub mod bp;
-#[cfg(feature = "lnp")]
-#[allow(dead_code, unused_variables)]
-// TODO: Remove attribute once LNP mod will be finalized
-pub mod lnp;
 
-pub use lnp::presentation::encoding as lightning_encoding;
-pub use paradigms::{
-    client_side_validation, commit_verify, single_use_seals, strict_encoding,
-};
 #[cfg(feature = "elgamal")]
 pub use standards::elgamal;
 pub use standards::{features, lnpbp1, lnpbp2, lnpbp3, lnpbp4};
