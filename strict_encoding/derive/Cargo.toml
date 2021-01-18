@@ -1,0 +1,24 @@
+[package]
+name = "strict_encoding_derive"
+version = "1.0.0-rc.1"
+license = "Apache-2.0"
+authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
+description = "Strict encoding derivation macro"
+repository = "https://github.com/internet2-org/internet2"
+homepage = "https://github.com/internet2-org"
+keywords = ["lnp-bp", "strict-encoding", "networking", "internet2", "proc-macro"]
+categories = ["encoding", "parsing"]
+readme = "../README.md"
+edition = "2018"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+quote = "1"
+syn = "1"
+proc-macro2 = "1"
+amplify = "3"
+
+[dev-dependencies]
+strict_encoding = { path = ".." }

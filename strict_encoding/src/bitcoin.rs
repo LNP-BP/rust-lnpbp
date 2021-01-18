@@ -11,9 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use std::fmt::Display;
 use std::io;
-use std::str::FromStr;
 
 use bitcoin::hashes::{hash160, hmac, sha256, sha256d, sha256t, sha512, Hash};
 use bitcoin::util::psbt::PartiallySignedTransaction;
@@ -22,84 +20,76 @@ use bitcoin::{
     ScriptHash, SigHash, Transaction, TxIn, TxOut, Txid, WPubkeyHash,
     WScriptHash, Wtxid, XpubIdentifier,
 };
-#[cfg(feature = "ed25519-dalek")]
-use ed25519_dalek::ed25519::signature::Signature;
-use miniscript::descriptor::DescriptorSinglePub;
-use miniscript::{policy, Miniscript, MiniscriptKey};
 
-use super::blind::OutpointHash;
-use crate::strict_encoding::{self, Error, StrictDecode, StrictEncode};
+use crate::{strategies, Error, Strategy, StrictDecode, StrictEncode};
 
-impl strict_encoding::Strategy for Txid {
-    type Strategy = strict_encoding::strategies::HashFixedBytes;
+impl Strategy for Txid {
+    type Strategy = strategies::HashFixedBytes;
 }
-impl strict_encoding::Strategy for Wtxid {
-    type Strategy = strict_encoding::strategies::HashFixedBytes;
+impl Strategy for Wtxid {
+    type Strategy = strategies::HashFixedBytes;
 }
-impl strict_encoding::Strategy for BlockHash {
-    type Strategy = strict_encoding::strategies::HashFixedBytes;
+impl Strategy for BlockHash {
+    type Strategy = strategies::HashFixedBytes;
 }
-impl strict_encoding::Strategy for OutpointHash {
-    type Strategy = strict_encoding::strategies::HashFixedBytes;
+impl Strategy for XpubIdentifier {
+    type Strategy = strategies::HashFixedBytes;
 }
-impl strict_encoding::Strategy for XpubIdentifier {
-    type Strategy = strict_encoding::strategies::HashFixedBytes;
+impl Strategy for PubkeyHash {
+    type Strategy = strategies::HashFixedBytes;
 }
-impl strict_encoding::Strategy for PubkeyHash {
-    type Strategy = strict_encoding::strategies::HashFixedBytes;
+impl Strategy for WPubkeyHash {
+    type Strategy = strategies::HashFixedBytes;
 }
-impl strict_encoding::Strategy for WPubkeyHash {
-    type Strategy = strict_encoding::strategies::HashFixedBytes;
+impl Strategy for ScriptHash {
+    type Strategy = strategies::HashFixedBytes;
 }
-impl strict_encoding::Strategy for ScriptHash {
-    type Strategy = strict_encoding::strategies::HashFixedBytes;
+impl Strategy for WScriptHash {
+    type Strategy = strategies::HashFixedBytes;
 }
-impl strict_encoding::Strategy for WScriptHash {
-    type Strategy = strict_encoding::strategies::HashFixedBytes;
-}
-impl strict_encoding::Strategy for SigHash {
-    type Strategy = strict_encoding::strategies::HashFixedBytes;
+impl Strategy for SigHash {
+    type Strategy = strategies::HashFixedBytes;
 }
 
-impl strict_encoding::Strategy for sha256::Hash {
-    type Strategy = strict_encoding::strategies::HashFixedBytes;
+impl Strategy for sha256::Hash {
+    type Strategy = strategies::HashFixedBytes;
 }
-impl strict_encoding::Strategy for sha256d::Hash {
-    type Strategy = strict_encoding::strategies::HashFixedBytes;
+impl Strategy for sha256d::Hash {
+    type Strategy = strategies::HashFixedBytes;
 }
-impl<T> strict_encoding::Strategy for sha256t::Hash<T>
+impl<T> Strategy for sha256t::Hash<T>
 where
     T: sha256t::Tag,
 {
-    type Strategy = strict_encoding::strategies::HashFixedBytes;
+    type Strategy = strategies::HashFixedBytes;
 }
-impl strict_encoding::Strategy for sha512::Hash {
-    type Strategy = strict_encoding::strategies::HashFixedBytes;
+impl Strategy for sha512::Hash {
+    type Strategy = strategies::HashFixedBytes;
 }
-impl strict_encoding::Strategy for hash160::Hash {
-    type Strategy = strict_encoding::strategies::HashFixedBytes;
+impl Strategy for hash160::Hash {
+    type Strategy = strategies::HashFixedBytes;
 }
-impl<T> strict_encoding::Strategy for hmac::Hmac<T>
+impl<T> Strategy for hmac::Hmac<T>
 where
     T: Hash,
 {
-    type Strategy = strict_encoding::strategies::HashFixedBytes;
+    type Strategy = strategies::HashFixedBytes;
 }
 
-impl strict_encoding::Strategy for OutPoint {
-    type Strategy = strict_encoding::strategies::BitcoinConsensus;
+impl Strategy for OutPoint {
+    type Strategy = strategies::BitcoinConsensus;
 }
-impl strict_encoding::Strategy for TxOut {
-    type Strategy = strict_encoding::strategies::BitcoinConsensus;
+impl Strategy for TxOut {
+    type Strategy = strategies::BitcoinConsensus;
 }
-impl strict_encoding::Strategy for TxIn {
-    type Strategy = strict_encoding::strategies::BitcoinConsensus;
+impl Strategy for TxIn {
+    type Strategy = strategies::BitcoinConsensus;
 }
-impl strict_encoding::Strategy for Transaction {
-    type Strategy = strict_encoding::strategies::BitcoinConsensus;
+impl Strategy for Transaction {
+    type Strategy = strategies::BitcoinConsensus;
 }
-impl strict_encoding::Strategy for PartiallySignedTransaction {
-    type Strategy = strict_encoding::strategies::BitcoinConsensus;
+impl Strategy for PartiallySignedTransaction {
+    type Strategy = strategies::BitcoinConsensus;
 }
 
 impl StrictEncode for Script {
@@ -113,123 +103,6 @@ impl StrictDecode for Script {
     #[inline]
     fn strict_decode<D: io::Read>(d: D) -> Result<Self, Error> {
         Ok(Self::from(Vec::<u8>::strict_decode(d)?))
-    }
-}
-
-#[cfg(feature = "ed25519-dalek")]
-impl StrictEncode for ed25519_dalek::PublicKey {
-    fn strict_encode<E: io::Write>(&self, mut e: E) -> Result<usize, Error> {
-        Ok(e.write(&self.as_bytes()[..])?)
-    }
-}
-
-#[cfg(feature = "ed25519-dalek")]
-impl StrictDecode for ed25519_dalek::PublicKey {
-    fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, Error> {
-        let mut buf = [0u8; ed25519_dalek::PUBLIC_KEY_LENGTH];
-        d.read_exact(&mut buf)?;
-        Ok(Self::from_bytes(&buf).map_err(|_| {
-            Error::DataIntegrityError(
-                "invalid Curve25519 public key data".to_string(),
-            )
-        })?)
-    }
-}
-
-#[cfg(feature = "ed25519-dalek")]
-impl StrictEncode for ed25519_dalek::Signature {
-    fn strict_encode<E: io::Write>(&self, mut e: E) -> Result<usize, Error> {
-        Ok(e.write(&self.as_bytes())?)
-    }
-}
-
-#[cfg(feature = "ed25519-dalek")]
-impl StrictDecode for ed25519_dalek::Signature {
-    fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, Error> {
-        let mut buf = [0u8; ed25519_dalek::SIGNATURE_LENGTH];
-        d.read_exact(&mut buf)?;
-        Ok(Self::from_bytes(&buf).map_err(|_| {
-            Error::DataIntegrityError(
-                "invalid Ed25519 signature data".to_string(),
-            )
-        })?)
-    }
-}
-
-#[cfg(feature = "grin_secp256k1zkp")]
-impl StrictEncode for secp256k1zkp::SecretKey {
-    fn strict_encode<E: io::Write>(&self, e: E) -> Result<usize, Error> {
-        self.0.as_ref().strict_encode(e)
-    }
-}
-
-#[cfg(feature = "grin_secp256k1zkp")]
-impl StrictDecode for secp256k1zkp::SecretKey {
-    fn strict_decode<D: io::Read>(d: D) -> Result<Self, Error> {
-        let secp = secp256k1zkp::Secp256k1::with_caps(
-            secp256k1zkp::ContextFlag::Commit,
-        );
-        let data = Vec::<u8>::strict_decode(d)?;
-        Self::from_slice(&secp, &data).map_err(|_| {
-            Error::DataIntegrityError(
-                "Wrong private key data in pedersen commitment private key"
-                    .to_string(),
-            )
-        })
-    }
-}
-
-#[cfg(feature = "grin_secp256k1zkp")]
-impl StrictEncode for secp256k1zkp::pedersen::Commitment {
-    #[inline]
-    fn strict_encode<E: io::Write>(&self, e: E) -> Result<usize, Error> {
-        self.0.as_ref().strict_encode(e)
-    }
-}
-
-#[cfg(feature = "grin_secp256k1zkp")]
-impl StrictDecode for secp256k1zkp::pedersen::Commitment {
-    #[inline]
-    fn strict_decode<D: io::Read>(d: D) -> Result<Self, Error> {
-        let data = Vec::<u8>::strict_decode(d)?;
-        if data.len() != secp256k1zkp::constants::PEDERSEN_COMMITMENT_SIZE {
-            Err(Error::DataIntegrityError(format!(
-                "Wrong size of Pedersen commitment: {}",
-                data.len()
-            )))?
-        }
-        Ok(Self::from_vec(data))
-    }
-}
-
-#[cfg(feature = "grin_secp256k1zkp")]
-impl StrictEncode for secp256k1zkp::pedersen::RangeProof {
-    #[inline]
-    fn strict_encode<E: io::Write>(&self, e: E) -> Result<usize, Error> {
-        self.proof[..self.plen].as_ref().strict_encode(e)
-    }
-}
-
-#[cfg(feature = "grin_secp256k1zkp")]
-impl StrictDecode for secp256k1zkp::pedersen::RangeProof {
-    #[inline]
-    fn strict_decode<D: io::Read>(d: D) -> Result<Self, Error> {
-        use secp256k1zkp::constants::MAX_PROOF_SIZE;
-        let data = Vec::<u8>::strict_decode(d)?;
-        match data.len() {
-            len if len < MAX_PROOF_SIZE => {
-                let mut buf = [0; MAX_PROOF_SIZE];
-                buf[..len].copy_from_slice(&data);
-                Ok(Self {
-                    proof: buf,
-                    plen: len,
-                })
-            }
-            invalid_len => Err(Error::DataIntegrityError(format!(
-                "Wrong bulletproof data size: expected no more than {}, got {}",
-                MAX_PROOF_SIZE, invalid_len
-            ))),
-        }
     }
 }
 
@@ -463,88 +336,15 @@ impl StrictDecode for bip32::ExtendedPrivKey {
     }
 }
 
-impl StrictEncode for DescriptorSinglePub {
-    #[inline]
-    fn strict_encode<E: io::Write>(&self, mut e: E) -> Result<usize, Error> {
-        Ok(strict_encode_list!(e; self.key, self.origin))
-    }
-}
-
-impl StrictDecode for DescriptorSinglePub {
-    #[inline]
-    fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, Error> {
-        Ok(strict_decode_self!(d; key, origin))
-    }
-}
-
-impl<Pk> StrictEncode for policy::Concrete<Pk>
-where
-    Pk: MiniscriptKey + FromStr,
-{
-    fn strict_encode<E: io::Write>(&self, e: E) -> Result<usize, Error> {
-        self.to_string().strict_encode(e)
-    }
-}
-
-impl<Pk> StrictDecode for policy::Concrete<Pk>
-where
-    Pk: MiniscriptKey + FromStr,
-    <Pk as FromStr>::Err: Display,
-    <Pk as MiniscriptKey>::Hash: FromStr,
-    <<Pk as MiniscriptKey>::Hash as FromStr>::Err: Display,
-{
-    fn strict_decode<D: io::Read>(d: D) -> Result<Self, Error> {
-        String::strict_decode(d)?.parse().map_err(|_| {
-            Error::DataIntegrityError(s!("Unparsable miniscript policy string"))
-        })
-    }
-}
-
-impl<Pk, Ctx> StrictEncode for Miniscript<Pk, Ctx>
-where
-    Pk: MiniscriptKey + FromStr,
-    Ctx: miniscript::ScriptContext,
-{
-    fn strict_encode<E: io::Write>(&self, e: E) -> Result<usize, Error> {
-        self.to_string().strict_encode(e)
-    }
-}
-
-impl<Pk, Ctx> StrictDecode for Miniscript<Pk, Ctx>
-where
-    Pk: MiniscriptKey + FromStr,
-    <Pk as FromStr>::Err: Display,
-    <Pk as MiniscriptKey>::Hash: FromStr,
-    <<Pk as MiniscriptKey>::Hash as FromStr>::Err: Display,
-    Ctx: miniscript::ScriptContext,
-{
-    fn strict_decode<D: io::Read>(d: D) -> Result<Self, Error> {
-        String::strict_decode(d)?.parse().map_err(|_| {
-            Error::DataIntegrityError(s!("Unparsable miniscript string"))
-        })
-    }
-}
-
 #[cfg(test)]
 pub(crate) mod test {
-    use std::{convert::TryFrom, str::FromStr};
+    use std::str::FromStr;
 
-    use bitcoin::{
-        consensus, hashes::hex::FromHex, secp256k1::Message, BlockHash,
-    };
+    use bitcoin::{consensus, hashes::hex::FromHex, secp256k1::Message};
 
     use super::*;
-    use crate::bp::{blind::OutpointReveal, short_id, ShortId};
+    use crate::strict_serialize;
     use crate::test_helpers::test_suite;
-
-    pub(crate) fn encode_decode<T: StrictEncode + StrictDecode>(
-        object: &T,
-    ) -> Result<(T, usize), Error> {
-        let mut encoded_object: Vec<u8> = vec![];
-        let written = object.strict_encode(&mut encoded_object).unwrap();
-        let decoded_object = T::strict_decode(&encoded_object[..]).unwrap();
-        Ok((decoded_object, written))
-    }
 
     #[test]
     fn test_encoding_network() {
@@ -679,99 +479,6 @@ pub(crate) mod test {
     }
 
     #[test]
-    fn test_encoding_shortids() {
-        static SHORT_ONCHAINBLOCK: [u8; 8] =
-            [0x0, 0x0, 0x0, 0x0, 0x20, 0x97, 0xcc, 0x9];
-        static SHORT_ONCHAINTX: [u8; 8] =
-            [0x0, 0x0, 0x5, 0x0, 0x20, 0x97, 0xcc, 0x9];
-        static SHORT_ONCHAINTXINPUT: [u8; 8] =
-            [0x6, 0x0, 0x5, 0x0, 0x20, 0x97, 0xcc, 0x9];
-        static SHORT_ONCHAINTXOUT: [u8; 8] =
-            [0x6, 0x0, 0x5, 0x80, 0x20, 0x97, 0xcc, 0x9];
-        static SHORT_OFFCHAINTX: [u8; 8] =
-            [0x0, 0x00, 0x53, 0xc6, 0x31, 0x13, 0xed, 0x80];
-        static SHORT_OFFCHAINTXIN: [u8; 8] =
-            [0x6, 0x0, 0x53, 0xc6, 0x31, 0x13, 0xed, 0x80];
-        static SHORT_OFFCHAINTXOUT: [u8; 8] =
-            [0x6, 0x0, 0x53, 0xc6, 0x31, 0x13, 0xed, 0x80];
-
-        let block_checksum = short_id::BlockChecksum::from(
-            BlockHash::from_hex("00000000000000000000fc48ad6e814097387355463c9ba4fdf8ecc2df34b52f")
-                .unwrap(),
-        );
-        let tx_checksum = short_id::TxChecksum::from(
-            Txid::from_hex("217861d1a487f8e7140b9da48385e3e5d64d1ffdcd8edf0afc6818ed1331c653")
-                .unwrap(),
-        );
-        let height = 642199u32;
-        let tx_index = 5u16;
-        let input_index = 5u16;
-        let output_index = 5u16;
-
-        // Test OnchainBlock
-        let des = short_id::Descriptor::OnchainBlock {
-            block_height: height,
-            block_checksum: block_checksum,
-        };
-        let short_id = ShortId::try_from(des).unwrap();
-        // TOD0: descriptor validity fails
-        //short_id.get_descriptor().try_validity().unwrap();
-        test_suite(&short_id, &SHORT_ONCHAINBLOCK, 8);
-
-        // test ShortId for OnchainTransaction
-        let des = short_id::Descriptor::OnchainTransaction {
-            block_height: height,
-            block_checksum: block_checksum,
-            tx_index: tx_index,
-        };
-        let short_id = ShortId::try_from(des).unwrap();
-        test_suite(&short_id, &SHORT_ONCHAINTX, 8);
-
-        // test ShortId for OnchainTxInput
-        let des = short_id::Descriptor::OnchainTxInput {
-            block_height: height,
-            block_checksum: block_checksum,
-            tx_index: tx_index,
-            input_index: input_index,
-        };
-        let short_id = ShortId::try_from(des).unwrap();
-        test_suite(&short_id, &SHORT_ONCHAINTXINPUT, 8);
-
-        // test ShortId for OnchainTxOutput
-        let des = short_id::Descriptor::OnchainTxOutput {
-            block_height: height,
-            block_checksum: block_checksum,
-            tx_index: tx_index,
-            output_index: output_index,
-        };
-        let short_id = ShortId::try_from(des).unwrap();
-        test_suite(&short_id, &SHORT_ONCHAINTXOUT, 8);
-
-        // test ShortId for OffchainTransaction
-        let des = short_id::Descriptor::OffchainTransaction {
-            tx_checksum: tx_checksum,
-        };
-        let short_id = ShortId::try_from(des).unwrap();
-        test_suite(&short_id, &SHORT_OFFCHAINTX, 8);
-
-        // test ShortId for OffchainTxInput
-        let des = short_id::Descriptor::OffchainTxInput {
-            tx_checksum: tx_checksum,
-            input_index: input_index,
-        };
-        let short_id = ShortId::try_from(des).unwrap();
-        test_suite(&short_id, &SHORT_OFFCHAINTXIN, 8);
-
-        // test ShortId for OffchainTxOutput
-        let des = short_id::Descriptor::OffchainTxOutput {
-            tx_checksum: tx_checksum,
-            output_index: output_index,
-        };
-        let short_id = ShortId::try_from(des).unwrap();
-        test_suite(&short_id, &SHORT_OFFCHAINTXOUT, 8);
-    }
-
-    #[test]
     fn test_encoding_outpoint() {
         static OUTPOINT: [u8; 36] = [
             0x53, 0xc6, 0x31, 0x13, 0xed, 0x18, 0x68, 0xfc, 0xa, 0xdf, 0x8e,
@@ -793,33 +500,9 @@ pub(crate) mod test {
 
         // test random and null outpoints
         let outpoint = OutPoint::new(txid, vout);
-        let decoded_outpoint = test_suite(&outpoint, &OUTPOINT, 36);
+        let _ = test_suite(&outpoint, &OUTPOINT, 36);
         let null = OutPoint::null();
-        let decoded_null = test_suite(&null, &OUTPOINT_NULL, 36);
-
-        // test random and null revealed outpoints
-        // test_suite cannot be used here because blinding factor is random.
-        let outpoint_reveal = OutpointReveal::from(decoded_outpoint);
-        let (decoded, written) = encode_decode(&outpoint_reveal).unwrap();
-        assert_eq!(written, 44);
-        assert_eq!(decoded, outpoint_reveal);
-
-        let null = OutpointReveal::from(decoded_null);
-        let (decoded, written) = encode_decode(&null).unwrap();
-        assert_eq!(written, 44);
-        assert_eq!(decoded, null);
-
-        // test random and null outpoint hash
-        // test_suite cannot be used here because blinding factor is random.
-        let random = OutpointHash::from(decoded_outpoint);
-        let (decoded, written) = encode_decode(&random).unwrap();
-        assert_eq!(written, 32);
-        assert_eq!(decoded, random);
-
-        let null = OutpointHash::from(decoded_null);
-        let (decoded_null, written) = encode_decode(&null).unwrap();
-        assert_eq!(written, 32);
-        assert_eq!(decoded_null, null);
+        let _ = test_suite(&null, &OUTPOINT_NULL, 36);
     }
 
     #[test]
@@ -863,18 +546,9 @@ pub(crate) mod test {
         let tx_legacy2: Transaction =
             consensus::deserialize(&tx_legacy2_bytes).unwrap();
 
-        assert_eq!(
-            strict_encoding::strict_serialize(&tx_segwit).unwrap(),
-            tx_segwit_bytes
-        );
-        assert_eq!(
-            strict_encoding::strict_serialize(&tx_legacy1).unwrap(),
-            tx_legacy1_bytes
-        );
-        assert_eq!(
-            strict_encoding::strict_serialize(&tx_legacy2).unwrap(),
-            tx_legacy2_bytes
-        );
+        assert_eq!(strict_serialize(&tx_segwit).unwrap(), tx_segwit_bytes);
+        assert_eq!(strict_serialize(&tx_legacy1).unwrap(), tx_legacy1_bytes);
+        assert_eq!(strict_serialize(&tx_legacy2).unwrap(), tx_legacy2_bytes);
         test_suite(&tx_segwit, &tx_segwit_bytes, tx_segwit_bytes.len());
         test_suite(&tx_legacy1, &tx_legacy1_bytes, tx_legacy1_bytes.len());
         test_suite(&tx_legacy2, &tx_legacy2_bytes, tx_legacy2_bytes.len());
@@ -890,10 +564,7 @@ pub(crate) mod test {
             0711c06c7f3e097c9447c52ffffffff"
         ).unwrap();
         let txin: TxIn = consensus::deserialize(&txin_bytes).unwrap();
-        assert_eq!(
-            strict_encoding::strict_serialize(&txin).unwrap(),
-            txin_bytes
-        );
+        assert_eq!(strict_serialize(&txin).unwrap(), txin_bytes);
         test_suite(&txin, &txin_bytes, txin_bytes.len());
     }
 
@@ -914,11 +585,11 @@ pub(crate) mod test {
             consensus::deserialize(&txout_legacy_bytes).unwrap();
 
         assert_eq!(
-            strict_encoding::strict_serialize(&txout_segwit).unwrap(),
+            strict_serialize(&txout_segwit).unwrap(),
             txout_segwit_bytes
         );
         assert_eq!(
-            strict_encoding::strict_serialize(&txout_legacy).unwrap(),
+            strict_serialize(&txout_legacy).unwrap(),
             txout_legacy_bytes
         );
         test_suite(
@@ -958,10 +629,7 @@ pub(crate) mod test {
         let psbt: PartiallySignedTransaction =
             consensus::deserialize(&psbt_bytes).unwrap();
 
-        assert_eq!(
-            strict_encoding::strict_serialize(&psbt).unwrap(),
-            psbt_bytes
-        );
+        assert_eq!(strict_serialize(&psbt).unwrap(), psbt_bytes);
         test_suite(&psbt, &psbt_bytes, psbt_bytes.len());
     }
 

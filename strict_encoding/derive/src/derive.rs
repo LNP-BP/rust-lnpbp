@@ -1,4 +1,4 @@
-// LNP/BP Derive Library implementing LNPBP specifications & standards
+// LNP/BP Core Library implementing LNPBP specifications & standards
 // Written in 2020 by
 //     Dr. Maxim Orlovsky <orlovsky@pandoracore.com>
 //
@@ -18,7 +18,7 @@ use syn::{
     Result,
 };
 
-use crate::util::get_lnpbp_crate;
+use crate::util::get_encoding_crate;
 
 pub(crate) fn encode_inner(input: DeriveInput) -> Result<TokenStream2> {
     match input.data {
@@ -52,7 +52,7 @@ fn encode_inner_struct(
         input.generics.split_for_impl();
     let ident_name = &input.ident;
 
-    let import = get_lnpbp_crate(input);
+    let import = get_encoding_crate(input);
 
     let recurse = match data.fields {
         Fields::Named(ref fields) => fields
@@ -93,10 +93,10 @@ fn encode_inner_struct(
 
     Ok(quote! {
         #[allow(unused_qualifications)]
-        impl #impl_generics #import::strict_encoding::StrictEncode for #ident_name #ty_generics #where_clause {
+        impl #impl_generics #import::StrictEncode for #ident_name #ty_generics #where_clause {
             #[inline]
-            fn strict_encode<E: ::std::io::Write>(&self, mut e: E) -> Result<usize, #import::strict_encoding::Error> {
-                use #import::strict_encoding::StrictEncode;
+            fn strict_encode<E: ::std::io::Write>(&self, mut e: E) -> Result<usize, #import::Error> {
+                use #import::StrictEncode;
 
                 #inner
             }
@@ -112,7 +112,7 @@ fn decode_inner_struct(
         input.generics.split_for_impl();
     let ident_name = &input.ident;
 
-    let import = get_lnpbp_crate(input);
+    let import = get_encoding_crate(input);
 
     let inner = match data.fields {
         Fields::Named(ref fields) => {
@@ -122,7 +122,7 @@ fn decode_inner_struct(
                 .map(|f| {
                     let name = &f.ident;
                     quote_spanned! { f.span() =>
-                        #name: #import::strict_encoding::StrictDecode::strict_decode(&mut d)?,
+                        #name: #import::StrictDecode::strict_decode(&mut d)?,
                     }
                 })
                 .collect();
@@ -138,7 +138,7 @@ fn decode_inner_struct(
                 .iter()
                 .map(|f| {
                     quote_spanned! { f.span() =>
-                        #import::strict_encoding::StrictDecode::strict_decode(&mut d)?,
+                        #import::StrictDecode::strict_decode(&mut d)?,
                     }
                 })
                 .collect();
@@ -156,10 +156,10 @@ fn decode_inner_struct(
 
     Ok(quote! {
         #[allow(unused_qualifications)]
-        impl #impl_generics #import::strict_encoding::StrictDecode for #ident_name #ty_generics #where_clause {
+        impl #impl_generics #import::StrictDecode for #ident_name #ty_generics #where_clause {
             #[inline]
-            fn strict_decode<D: ::std::io::Read>(mut d: D) -> Result<Self, #import::strict_encoding::Error> {
-                use #import::strict_encoding::StrictDecode;
+            fn strict_decode<D: ::std::io::Read>(mut d: D) -> Result<Self, #import::Error> {
+                use #import::StrictDecode;
 
                 Ok(#inner)
             }
@@ -175,7 +175,7 @@ fn encode_inner_enum(
         input.generics.split_for_impl();
     let ident_name = &input.ident;
 
-    let import = get_lnpbp_crate(input);
+    let import = get_encoding_crate(input);
 
     let mut inner: Vec<TokenStream2> = none!();
     for (idx, variant) in data.variants.iter().enumerate() {
@@ -239,10 +239,10 @@ fn encode_inner_enum(
 
     Ok(quote! {
         #[allow(unused_qualifications)]
-        impl #impl_generics #import::strict_encoding::StrictEncode for #ident_name #ty_generics #where_clause {
+        impl #impl_generics #import::StrictEncode for #ident_name #ty_generics #where_clause {
             #[inline]
-            fn strict_encode<E: ::std::io::Write>(&self, mut e: E) -> Result<usize, #import::strict_encoding::Error> {
-                use #import::strict_encoding::StrictEncode;
+            fn strict_encode<E: ::std::io::Write>(&self, mut e: E) -> Result<usize, #import::Error> {
+                use #import::StrictEncode;
 
                 #inner
             }
@@ -258,7 +258,7 @@ fn decode_inner_enum(
         input.generics.split_for_impl();
     let ident_name = &input.ident;
 
-    let import = get_lnpbp_crate(input);
+    let import = get_encoding_crate(input);
 
     let mut inner: Vec<TokenStream2> = none!();
     for (idx, variant) in data.variants.iter().enumerate() {
@@ -314,17 +314,17 @@ fn decode_inner_enum(
         _ => quote! {
             match u8::strict_decode(&mut d)? {
                 #( #inner )*
-                other => Err(#import::strict_encoding::Error::EnumValueNotKnown(stringify!(#ident_name).to_owned(), other))?
+                other => Err(#import::Error::EnumValueNotKnown(stringify!(#ident_name).to_owned(), other))?
             }
         },
     };
 
     Ok(quote! {
         #[allow(unused_qualifications)]
-        impl #impl_generics #import::strict_encoding::StrictDecode for #ident_name #ty_generics #where_clause {
+        impl #impl_generics #import::StrictDecode for #ident_name #ty_generics #where_clause {
             #[inline]
-            fn strict_decode<D: ::std::io::Read>(mut d: D) -> Result<Self, #import::strict_encoding::Error> {
-                use #import::strict_encoding::StrictDecode;
+            fn strict_decode<D: ::std::io::Read>(mut d: D) -> Result<Self, #import::Error> {
+                use #import::StrictDecode;
 
                 Ok(#inner)
             }

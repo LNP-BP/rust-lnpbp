@@ -15,7 +15,7 @@ use std::fmt::Debug;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 
-use crate::strict_encoding::{StrictDecode, StrictEncode};
+use crate::{Error, StrictDecode, StrictEncode};
 
 // TODO: (new) Move into derive macro
 #[macro_export]
@@ -72,7 +72,7 @@ macro_rules! test_garbage_exhaustive {
                 cp[0] = byte as u8;
                 assert_eq!(
                     <$ty>::strict_decode(&cp[..]).unwrap_err(),
-                    lnpbp::strict_encoding::Error::EnumValueNotKnown($err.to_string(), byte)
+                    internet2::strict_encoding::Error::EnumValueNotKnown($err.to_string(), byte)
                 );
             }
         )+}
@@ -101,10 +101,13 @@ pub fn print_to_file<T: StrictEncode + StrictDecode>(
     Ok(written)
 }
 
-pub fn encode_decode<T: StrictEncode + StrictDecode>(object: &T) {
+pub fn encode_decode<T: StrictEncode + StrictDecode>(
+    object: &T,
+) -> Result<(T, usize), Error> {
     let mut encoded_object: Vec<u8> = vec![];
-    object.strict_encode(&mut encoded_object).unwrap();
-    T::strict_decode(&encoded_object[..]).unwrap();
+    let written = object.strict_encode(&mut encoded_object).unwrap();
+    let decoded_object = T::strict_decode(&encoded_object[..]).unwrap();
+    Ok((decoded_object, written))
 }
 
 /// Test suite function to test against the vectors

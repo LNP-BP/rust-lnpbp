@@ -1,8 +1,7 @@
 #![allow(dead_code, bare_trait_objects)]
 
 #[macro_use]
-extern crate lnpbp_derive;
-extern crate lnpbp;
+extern crate strict_encoding_derive;
 
 use ::core::marker::PhantomData;
 

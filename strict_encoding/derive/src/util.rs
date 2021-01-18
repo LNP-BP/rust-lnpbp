@@ -1,7 +1,5 @@
-// Rust language amplification derive library providing multiple generic trait
-// implementations, type wrappers, derive macros and other language enhancements
-//
-// Written in 2019-2020 by
+// LNP/BP Core Library implementing LNPBP specifications & standards
+// Written in 2020 by
 //     Dr. Maxim Orlovsky <orlovsky@pandoracore.com>
 //
 // To the extent possible under law, the author(s) have dedicated all
@@ -45,10 +43,10 @@ macro_rules! attr_err {
     };
 }
 
-pub(crate) fn get_lnpbp_crate(input: &DeriveInput) -> Path {
-    let name = "lnpbp_crate";
-    let example = "#[lnpbp_crate(crate_path)]";
-    let default = Path::from(Ident::new("lnpbp", input.span()));
+pub(crate) fn get_encoding_crate(input: &DeriveInput) -> Path {
+    let name = "strict_encoding_crate";
+    let example = "#[strict_encoding_crate(crate_path)]";
+    let default = Path::from(Ident::new("strict_encoding", input.span()));
 
     let list = match attr_list(&input.attrs, name, example).ok().flatten() {
         Some(x) => x,
