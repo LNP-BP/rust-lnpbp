@@ -120,7 +120,7 @@ where
 #[cfg(test)]
 pub(crate) mod test {
     use super::*;
-    use bitcoin::hashes::{hex::FromHex, sha256d};
+    use bitcoin_hashes::{hex::FromHex, sha256d};
     use core::fmt::Debug;
     use core::hash::Hash;
     use std::collections::HashSet;
@@ -135,7 +135,7 @@ pub(crate) mod test {
         T: AsRef<[u8]>,
     {
         fn commit(msg: &T) -> Self {
-            Self(bitcoin::hashes::Hash::hash(msg.as_ref()))
+            Self(bitcoin_hashes::Hash::hash(msg.as_ref()))
         }
     }
 

@@ -1,4 +1,4 @@
-// LNP/BP Rust Library
+// LNP/BP Core Library implementing LNPBP specifications & standards
 // Written in 2019 by
 //     Dr. Maxim Orlovsky <orlovsky@pandoracore.com>
 //
@@ -11,10 +11,11 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use crate::commit_verify::CommitVerify;
-use bitcoin::hashes::{
+use bitcoin_hashes::{
     hash160, ripemd160, sha1, sha256, sha256d, sha256t, sha512, siphash24, Hash,
 };
+
+use crate::commit_verify::CommitVerify;
 
 impl<MSG> CommitVerify<MSG> for sha1::Hash
 where
@@ -100,7 +101,7 @@ where
 #[cfg(test)]
 mod test {
     use crate::commit_verify::test::*;
-    use bitcoin::hashes::*;
+    use bitcoin_hashes::*;
 
     #[test]
     fn test_sha256_commitment() {

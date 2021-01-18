@@ -11,6 +11,18 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+#![recursion_limit = "256"]
+// Coding conventions
+#![deny(
+    non_upper_case_globals,
+    non_camel_case_types,
+    non_snake_case,
+    unused_mut,
+    unused_imports,
+    dead_code,
+    //missing_docs
+)]
+
 //! Primitives module defines core strict interfaces from informational LNPBP
 //! standards specifying secure and robust practices for function calls
 //! used in main LNP/BP development paradigms:
@@ -25,8 +37,12 @@
 //! will be nearly impossible to use in the wrong form.
 
 #[macro_use]
+extern crate amplify_derive;
+#[macro_use]
+extern crate bitcoin_hashes;
+
+#[macro_use]
 pub mod client_side_validation;
 pub mod commit_verify;
+mod digests;
 pub mod single_use_seals;
-#[macro_use]
-pub mod strict_encoding;
