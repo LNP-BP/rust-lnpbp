@@ -47,6 +47,7 @@ mod collections;
 mod crypto;
 #[cfg(feature = "miniscript")]
 mod miniscript;
+pub mod net;
 mod primitives;
 pub mod strategies;
 

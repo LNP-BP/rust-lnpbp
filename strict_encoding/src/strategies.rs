@@ -16,6 +16,7 @@
 use amplify::Wrapper;
 use std::io;
 
+use super::net;
 use super::{Error, StrictDecode, StrictEncode};
 
 // Defining strategies:
@@ -23,6 +24,7 @@ use super::{Error, StrictDecode, StrictEncode};
 pub struct HashFixedBytes;
 pub struct BitcoinConsensus;
 pub struct Wrapped;
+pub struct UsingUniformAddr;
 
 pub trait Strategy {
     type Strategy;
@@ -112,6 +114,29 @@ where
     #[inline]
     fn strict_decode<D: io::Read>(d: D) -> Result<Self, Error> {
         Ok(Self::new(T::consensus_decode(d).map_err(Error::from)?))
+    }
+}
+
+impl<T> StrictEncode for amplify::Holder<T, UsingUniformAddr>
+where
+    T: net::Uniform,
+{
+    #[inline]
+    fn strict_encode<E: io::Write>(&self, e: E) -> Result<usize, Error> {
+        self.as_inner().to_raw_uniform().strict_encode(e)
+    }
+}
+
+impl<T> StrictDecode for amplify::Holder<T, UsingUniformAddr>
+where
+    T: net::Uniform,
+{
+    #[inline]
+    fn strict_decode<D: io::Read>(d: D) -> Result<Self, Error> {
+        Ok(Self::new(
+            T::from_raw_uniform_addr(net::RawUniformAddr::strict_decode(d)?)
+                .map_err(|err| Error::DataIntegrityError(err.to_string()))?,
+        ))
     }
 }
 
