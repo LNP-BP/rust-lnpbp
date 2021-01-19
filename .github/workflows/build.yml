@@ -66,7 +66,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        toolchain: [ nightly, beta, stable, 1.45.0 ]
+        toolchain: [ nightly, beta, stable, 1.41.1 ]
     steps:
       - uses: actions/checkout@v2
       - name: Install rust ${{ matrix.toolchain }}
