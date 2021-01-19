@@ -30,7 +30,7 @@ impl StrictEncode for DescriptorSinglePub {
 impl StrictDecode for DescriptorSinglePub {
     #[inline]
     fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, Error> {
-        Ok(strict_decode_self!(d; key, origin))
+        Ok(strict_decode_self!(d; key, origin; crate))
     }
 }
 

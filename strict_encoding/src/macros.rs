@@ -39,7 +39,16 @@ macro_rules! strict_decode_self {
         {
             Self {
             $(
-                $item: StrictDecode::strict_decode(&mut $decoder)?,
+                $item: ::strict_encoding::StrictDecode::strict_decode(&mut $decoder)?,
+            )+
+            }
+        }
+    };
+    ( $decoder:ident; $($item:ident),+ ; crate) => {
+        {
+            Self {
+            $(
+                $item: $crate::StrictDecode::strict_decode(&mut $decoder)?,
             )+
             }
         }
@@ -49,7 +58,7 @@ macro_rules! strict_decode_self {
 #[macro_export]
 macro_rules! impl_enum_strict_encoding {
     ($type:ty) => {
-        impl $crate::strict_encoding::StrictEncode for $type {
+        impl ::strict_encoding::StrictEncode for $type {
             #[inline]
             fn strict_encode<E: ::std::io::Write>(
                 &self,
@@ -59,11 +68,9 @@ macro_rules! impl_enum_strict_encoding {
 
                 match self.to_u8() {
                     Some(result) => result.strict_encode(e),
-                    None => {
-                        Err($crate::strict_encoding::Error::EnumValueOverflow(
-                            stringify!($type).to_string(),
-                        ))
-                    }
+                    None => Err(::strict_encoding::Error::EnumValueOverflow(
+                        stringify!($type).to_string(),
+                    )),
                 }
             }
         }
@@ -72,18 +79,16 @@ macro_rules! impl_enum_strict_encoding {
             #[inline]
             fn strict_decode<D: ::std::io::Read>(
                 d: D,
-            ) -> Result<Self, $crate::strict_encoding::Error> {
+            ) -> Result<Self, ::strict_encoding::Error> {
                 use ::num_traits::FromPrimitive;
 
-                let value = u8::strict_decode(d)?;
+                let value = ::std::u8::strict_decode(d)?;
                 match Self::from_u8(value) {
                     Some(result) => Ok(result),
-                    None => {
-                        Err($crate::strict_encoding::Error::EnumValueNotKnown(
-                            stringify!($type).to_string(),
-                            value,
-                        ))
-                    }
+                    None => Err(::strict_encoding::Error::EnumValueNotKnown(
+                        stringify!($type).to_string(),
+                        value,
+                    )),
                 }
             }
         }
