@@ -30,8 +30,8 @@ macro_rules! test_enum_u8_exhaustive {
         for x in 0..=core::u8::MAX {
             if !set.contains(&x) {
                 assert_eq!($enum::from_u8(x), None);
-                let decoded: Result<$enum, _> = $crate::strict_encoding::strict_deserialize(&[x]);
-                assert_eq!(decoded.unwrap_err(), $crate::strict_encoding::Error::EnumValueNotKnown(stringify!($enum).to_string(), x));
+                let decoded: Result<$enum, _> = ::strict_encoding::strict_deserialize(&[x]);
+                assert_eq!(decoded.unwrap_err(), ::strict_encoding::Error::EnumValueNotKnown(stringify!($enum).to_string(), x));
             }
         }
         let mut all = ::std::collections::BTreeSet::new();
@@ -43,8 +43,8 @@ macro_rules! test_enum_u8_exhaustive {
                 assert!(a < b);
             }
         }
-        $( assert_eq!($crate::strict_encoding::strict_serialize(&$item).unwrap(), &[$val]); )+
-        $( assert_eq!($item, $crate::strict_encoding::strict_deserialize(&[$val]).unwrap()); )+
+        $( assert_eq!(::strict_encoding::strict_serialize(&$item).unwrap(), &[$val]); )+
+        $( assert_eq!($item, ::strict_encoding::strict_deserialize(&[$val]).unwrap()); )+
     } };
 }
 
@@ -55,7 +55,7 @@ macro_rules! test_encode {
         {
             $(
                 let object = <$ty>::strict_decode(&$x[..]).unwrap();
-                test_suite(&object, &$x[..], $x.to_vec().len());
+                ::strict_encoding::test_helpers::test_suite(&object, &$x[..], $x.to_vec().len());
             )*
         }
     );
@@ -72,7 +72,7 @@ macro_rules! test_garbage_exhaustive {
                 cp[0] = byte as u8;
                 assert_eq!(
                     <$ty>::strict_decode(&cp[..]).unwrap_err(),
-                    internet2::strict_encoding::Error::EnumValueNotKnown($err.to_string(), byte)
+                    ::strict_encoding::Error::EnumValueNotKnown($err.to_string(), byte)
                 );
             }
         )+}

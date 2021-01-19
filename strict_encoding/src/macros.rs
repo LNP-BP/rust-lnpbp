@@ -75,7 +75,7 @@ macro_rules! impl_enum_strict_encoding {
             }
         }
 
-        impl $crate::strict_encoding::StrictDecode for $type {
+        impl ::strict_encoding::StrictDecode for $type {
             #[inline]
             fn strict_decode<D: ::std::io::Read>(
                 d: D,

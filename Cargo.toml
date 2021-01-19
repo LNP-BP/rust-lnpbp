@@ -1,6 +1,6 @@
 [package]
 name = "lnpbp"
-version = "0.3.0-beta.1+1"
+version = "0.3.0-beta.1+5"
 license = "MIT"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 description = "LNP/BP Core Library implementing LNPBP specifications & standards"
@@ -64,11 +64,12 @@ lazy_static = "~1.4.0"
 # ========
 [features]
 default = []
-all = ["serde", "elgamal"]
+all = ["serde", "elgamal", "bulletproofs"]
 serde = ["serde_crate", "serde_with", "serde_with_macros", "amplify/serde",
          "bitcoin/use-serde", "bitcoin_hashes/serde", "miniscript/serde",
          "descriptor-wallet/serde"]
 elgamal = [] # Provides ElGamal encryption module from this library
+bulletproofs = ["client_side_validation/bulletproofs"]
 
 [workspace]
 members = [".", "strict_encoding", "strict_encoding/derive", "client_side_validation"]

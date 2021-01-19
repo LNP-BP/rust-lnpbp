@@ -17,6 +17,7 @@ jobs:
       matrix:
         feature:
           - elgamal
+          - bulletproofs
           - serde
     steps:
       - uses: actions/checkout@v2

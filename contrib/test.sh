@@ -4,7 +4,7 @@ AS_DEPENDENCY=true
 DO_LINT=true
 
 # Library components
-FEATURES="serde elgamal"
+FEATURES="serde elgamal bulletproofs"
 
 
 # Use toolchain if explicitly specified
