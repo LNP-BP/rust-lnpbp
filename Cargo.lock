@@ -358,6 +358,7 @@ dependencies = [
  "serde_with",
  "serde_with_macros",
  "strict_encoding 1.0.0-rc.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strict_encoding_derive 1.0.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

@@ -11,6 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+mod blind;
 mod error;
 pub mod lnpbp1;
 pub mod lnpbp2;
@@ -20,6 +21,7 @@ mod tx_graph;
 mod txout_seal;
 mod txout_witness;
 
+pub use blind::{OutpointHash, OutpointReveal};
 pub use error::Error;
 pub use tx_graph::{SpendingStatus, TxGraph};
 pub use txout_seal::{TxResolve, TxoutSeal};
