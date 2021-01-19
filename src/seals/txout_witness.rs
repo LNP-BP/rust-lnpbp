@@ -11,7 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use crate::bp::dbc::{Proof, TxCommitment};
+use crate::dbc::{Proof, TxCommitment};
 
 pub struct Witness(pub InnerWitness, pub OuterWitness);
 

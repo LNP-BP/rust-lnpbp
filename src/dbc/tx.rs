@@ -14,12 +14,12 @@
 use amplify::Wrapper;
 use bitcoin::hashes::{sha256, Hmac};
 use bitcoin::{secp256k1, Transaction, TxOut};
+use client_side_validation::commit_verify::EmbedCommitVerify;
 
 use super::{
     Container, Error, Proof, ScriptEncodeData, ScriptEncodeMethod,
     TxoutCommitment, TxoutContainer,
 };
-use crate::commit_verify::EmbedCommitVerify;
 
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
 #[display(Debug)]

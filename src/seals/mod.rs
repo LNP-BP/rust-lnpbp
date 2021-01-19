@@ -12,6 +12,10 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 mod error;
+pub mod lnpbp1;
+pub mod lnpbp2;
+pub mod lnpbp3;
+pub mod lnpbp4;
 mod tx_graph;
 mod txout_seal;
 mod txout_witness;

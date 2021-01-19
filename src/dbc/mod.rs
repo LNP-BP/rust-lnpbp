@@ -11,7 +11,6 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-pub mod digests;
 mod error;
 pub mod keyset;
 pub mod lockscript;

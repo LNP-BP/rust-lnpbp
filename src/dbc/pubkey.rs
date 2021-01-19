@@ -28,9 +28,9 @@
 
 use bitcoin::hashes::{sha256, Hmac};
 use bitcoin::secp256k1;
+use client_side_validation::commit_verify::EmbedCommitVerify;
 
 use super::{Container, Error, Proof};
-use crate::commit_verify::EmbedCommitVerify;
 use crate::lnpbp1;
 
 /// Container for LNPBP-1 commitments. In order to be constructed, commitment

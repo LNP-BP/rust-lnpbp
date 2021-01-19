@@ -35,7 +35,6 @@ pub trait Container: Sized {
 #[derive(
     Clone, PartialEq, Eq, Hash, Debug, Display, StrictEncode, StrictDecode,
 )]
-#[lnpbp_crate(crate)]
 #[display("proof({pubkey}, {source}")]
 pub struct Proof {
     pub pubkey: secp256k1::PublicKey,
@@ -44,7 +43,7 @@ pub struct Proof {
 
 impl DumbDefault for Proof {
     fn dumb_default() -> Self {
-        use crate::SECP256K1;
+        use wallet::SECP256K1;
         Proof {
             pubkey: secp256k1::PublicKey::from_secret_key(
                 &SECP256K1,

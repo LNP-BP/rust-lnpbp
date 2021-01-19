@@ -16,8 +16,7 @@
 
 use bitcoin::hashes::{sha256, Hash, HashEngine};
 use bitcoin::secp256k1;
-
-use crate::SECP256K1;
+use wallet::SECP256K1;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Display, Error, From)]
 #[display(Debug)]

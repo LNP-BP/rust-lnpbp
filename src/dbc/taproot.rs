@@ -13,10 +13,12 @@
 
 use bitcoin::hashes::{sha256, Hmac};
 use bitcoin::secp256k1;
+use client_side_validation::commit_verify::EmbedCommitVerify;
 
-use super::{Container, Error, Proof, PubkeyCommitment, ScriptEncodeData};
-use crate::bp::dbc::PubkeyContainer;
-use crate::commit_verify::EmbedCommitVerify;
+use super::{
+    Container, Error, Proof, PubkeyCommitment, PubkeyContainer,
+    ScriptEncodeData,
+};
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display)]
 #[display(Debug)]

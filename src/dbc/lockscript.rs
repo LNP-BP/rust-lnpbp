@@ -29,12 +29,12 @@ use std::collections::{BTreeSet, HashSet};
 use bitcoin::hashes::{hash160, sha256, Hmac};
 use bitcoin::secp256k1;
 use bitcoin::PubkeyHash;
+use client_side_validation::commit_verify::EmbedCommitVerify;
 use miniscript::Segwitv0;
+use wallet::LockScript;
 
 use super::{Container, Error, KeysetCommitment, Proof, ScriptEncodeData};
-use crate::bp::dbc::KeysetContainer;
-use crate::bp::scripts::*;
-use crate::commit_verify::EmbedCommitVerify;
+use crate::dbc::KeysetContainer;
 
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display)]
 #[display(Debug)]
@@ -242,14 +242,15 @@ where
 
 #[cfg(test)]
 mod test {
+    use std::str::FromStr;
+
     use bitcoin::hashes::{hash160, sha256, Hash};
     use bitcoin::secp256k1;
     use miniscript::{Miniscript, Segwitv0};
-    use std::str::FromStr;
+    use wallet::SECP256K1;
 
-    use super::super::Error;
     use super::*;
-    use crate::SECP256K1;
+    use crate::dbc::Error;
 
     macro_rules! ms_str {
         ($($arg:tt)*) => (Miniscript::<bitcoin::PublicKey, Segwitv0>::from_str_insane(&format!($($arg)*)).unwrap())

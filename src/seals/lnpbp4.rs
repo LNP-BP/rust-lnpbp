@@ -16,8 +16,7 @@ use std::collections::BTreeMap;
 use bitcoin::hashes::{sha256d, Hash, HashEngine};
 use bitcoin::secp256k1::rand::{thread_rng, Rng};
 use bitcoin::util::uint::Uint256;
-
-use crate::commit_verify::TryCommitVerify;
+use client_side_validation::commit_verify::TryCommitVerify;
 
 /// Source data for creation of multi-message commitments according to LNPBP-4
 /// procedure
@@ -40,7 +39,6 @@ pub struct TooManyMessagesError;
     StrictEncode,
     StrictDecode,
 )]
-#[lnpbp_crate(crate)]
 #[display(Debug)]
 pub struct MultimsgCommitmentItem {
     pub protocol: Option<ProtocolId>,
@@ -69,7 +67,6 @@ impl MultimsgCommitmentItem {
     StrictEncode,
     StrictDecode,
 )]
-#[lnpbp_crate(crate)]
 #[display(Debug)]
 pub struct MultimsgCommitment {
     pub commitments: Vec<MultimsgCommitmentItem>,

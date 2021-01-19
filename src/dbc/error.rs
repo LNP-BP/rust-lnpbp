@@ -11,7 +11,8 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use crate::bp;
+use wallet::descriptor;
+
 use crate::lnpbp1;
 
 /// Different error types which may happen during deterministic bitcoin
@@ -40,7 +41,7 @@ pub enum Error {
 
     /// Miniscript was unable to parse provided script data; they are either
     /// invalid or miniscript library contains a bug
-    #[from(crate::bp::scripts::PubkeyParseError)]
+    #[from(wallet::PubkeyParseError)]
     LockscriptParseError,
 
     /// Provided script contains no keys, so commitment or its verification is
@@ -66,17 +67,17 @@ pub enum Error {
     UncompressedKey,
 }
 
-impl From<bp::descriptor::Error> for Error {
-    fn from(err: bp::descriptor::Error) -> Self {
+impl From<descriptor::Error> for Error {
+    fn from(err: descriptor::Error) -> Self {
         match err {
-            bp::descriptor::Error::InvalidKeyData => Error::InvalidKeyData,
-            bp::descriptor::Error::UnsupportedWitnessVersion => {
+            descriptor::Error::InvalidKeyData => Error::InvalidKeyData,
+            descriptor::Error::UnsupportedWitnessVersion => {
                 Error::UnsupportedWitnessVersion
             }
-            bp::descriptor::Error::PolicyCompilation(err) => {
+            descriptor::Error::PolicyCompilation(err) => {
                 Error::PolicyCompilation(err)
             }
-            bp::descriptor::Error::UncompressedKeyInSegWitContext => {
+            descriptor::Error::UncompressedKeyInSegWitContext => {
                 Error::UncompressedKey
             }
         }

@@ -15,14 +15,14 @@ use amplify::Wrapper;
 use bitcoin::blockdata::script::Script;
 use bitcoin::hashes::{sha256, Hmac};
 use bitcoin::secp256k1;
+use client_side_validation::commit_verify::EmbedCommitVerify;
 use core::convert::TryFrom;
+use wallet::{descriptor, LockScript, PubkeyScript, ToPubkeyScript};
 
 use super::{
     Container, Error, LockscriptCommitment, LockscriptContainer, Proof,
     PubkeyCommitment, PubkeyContainer, TaprootCommitment, TaprootContainer,
 };
-use crate::bp::{descriptor, LockScript, PubkeyScript, ToPubkeyScript};
-use crate::commit_verify::EmbedCommitVerify;
 
 /// Enum defining how given `scriptPubkey` is constructed from the script data
 /// or a public key. It is similar to Bitcoin Core descriptors, however it does
@@ -53,7 +53,9 @@ pub enum ScriptEncodeMethod {
 /// Structure keeping the minimum of information (bytewise) required to verify
 /// deterministic bitcoin commitment given only the transaction source, its
 /// fee and protocol-specific constants. It is a part of the [`Proof`] data.
-#[derive(Clone, PartialEq, Eq, Hash, Debug, Display)]
+#[derive(
+    Clone, PartialEq, Eq, Hash, Debug, Display, StrictEncode, StrictDecode,
+)]
 #[display(doc_comments)]
 #[non_exhaustive]
 pub enum ScriptEncodeData {
@@ -93,81 +95,6 @@ pub struct SpkContainer {
     /// Tweaking factor stored after [ScriptPubkeyContainer::commit_verify]
     /// procedure
     pub tweaking_factor: Option<Hmac<sha256::Hash>>,
-}
-
-pub(super) mod strict_encoding {
-    use super::*;
-    use crate::strict_encoding::{Error, StrictDecode, StrictEncode};
-    use std::io;
-
-    #[derive(
-        Copy,
-        Clone,
-        PartialEq,
-        Eq,
-        PartialOrd,
-        Ord,
-        FromPrimitive,
-        ToPrimitive,
-        Debug,
-    )]
-    #[repr(u8)]
-    pub(in super::super) enum EncodingTag {
-        None = 0,
-        LockScript = 1,
-        Taproot = 2,
-    }
-    impl_enum_strict_encoding!(EncodingTag);
-
-    impl StrictEncode for ScriptEncodeData {
-        fn strict_encode<E: io::Write>(
-            &self,
-            mut e: E,
-        ) -> Result<usize, strict_encoding::Error> {
-            Ok(match self {
-                ScriptEncodeData::SinglePubkey => {
-                    EncodingTag::None.strict_encode(&mut e)?
-                }
-                ScriptEncodeData::LockScript(val) => {
-                    strict_encode_list!(e; EncodingTag::LockScript, val)
-                }
-                ScriptEncodeData::Taproot(val) => {
-                    strict_encode_list!(e; EncodingTag::Taproot, val)
-                }
-            })
-        }
-    }
-
-    impl StrictDecode for ScriptEncodeData {
-        fn strict_decode<D: io::Read>(
-            mut d: D,
-        ) -> Result<Self, strict_encoding::Error> {
-            let format = EncodingTag::strict_decode(&mut d)?;
-            Ok(match format {
-                EncodingTag::None => ScriptEncodeData::SinglePubkey,
-                EncodingTag::LockScript => ScriptEncodeData::LockScript(
-                    LockScript::strict_decode(&mut d)?,
-                ),
-                EncodingTag::Taproot => ScriptEncodeData::Taproot(
-                    sha256::Hash::strict_decode(&mut d)?,
-                ),
-            })
-        }
-    }
-
-    #[cfg(test)]
-    mod test {
-        use super::*;
-
-        #[test]
-        fn test_encoding_tag_exhaustive() {
-            test_enum_u8_exhaustive!(EncodingTag;
-                EncodingTag::None => 0,
-                EncodingTag::LockScript => 1,
-                EncodingTag::Taproot => 2
-            );
-        }
-    }
 }
 
 impl SpkContainer {
@@ -249,6 +176,7 @@ impl Container for SpkContainer {
             descriptor::Compact::Wpkh(_) => ScriptEncodeMethod::WPubkeyHash,
             descriptor::Compact::Wsh(_) => ScriptEncodeMethod::WScriptHash,
             descriptor::Compact::Taproot(_) => ScriptEncodeMethod::Taproot,
+            _ => unimplemented!(),
         };
         let proof = proof;
 

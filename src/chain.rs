@@ -19,7 +19,6 @@ use bitcoin::hashes::hex::{self, FromHex, ToHex};
 use bitcoin::hashes::{sha256d, Hash};
 use bitcoin::BlockHash;
 
-use crate::lightning_encoding;
 use crate::strict_encoding::{
     self, strict_deserialize, strict_serialize, StrictDecode, StrictEncode,
 };
@@ -190,9 +189,6 @@ hash_newtype!(
 );
 impl strict_encoding::Strategy for AssetId {
     type Strategy = strict_encoding::strategies::HashFixedBytes;
-}
-impl lightning_encoding::Strategy for AssetId {
-    type Strategy = lightning_encoding::strategies::AsBitcoinHash;
 }
 
 impl From<BlockHash> for AssetId {
@@ -389,8 +385,8 @@ lazy_static! {
     Debug,
     Display,
     Hash,
-    FromPrimitive,
-    ToPrimitive,
+    StrictEncode,
+    StrictDecode,
 )]
 #[display(Debug)]
 #[cfg_attr(
@@ -406,7 +402,6 @@ pub enum ChainFormat {
     /// Confidential transactions format
     Elements = 1,
 }
-impl_enum_strict_encoding!(ChainFormat);
 
 /// Layers on which a given asset can operate
 #[derive(
@@ -419,8 +414,8 @@ impl_enum_strict_encoding!(ChainFormat);
     Debug,
     Display,
     Hash,
-    FromPrimitive,
-    ToPrimitive,
+    StrictEncode,
+    StrictDecode,
 )]
 #[display(Debug)]
 #[cfg_attr(
@@ -439,7 +434,6 @@ pub enum AssetLayer {
     /// RGB), but also can be used on top of payment/state channels
     Layer2and3 = 2,
 }
-impl_enum_strict_encoding!(AssetLayer);
 
 #[derive(
     Clone,
@@ -451,8 +445,8 @@ impl_enum_strict_encoding!(AssetLayer);
     Debug,
     Display,
     Hash,
-    FromPrimitive,
-    ToPrimitive,
+    StrictEncode,
+    StrictDecode,
 )]
 #[cfg_attr(
     feature = "serde",
@@ -472,7 +466,6 @@ pub enum AssetSystem {
     /// RGB confidential assets
     RgbContract = 2,
 }
-impl_enum_strict_encoding!(AssetSystem);
 
 /// Parameters for a given asset, which are shared between different types of
 /// Layer 1, 2 and 3 assets.
@@ -565,7 +558,6 @@ impl StrictDecode for AssetParams {
     serde(crate = "serde_crate")
 )]
 #[display(Debug)]
-#[lnpbp_crate(crate)]
 pub struct ChainParams {
     /// Hash of the genesis block, uniquely defining chain
     pub genesis_hash: BlockHash,

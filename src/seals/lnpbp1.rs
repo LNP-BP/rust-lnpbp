@@ -15,8 +15,7 @@ use std::collections::BTreeSet;
 
 use bitcoin::hashes::{sha256, Hash, HashEngine, Hmac, HmacEngine};
 use bitcoin::secp256k1;
-
-use crate::SECP256K1;
+use wallet::SECP256K1;
 
 lazy_static! {
     /// Single SHA256 hash of "LNPBP1" string according to LNPBP-1 acting as a

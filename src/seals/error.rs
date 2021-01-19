@@ -11,7 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use crate::bp::dbc;
+use crate::dbc;
 
 #[derive(Clone, PartialEq, Debug, Display, From, Error)]
 #[display(doc_comments)]

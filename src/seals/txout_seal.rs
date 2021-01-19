@@ -13,12 +13,11 @@
 
 use amplify::Wrapper;
 use bitcoin::{OutPoint, Transaction};
+use client_side_validation::commit_verify::EmbedCommitVerify;
+use client_side_validation::single_use_seals::{Message, SingleUseSeal};
 
-use super::{Error, SpendingStatus, TxGraph, Witness};
-use crate::bp::dbc::{Container, TxCommitment, TxContainer, TxSupplement};
-use crate::bp::ShortId;
-use crate::commit_verify::EmbedCommitVerify;
-use crate::single_use_seals::{Message, SealMedium, SealStatus, SingleUseSeal};
+use super::{Error, Witness};
+use crate::dbc::{Container, TxCommitment, TxContainer, TxSupplement};
 
 pub struct TxoutSeal<'a, RESOLVER>
 where
@@ -32,7 +31,7 @@ impl<'a, RESOLVER> TxoutSeal<'a, RESOLVER>
 where
     RESOLVER: TxResolve,
 {
-    fn new(seal_definition: OutPoint, resolver: &'a RESOLVER) -> Self {
+    pub fn new(seal_definition: OutPoint, resolver: &'a RESOLVER) -> Self {
         Self {
             seal_definition,
             resolver,
@@ -80,6 +79,7 @@ where
     }
 }
 
+/*
 impl<'a, TXGRAPH> SealMedium<'a, TxoutSeal<'a, TXGRAPH>> for TXGRAPH
 where
     TXGRAPH: TxGraph + TxResolve,
@@ -122,6 +122,7 @@ where
 
     // TODO: Implement publication-related methods
 }
+ */
 
 pub trait TxResolve {
     type Error: std::error::Error;
