@@ -29,8 +29,6 @@ extern crate amplify;
 #[macro_use]
 extern crate amplify_derive;
 #[macro_use]
-extern crate strict_encoding;
-#[macro_use]
 extern crate lazy_static;
 
 #[cfg(feature = "serde")]
@@ -41,6 +39,15 @@ extern crate serde_crate as serde;
 
 #[macro_use]
 extern crate bitcoin_hashes;
+
+pub extern crate client_side_validation;
+pub use client_side_validation::commit_encode_list;
+#[macro_use]
+pub extern crate strict_encoding;
+pub use strict_encoding::{
+    strict_decode_self, strict_encode_list, test_encode,
+    test_enum_u8_exhaustive, test_garbage_exhaustive,
+};
 
 pub mod chain;
 pub mod dbc;
