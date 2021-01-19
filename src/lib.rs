@@ -65,8 +65,8 @@ pub use tagged_hash::TaggedHash;
 
 #[cfg(test)]
 pub mod test {
-    use crate::SECP256K1;
     use bitcoin::secp256k1;
+    use wallet::SECP256K1;
 
     pub fn gen_secp_pubkeys(n: usize) -> Vec<secp256k1::PublicKey> {
         let mut ret = Vec::with_capacity(n);

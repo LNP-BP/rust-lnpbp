@@ -132,12 +132,14 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::bp::dbc::pubkey::*;
-    use crate::bp::test::*;
-    use crate::commit_verify::test::*;
+    use crate::dbc::pubkey::*;
+    use crate::test::gen_secp_pubkeys;
     use amplify::Wrapper;
     use bitcoin::hashes::{hex::ToHex, sha256, Hash};
     use bitcoin::secp256k1;
+    use client_side_validation::commit_verify::test_helpers::{
+        embed_commit_verify_suite, gen_messages,
+    };
     use std::iter::FromIterator;
     use std::str::FromStr;
 

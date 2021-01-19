@@ -218,8 +218,8 @@ mod test {
     use std::str::FromStr;
 
     use super::*;
-    use crate::bp::test::*;
-    use crate::paradigms::commit_verify::test::*;
+    use crate::test::*;
+    use client_side_validation::commit_verify::test_helpers::*;
 
     #[test]
     fn test_lnpbp1_tag() {

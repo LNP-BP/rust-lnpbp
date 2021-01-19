@@ -155,7 +155,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::bp::dbc::{ScriptEncodeData, ScriptEncodeMethod, SpkContainer};
+    use crate::dbc::{ScriptEncodeData, ScriptEncodeMethod, SpkContainer};
     use bitcoin::consensus::encode::deserialize;
     use bitcoin::hashes::hex::FromHex;
     use std::str::FromStr;

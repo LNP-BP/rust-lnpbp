@@ -131,18 +131,6 @@ dependencies = [
 
 [[package]]
 name = "client_side_validation"
-version = "1.0.0-rc.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc54cd31c720c00385a36ee2fe817fede66958e349f582e3354980503d75248a"
-dependencies = [
- "amplify",
- "amplify_derive",
- "bitcoin_hashes",
- "strict_encoding 1.0.0-rc.3 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "client_side_validation"
 version = "1.0.0-rc.2"
 dependencies = [
  "amplify",
@@ -362,7 +350,7 @@ dependencies = [
  "amplify_derive",
  "bitcoin",
  "bitcoin_hashes",
- "client_side_validation 1.0.0-rc.1",
+ "client_side_validation",
  "descriptor-wallet",
  "lazy_static",
  "miniscript",

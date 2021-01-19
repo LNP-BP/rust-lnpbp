@@ -100,7 +100,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::commit_verify::test::*;
+    use crate::commit_verify::test_helpers::*;
     use bitcoin_hashes::*;
 
     #[test]

@@ -47,7 +47,7 @@ pub mod commit_verify;
 mod digests;
 pub mod single_use_seals;
 
-pub use client_side_validation::{
+pub use crate::client_side_validation::{
     commit_strategy, merklize, CommitEncode, CommitEncodeWithStrategy, Conceal,
     ConsensusCommit, MerkleNode,
 };

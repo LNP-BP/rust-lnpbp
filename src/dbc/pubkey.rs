@@ -125,11 +125,11 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::bp::test::*;
-    use crate::commit_verify::test::*;
+    use crate::test::*;
     use amplify::Wrapper;
     use bitcoin::hashes::{hex::ToHex, sha256, Hash};
     use bitcoin::secp256k1;
+    use client_side_validation::commit_verify::test_helpers::*;
     use std::str::FromStr;
 
     #[test]

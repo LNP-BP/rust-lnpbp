@@ -117,50 +117,16 @@ where
     }
 }
 
-#[cfg(test)]
-pub(crate) mod test {
+pub mod test_helpers {
     use super::*;
-    use bitcoin_hashes::{hex::FromHex, sha256d};
+    use bitcoin_hashes::hex::FromHex;
     use core::fmt::Debug;
     use core::hash::Hash;
     use std::collections::HashSet;
 
-    #[derive(Debug, Display, Error)]
-    #[display(Debug)]
-    struct Error;
-    #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-    struct DummyHashCommitment(sha256d::Hash);
-    impl<T> CommitVerify<T> for DummyHashCommitment
-    where
-        T: AsRef<[u8]>,
-    {
-        fn commit(msg: &T) -> Self {
-            Self(bitcoin_hashes::Hash::hash(msg.as_ref()))
-        }
-    }
-
-    #[derive(Clone, PartialEq, Eq, Debug, Hash)]
-    struct DummyVec(Vec<u8>);
-    impl<T> EmbedCommitVerify<T> for DummyVec
-    where
-        T: AsRef<[u8]>,
-    {
-        type Container = DummyVec;
-        type Error = Error;
-
-        fn embed_commit(
-            container: &mut Self::Container,
-            msg: &T,
-        ) -> Result<Self, Self::Error> {
-            let mut result = container.0.clone();
-            result.extend(msg.as_ref());
-            Ok(DummyVec(result))
-        }
-    }
-
     /// All of these messages MUST produce different commitments, otherwise the
     /// commitment algorithm is not collision-resistant
-    pub(crate) fn gen_messages() -> Vec<Vec<u8>> {
+    pub fn gen_messages() -> Vec<Vec<u8>> {
         vec![
             // empty message
             b"".to_vec(),
@@ -187,7 +153,7 @@ pub(crate) mod test {
         ]
     }
 
-    pub(crate) fn commit_verify_suite<MSG, CMT>(messages: Vec<MSG>)
+    pub fn commit_verify_suite<MSG, CMT>(messages: Vec<MSG>)
     where
         MSG: AsRef<[u8]> + Eq,
         CMT: CommitVerify<MSG> + Eq + Hash + Debug,
@@ -226,7 +192,7 @@ pub(crate) mod test {
         );
     }
 
-    pub(crate) fn embed_commit_verify_suite<MSG, CMT>(
+    pub fn embed_commit_verify_suite<MSG, CMT>(
         messages: Vec<MSG>,
         container: &mut CMT::Container,
     ) where
@@ -271,6 +237,48 @@ pub(crate) mod test {
                 acc
             },
         );
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::test_helpers::*;
+    use super::*;
+    use bitcoin_hashes::sha256d;
+    use core::fmt::Debug;
+    use core::hash::Hash;
+
+    #[derive(Debug, Display, Error)]
+    #[display(Debug)]
+    struct Error;
+    #[derive(Clone, PartialEq, Eq, Debug, Hash)]
+    struct DummyHashCommitment(sha256d::Hash);
+    impl<T> CommitVerify<T> for DummyHashCommitment
+    where
+        T: AsRef<[u8]>,
+    {
+        fn commit(msg: &T) -> Self {
+            Self(bitcoin_hashes::Hash::hash(msg.as_ref()))
+        }
+    }
+
+    #[derive(Clone, PartialEq, Eq, Debug, Hash)]
+    struct DummyVec(Vec<u8>);
+    impl<T> EmbedCommitVerify<T> for DummyVec
+    where
+        T: AsRef<[u8]>,
+    {
+        type Container = DummyVec;
+        type Error = Error;
+
+        fn embed_commit(
+            container: &mut Self::Container,
+            msg: &T,
+        ) -> Result<Self, Self::Error> {
+            let mut result = container.0.clone();
+            result.extend(msg.as_ref());
+            Ok(DummyVec(result))
+        }
     }
 
     #[test]
