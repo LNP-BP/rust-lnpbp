@@ -63,7 +63,7 @@ macro_rules! impl_enum_strict_encoding {
             fn strict_encode<E: ::std::io::Write>(
                 &self,
                 e: E,
-            ) -> Result<usize, $crate::strict_encoding::Error> {
+            ) -> Result<usize, ::strict_encoding::Error> {
                 use ::num_traits::ToPrimitive;
 
                 match self.to_u8() {
@@ -82,7 +82,7 @@ macro_rules! impl_enum_strict_encoding {
             ) -> Result<Self, ::strict_encoding::Error> {
                 use ::num_traits::FromPrimitive;
 
-                let value = ::std::u8::strict_decode(d)?;
+                let value = u8::strict_decode(d)?;
                 match Self::from_u8(value) {
                     Some(result) => Ok(result),
                     None => Err(::strict_encoding::Error::EnumValueNotKnown(

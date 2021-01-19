@@ -36,7 +36,7 @@ crate-type = ["rlib", "staticlib"]
 # -----------------------------------------
 amplify = { version = "3", features = ["stringly_conversions"] }
 amplify_derive = "2.4.3"
-strict_encoding = { version = "1.0.0-rc.5", features = ["miniscript"] }
+strict_encoding = { version = "1.0.0-rc.6", features = ["miniscript"] }
 strict_encoding_derive = "1.0.0-rc.1"
 client_side_validation = { version = "1.0.0-rc.2", path = "client_side_validation" }
 # Dependencies on core rust-bitcoin ecosystem projects
@@ -46,7 +46,7 @@ bitcoin_hashes = "~0.9.4" # we need macro from here
 # <https://github.com/LNP-BP/LNPBPs/blob/master/lnpbp-0002.md#deterministic-public-key-extraction-from-bitcoin-script>
 # We have to fix version of miniscript as required by LNPBP-2 specification
 miniscript = { version = "=5.0.0", features = ["compiler"] }
-descriptor-wallet = "~0.3.0-rc.2"
+descriptor-wallet = "~0.3.0-rc.3"
 # Serialization
 # -------------
 # This strange naming is a workaround for cargo inability to define required
