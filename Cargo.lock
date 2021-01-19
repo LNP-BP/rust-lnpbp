@@ -137,7 +137,7 @@ dependencies = [
  "amplify_derive",
  "bitcoin_hashes",
  "grin_secp256k1zkp",
- "strict_encoding 1.0.0-rc.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strict_encoding 1.0.0-rc.6+3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -205,7 +205,7 @@ dependencies = [
 
 [[package]]
 name = "descriptor-wallet"
-version = "0.3.0-rc.3"
+version = "0.3.0-rc.3+1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d50086c75274e19503e1a4566d425ecfb0a333d2aba74fe7e640b66f750305fa"
 dependencies = [
@@ -217,7 +217,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_with",
- "strict_encoding 1.0.0-rc.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strict_encoding 1.0.0-rc.6+3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -358,7 +358,7 @@ dependencies = [
  "serde",
  "serde_with",
  "serde_with_macros",
- "strict_encoding 1.0.0-rc.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strict_encoding 1.0.0-rc.6+3 (registry+https://github.com/rust-lang/crates.io-index)",
  "strict_encoding_derive 1.0.0-rc.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -684,18 +684,18 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.119"
+version = "1.0.120"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9bdd36f49e35b61d49efd8aa7fc068fd295961fd2286d0b2ee9a4c7a14e99cc3"
+checksum = "166b2349061381baf54a58e4b13c89369feb0ef2eaa57198899e2312aac30aab"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.119"
+version = "1.0.120"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "552954ce79a059ddd5fd68c271592374bd15cab2274970380c000118aeffe1cd"
+checksum = "0ca2a8cb5805ce9e3b95435e3765b7b553cecc762d938d409434338386cb5775"
 dependencies = [
  "proc-macro2 1.0.24",
  "quote 1.0.8",
@@ -793,9 +793,9 @@ dependencies = [
 
 [[package]]
 name = "strict_encoding"
-version = "1.0.0-rc.6"
+version = "1.0.0-rc.6+3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a93d1c502031b45fc99153227f54e8249db90b596b260fd4735eb782e506642c"
+checksum = "efb715a50ecf1a813f5711aeaf054fdff6557acbdcb0468c642bb4327ea10ba1"
 dependencies = [
  "amplify",
  "amplify_derive",

@@ -34,6 +34,7 @@ pub type RawUniformAddr = [u8; UNIFORM_LEN];
     Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display, Error,
 )]
 #[display(doc_comments)]
+#[non_exhaustive]
 pub enum DecodeError {
     /// Unknown network address format
     UnknownAddrFormat,
@@ -65,6 +66,7 @@ pub enum DecodeError {
 
 #[derive(Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
 #[repr(u8)]
+#[non_exhaustive]
 pub enum AddrFormat {
     #[display("ipv4")]
     IpV4 = 0,
@@ -84,6 +86,7 @@ pub enum AddrFormat {
 
 #[derive(Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
 #[repr(u8)]
+#[non_exhaustive]
 pub enum Transport {
     /// Normal TCP
     #[display("tcp")]
