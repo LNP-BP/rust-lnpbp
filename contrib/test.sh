@@ -3,26 +3,8 @@
 AS_DEPENDENCY=true
 DO_LINT=true
 
-# Library components, one by one
-FEATURES="rgb lnp"
-# ... and used together
-FEATURES="${FEATURES} rgb,lnp"
-# Cryptographic optionals
-FEATURES="${FEATURES} keygen bulletproofs elgamal"
-# Core rust optionals
-FEATURES="${FEATURES} serde tokio async"
-# Networking
-FEATURES="${FEATURES} tor url websockets"
-FEATURES="${FEATURES} tor,url"
-# Full LNP strength, but without Serde
-FEATURES="${FEATURES} lnp,websockets,url,tokio,async,keygen"
-# Full library strength, but without Serde
-FEATURES="${FEATURES} rgb,lnp,tokio,websockets,url,async,keygen"
-
-if [ "$DO_COV" = true ]
-then
-    export RUSTFLAGS="-C link-dead-code"
-fi
+# Library components
+FEATURES="serde elgamal"
 
 
 # Use toolchain if explicitly specified
@@ -39,12 +21,6 @@ cargo check --verbose --no-default-features --all-targets --workspace
 for feature in ${FEATURES}
 do
     cargo check --verbose --features="$feature" --all-targets
-done
-
-# Check that we can build services with different features
-for feature in "server client embedded cli server,serde client,serde"
-do
-    cargo check --manifest-path services/Cargo.toml --verbose --features="$feature"
 done
 
 # Fuzz if told to

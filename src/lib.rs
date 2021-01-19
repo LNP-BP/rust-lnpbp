@@ -23,9 +23,6 @@
     //missing_docs
 )]
 // TODO: when we will be ready for the release #![deny(missing_docs)]
-// This is required because of incomplete rust async implementation and can be
-// removed after async trait feature completion in rust compiler
-#![cfg_attr(feature = "async", allow(where_clauses_object_safety))]
 
 #[macro_use]
 extern crate amplify;
@@ -33,15 +30,6 @@ extern crate amplify;
 extern crate amplify_derive;
 #[macro_use]
 extern crate lazy_static;
-#[macro_use]
-extern crate num_derive;
-
-extern crate chacha20poly1305;
-
-// Support for node & node clients development (include API helpers)
-#[cfg(feature = "async")]
-#[macro_use]
-extern crate async_trait;
 
 #[cfg(feature = "serde")]
 #[macro_use]
@@ -49,46 +37,61 @@ extern crate serde_with;
 #[cfg(feature = "serde")]
 extern crate serde_crate as serde;
 
-// Bitcoin-specific imports. We make them public while we use custom versions
-// of the libs so downstream dependencies can use them directly from this lib
-// TODO: Refactor re-exported bitcoin and hashes functionality
-pub extern crate bitcoin;
-pub use bitcoin::secp256k1;
 #[macro_use]
-pub extern crate bitcoin_hashes as hashes;
-pub use hashes::hex;
-pub extern crate miniscript;
-#[cfg(feature = "grin_secp256k1zkp")]
-pub extern crate secp256k1zkp;
+extern crate bitcoin_hashes;
 
+pub extern crate client_side_validation;
+pub use client_side_validation::commit_encode_list;
 #[macro_use]
-extern crate lnpbp_derive;
-
-#[macro_use]
-mod paradigms;
-mod standards;
-#[macro_use]
-pub mod bp;
-#[cfg(feature = "lnp")]
-#[allow(dead_code, unused_variables)]
-// TODO: Remove attribute once LNP mod will be finalized
-pub mod lnp;
-#[cfg(feature = "rgb")]
-pub mod rgb;
-
-pub use lnp::presentation::encoding as lightning_encoding;
-pub use paradigms::{
-    client_side_validation, commit_verify, single_use_seals, strict_encoding,
+pub extern crate strict_encoding;
+pub use strict_encoding::{
+    strict_decode_self, strict_encode_list, test_encode,
+    test_enum_u8_exhaustive, test_garbage_exhaustive,
 };
+
+pub mod chain;
+pub mod dbc;
 #[cfg(feature = "elgamal")]
-pub use standards::elgamal;
-pub use standards::{features, lnpbp1, lnpbp2, lnpbp3, lnpbp4};
+pub mod elgamal;
+pub mod seals;
+pub mod short_id;
+pub mod tagged_hash;
 
-lazy_static! {
-    /// Global Secp256k1 context object
-    pub static ref SECP256K1: bitcoin::secp256k1::Secp256k1<bitcoin::secp256k1::All> =
-        bitcoin::secp256k1::Secp256k1::new();
+pub use chain::{Chain, P2pNetworkId};
+pub use seals::TxoutSeal;
+pub use seals::{lnpbp1, lnpbp2, lnpbp3, lnpbp4};
+pub use short_id::ShortId;
+pub use tagged_hash::TaggedHash;
 
-    pub static ref SECP256K1_PUBKEY_DUMB: bitcoin::secp256k1::PublicKey =
-        bitcoin::secp256k1::PublicKey::from_secret_key(&SECP256K1, &bitcoin::secp256k1::key::ONE_KEY);
+#[cfg(test)]
+pub mod test {
+    use bitcoin::secp256k1;
+    use wallet::SECP256K1;
+
+    pub fn gen_secp_pubkeys(n: usize) -> Vec<secp256k1::PublicKey> {
+        let mut ret = Vec::with_capacity(n);
+        let mut sk = [0; 32];
+
+        for i in 1..n + 1 {
+            sk[0] = i as u8;
+            sk[1] = (i >> 8) as u8;
+            sk[2] = (i >> 16) as u8;
+
+            ret.push(secp256k1::PublicKey::from_secret_key(
+                &SECP256K1,
+                &secp256k1::SecretKey::from_slice(&sk[..]).unwrap(),
+            ));
+        }
+        ret
+    }
+
+    pub fn gen_bitcoin_pubkeys(
+        n: usize,
+        compressed: bool,
+    ) -> Vec<bitcoin::PublicKey> {
+        gen_secp_pubkeys(n)
+            .into_iter()
+            .map(|key| bitcoin::PublicKey { key, compressed })
+            .collect()
+    }
 }

@@ -1,6 +1,7 @@
 # This is an add-on that must be added to any dependency using this library
 
 lnpbp = { path = "..", features = ["all"] }
-lnpbp_derive = { path = "../derive" }
+strict_encoding = { path = "../strict_encoding", features = ["all"] }
+client_side_validation = { path = "../client_side_validation" }
 
 [workspace]
