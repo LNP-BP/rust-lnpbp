@@ -1,22 +1,22 @@
 Change Log
 ==========
 
-v0.3.0-alpha.3
---------------
-- Internet2, LNP Core, Descriptor Wallet crates externalized and removed from
-  this repository
+v0.3.0
+------
+- RGB Core Library is extracted and externalized from LNP/BP Core Library to
+  <https://github.com/rgb-org/rgb-core>
+- LNP Core Library is extracted and externalized from LNP/BP Core Library
+  <https://github.com/LNP-BP/lnb-core>
+- Internet2 repo & crates are extracted & externalized from LNP/BP Core Library
+  <https://github.com/internet-org/rust-internet2>
+- Bitcoin descriptors wallet repo & crates are extracted & externalized from 
+  LNP/BP Core Library to <https://github.com/LNP-BP/descriptor-wallet>
 - Repository split into multiple crates (lnpbp, client_side_validation, 
-  strict_encoding)
-
-v0.3.0-alpha.2
---------------
-- RGB Core Library is extracted and externalized from LNP/BP Core Library
-
-v0.3.0-alpha.1
---------------
+  strict_encoding, strict_encoding_derive)
 - Serde encoding fixes (proper use of `serde_as` for wrapped types)
-- BIP32 & descriptor enhancements
-- Miniscript 4.0 migration
+- Miniscript 4.0 & bitcoin 0.26 migration
+- Refactored unified network address format & encodings (inside strict_encoding)
+- Refactored deterministic bitcoin commitments (LNPBP-4)
 
 v0.2.1, v0.2.2
 --------------

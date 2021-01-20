@@ -1,6 +1,6 @@
 [package]
 name = "client_side_validation"
-version = "1.0.0-rc.2+1"
+version = "0.3.0"
 license = "Apache-2.0"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 description = "Client-side validation library"
@@ -20,7 +20,7 @@ crate-type = ["dylib", "rlib", "staticlib"]
 [dependencies]
 amplify = "3"
 amplify_derive = "2.4.3"
-strict_encoding = { version = "1.0.0-rc.3", features = [] }
+strict_encoding = { version = "1", features = [] }
 bitcoin_hashes = "0.9"
 grin_secp256k1zkp = { version = "0.7", optional = true }
 

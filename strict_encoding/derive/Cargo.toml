@@ -1,6 +1,6 @@
 [package]
 name = "strict_encoding_derive"
-version = "1.0.0-rc.1"
+version = "1.0.0"
 license = "Apache-2.0"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 description = "Strict encoding derivation macro"

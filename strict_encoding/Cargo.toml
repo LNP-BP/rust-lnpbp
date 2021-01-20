@@ -1,6 +1,6 @@
 [package]
 name = "strict_encoding"
-version = "1.0.0-rc.6+3"
+version = "1.0.1"
 license = "Apache-2.0"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 description = "Strict encoding: deterministic binary serialization for networking & client-side validation"
@@ -15,12 +15,12 @@ exclude = ["derive"]
 [lib]
 name = "strict_encoding"
 path = "src/lib.rs"
-crate-type = ["dylib", "rlib", "staticlib"]
+crate-type = ["rlib", "staticlib"]
 
 [dependencies]
 amplify = "3"
 amplify_derive = "2.4.3"
-strict_encoding_derive = { version = "1.0.0-rc.1", path = "./derive", optional = true }
+strict_encoding_derive = { version = "1", optional = true }
 bitcoin = "0.26" # TODO: Replace on bitcoin encoding crate with 0.27 release
 miniscript = { version = "5", optional = true }
 ed25519-dalek = { version = "1", optional = true }
