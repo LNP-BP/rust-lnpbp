@@ -23,9 +23,9 @@ use crate::{strategies, Error, Strategy, StrictDecode, StrictEncode};
 
 pub const ADDR_LEN: usize = 33; // Maximum Tor public key size
 pub const UNIFORM_LEN: usize = ADDR_LEN
-    + 1  // Tag byte for specifying address format (IP, Onion, etc)
-    + 2  // Tag byte for specifying port number
-    + 1; // Tag byte for specifying transport-level protocol (TCP, UDP, ...)
+    + 1  // Prefix byte for specifying address format (IP, Onion, etc)
+    + 2  // Suffix byte for specifying port number
+    + 1; // Suffix byte for specifying transport-level protocol (TCP, UDP, ...)
 
 pub type RawAddr = [u8; ADDR_LEN];
 pub type RawUniformAddr = [u8; UNIFORM_LEN];
@@ -211,8 +211,8 @@ impl From<UniformAddr> for RawUniformAddr {
         raw[0] = addr.addr_format as u8;
         raw[1..ADDR_LEN + 1].copy_from_slice(&addr.addr);
         if let Some(port) = addr.port {
-            raw[ADDR_LEN + 2] = (port >> 8) as u8;
-            raw[ADDR_LEN + 3] = (port & 0xFF) as u8;
+            raw[ADDR_LEN + 1] = (port >> 8) as u8;
+            raw[ADDR_LEN + 2] = (port & 0xFF) as u8;
         }
         if let Some(transport) = addr.transport {
             raw[UNIFORM_LEN - 1] = transport as u8;
@@ -249,7 +249,8 @@ impl TryFrom<RawUniformAddr> for UniformAddr {
         {
             return Err(DecodeError::InvalidAddr);
         }
-        let port = (raw[ADDR_LEN + 1] as u16) << 8 + raw[ADDR_LEN + 2] as u16;
+        let port = (((raw[ADDR_LEN + 1] as u16) & 0x00FF) << 8)
+            + raw[ADDR_LEN + 2] as u16;
         let port = if port == 0 { None } else { Some(port) };
         let transport = match raw[UNIFORM_LEN - 1] {
             0 => None,
@@ -332,7 +333,7 @@ impl Uniform for Ipv4Addr {
     #[inline]
     fn addr(&self) -> RawAddr {
         let mut ip = [0u8; ADDR_LEN];
-        ip.copy_from_slice(&self.octets()[29..]);
+        ip[29..].copy_from_slice(&self.octets());
         ip
     }
 
@@ -377,7 +378,7 @@ impl Uniform for Ipv6Addr {
     #[inline]
     fn addr(&self) -> RawAddr {
         let mut ip = [0u8; ADDR_LEN];
-        ip.copy_from_slice(&self.octets()[17..]);
+        ip[17..].copy_from_slice(&self.octets());
         ip
     }
 
@@ -481,7 +482,7 @@ impl Uniform for SocketAddrV4 {
     #[inline]
     fn addr(&self) -> RawAddr {
         let mut ip = [0u8; ADDR_LEN];
-        ip.copy_from_slice(&self.ip().octets()[29..]);
+        ip[29..].copy_from_slice(&self.ip().octets());
         ip
     }
 
@@ -530,7 +531,7 @@ impl Uniform for SocketAddrV6 {
     #[inline]
     fn addr(&self) -> RawAddr {
         let mut ip = [0u8; ADDR_LEN];
-        ip.copy_from_slice(&self.ip().octets()[17..]);
+        ip[17..].copy_from_slice(&self.ip().octets());
         ip
     }
 
@@ -626,4 +627,191 @@ impl Strategy for SocketAddrV4 {
 
 impl Strategy for SocketAddrV6 {
     type Strategy = strategies::UsingUniformAddr;
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::convert::TryInto;
+
+    fn gen_ipv4_addrs() -> Vec<Ipv4Addr> {
+        let vars = [0u8, 1, 32, 48, 64, 127, 168, 192, 254, 255];
+        let mut addrs = Vec::<Ipv4Addr>::with_capacity(vars.len().pow(4));
+        for v1 in &vars {
+            for v2 in &vars {
+                for v3 in &vars {
+                    for v4 in &vars {
+                        addrs.push(Ipv4Addr::new(*v1, *v2, *v3, *v4));
+                    }
+                }
+            }
+        }
+        addrs
+    }
+
+    fn gen_ipv6_addrs() -> Vec<Ipv6Addr> {
+        let vars = [0u16, 1, 127, 256, std::u16::MAX];
+        let ipv4 = gen_ipv4_addrs();
+        let mut addrs = Vec::<Ipv6Addr>::with_capacity(
+            vars.len().pow(5) * 4 + ipv4.len() * 2,
+        );
+        addrs.extend(ipv4.iter().map(|ip| ip.to_ipv6_compatible()));
+        addrs.extend(ipv4.iter().map(|ip| ip.to_ipv6_mapped()));
+        for v1 in &vars {
+            for v2 in &vars {
+                for v3 in &vars {
+                    for v4 in &vars {
+                        for v5 in &vars {
+                            addrs.push(Ipv6Addr::new(
+                                *v1, 0, 0, 0, *v2, *v3, *v4, *v5,
+                            ));
+                            addrs.push(Ipv6Addr::new(
+                                *v1, 0, 0, *v2, 0, *v3, *v4, *v5,
+                            ));
+                            addrs.push(Ipv6Addr::new(
+                                *v1, *v2, *v3, 0, 0, 0, *v4, *v5,
+                            ));
+                            addrs.push(Ipv6Addr::new(
+                                0x2001, *v1, 0xff0e, 0x890a, *v2, *v3, *v4, *v5,
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+        addrs
+    }
+
+    #[test]
+    fn uniform_raw_roundtrip_ipv4() {
+        for ip in gen_ipv4_addrs() {
+            let uniform = UniformAddr {
+                addr_format: AddrFormat::IpV4,
+                addr: ip.addr(),
+                port: None,
+                transport: None,
+            };
+            println!("{}", ip);
+            let raw = uniform.to_raw_uniform();
+            assert_eq!(uniform, raw.try_into().unwrap());
+
+            let uniform = UniformAddr {
+                addr_format: AddrFormat::IpV4,
+                addr: ip.addr(),
+                port: Some(6432),
+                transport: None,
+            };
+            println!("{}:6432", ip);
+            let raw = uniform.to_raw_uniform();
+            assert_eq!(uniform, raw.try_into().unwrap());
+
+            let uniform = UniformAddr {
+                addr_format: AddrFormat::IpV4,
+                addr: ip.addr(),
+                port: None,
+                transport: Some(Transport::Tcp),
+            };
+            println!("tcp://{}", ip);
+            let raw = uniform.to_raw_uniform();
+            assert_eq!(uniform, raw.try_into().unwrap());
+
+            let uniform = UniformAddr {
+                addr_format: AddrFormat::IpV4,
+                addr: ip.addr(),
+                port: Some(32),
+                transport: Some(Transport::Udp),
+            };
+            println!("udp://{}:32", ip);
+            let raw = uniform.to_raw_uniform();
+            assert_eq!(uniform, raw.try_into().unwrap());
+        }
+    }
+
+    #[test]
+    fn uniform_raw_roundtrip_ipv6() {
+        for ip in gen_ipv6_addrs() {
+            let uniform = UniformAddr {
+                addr_format: AddrFormat::IpV6,
+                addr: ip.addr(),
+                port: None,
+                transport: None,
+            };
+            println!("{}", ip);
+            let raw = uniform.to_raw_uniform();
+            assert_eq!(uniform, raw.try_into().unwrap());
+
+            let uniform = UniformAddr {
+                addr_format: AddrFormat::IpV6,
+                addr: ip.addr(),
+                port: Some(6432),
+                transport: None,
+            };
+            println!("{}:6432", ip);
+            let raw = uniform.to_raw_uniform();
+            assert_eq!(uniform, raw.try_into().unwrap());
+
+            let uniform = UniformAddr {
+                addr_format: AddrFormat::IpV6,
+                addr: ip.addr(),
+                port: None,
+                transport: Some(Transport::Tcp),
+            };
+            println!("tcp://{}", ip);
+            let raw = uniform.to_raw_uniform();
+            assert_eq!(uniform, raw.try_into().unwrap());
+
+            let uniform = UniformAddr {
+                addr_format: AddrFormat::IpV6,
+                addr: ip.addr(),
+                port: Some(32),
+                transport: Some(Transport::Udp),
+            };
+            println!("udp://{}:32", ip);
+            let raw = uniform.to_raw_uniform();
+            assert_eq!(uniform, raw.try_into().unwrap());
+        }
+    }
+
+    #[test]
+    fn uniform_raw_conversion() {
+        use bitcoin::hashes::hex::ToHex;
+        use std::str::FromStr;
+
+        let ips = vec![
+            "0.0.0.0",
+            "8.8.8.8",
+            "127.0.0.1",
+            "192.168.0.1",
+            "255.255.255.255",
+        ]
+        .into_iter()
+        .map(Ipv4Addr::from_str)
+        .map(Result::unwrap);
+
+        for ip in ips {
+            for port in vec![None, Some(32), Some(6432), Some(50001)] {
+                for transport in vec![
+                    None,
+                    Some(Transport::Tcp),
+                    Some(Transport::Udp),
+                    Some(Transport::Quic),
+                ] {
+                    let uniform = UniformAddr {
+                        addr_format: AddrFormat::IpV4,
+                        addr: ip.addr(),
+                        port,
+                        transport,
+                    };
+
+                    let hex = format!(
+                        "00{:066x}{:04x}{:02x}",
+                        u32::from_be_bytes(ip.octets()),
+                        port.unwrap_or_default(),
+                        transport.map(|t| t as u8).unwrap_or_default()
+                    );
+                    assert_eq!(uniform.to_raw_uniform().to_hex(), hex);
+                }
+            }
+        }
+    }
 }
