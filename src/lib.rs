@@ -53,6 +53,7 @@ pub use strict_encoding::{
 pub extern crate strict_encoding_derive;
 pub use strict_encoding_derive::{StrictDecode, StrictEncode};
 
+pub mod bech32;
 pub mod chain;
 pub mod dbc;
 #[cfg(feature = "elgamal")]

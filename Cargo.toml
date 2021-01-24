@@ -1,6 +1,6 @@
 [package]
 name = "lnpbp"
-version = "0.3.0"
+version = "0.4.0-alpha.1"
 license = "MIT"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 description = "LNP/BP Core Library implementing LNPBP specifications & standards"
@@ -35,7 +35,7 @@ crate-type = ["rlib", "staticlib"]
 [dependencies]
 # Dependencies on other LNP/BP repositories
 # -----------------------------------------
-amplify = { version = "3", features = ["stringly_conversions"] }
+amplify = { version = "3", features = ["stringly_conversions", "std"] }
 amplify_derive = "2.4.3"
 strict_encoding = { version = "1", features = ["miniscript"] }
 strict_encoding_derive = { version = "1" }
@@ -45,6 +45,7 @@ descriptor-wallet = "0.3"
 # ----------------------------------------------------
 bitcoin = { version = "~0.26.0", features = ["rand"] }
 bitcoin_hashes = "~0.9.4" # we need macro from here
+bech32 = "~0.7.2"
 # <https://github.com/LNP-BP/LNPBPs/blob/master/lnpbp-0002.md#deterministic-public-key-extraction-from-bitcoin-script>
 # We have to fix version of miniscript as required by LNPBP-2 specification
 miniscript = { version = "=5.0.0", features = ["compiler"] }
@@ -60,17 +61,20 @@ serde_with_macros = { version = "~1.2.0", optional = true } # Fix for the proble
 # Core rust projects
 # ------------------
 lazy_static = "~1.4.0"
+deflate = { version = "~0.8.6", optional = true }
+inflate = { version = "~0.4.5", optional = true }
 
 # Features
 # ========
 [features]
-default = []
-all = ["serde", "elgamal", "bulletproofs"]
+default = ["zip"]
+all = ["serde", "elgamal", "bulletproofs", "zip"]
 serde = ["serde_crate", "serde_with", "serde_with_macros", "amplify/serde",
          "bitcoin/use-serde", "bitcoin_hashes/serde", "miniscript/serde",
          "descriptor-wallet/serde"]
 elgamal = [] # Provides ElGamal encryption module from this library
 bulletproofs = ["client_side_validation/bulletproofs"]
+zip = ["inflate", "deflate"]
 
 [workspace]
 members = [".", "strict_encoding", "strict_encoding/derive", "client_side_validation"]

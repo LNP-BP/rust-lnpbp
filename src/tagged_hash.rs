@@ -24,7 +24,7 @@ use bitcoin::hashes::{hex, sha256, sha256t, Hash, HashEngine};
 #[derive(
     Wrapper, Clone, Copy, PartialEq, Eq, Hash, Debug, Display, Default, From,
 )]
-#[display("{_0:#x?}")]
+#[display("{0:#x?}")]
 pub struct Midstate([u8; 32]);
 
 impl Midstate {
