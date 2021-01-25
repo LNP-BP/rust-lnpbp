@@ -1,5 +1,5 @@
-// LNP/BP Core Library implementing LNPBP specifications & standards
-// Written in 2020 by
+// LNP/BP universal invoice library implementing LNPBP-38 standard
+// Written in 2021 by
 //     Dr. Maxim Orlovsky <orlovsky@pandoracore.com>
 //
 // To the extent possible under law, the author(s) have dedicated all
@@ -11,28 +11,29 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use bitcoin::hashes::sha256d;
-use bitcoin::secp256k1::Signature;
-use bitcoin::Address;
-use miniscript::{descriptor::DescriptorPublicKey, Descriptor, Miniscript};
 use url::Url;
 
-use crate::bp::blind::OutpointHash;
-use crate::bp::chain::AssetId;
-use crate::bp::{Chain, HashLock, P2pNetworkId, Psbt, ScriptPubkeyFormat};
-use crate::lnp::{tlv, Features};
-use crate::secp256k1;
+use bitcoin::hashes::sha256d;
+use bitcoin::secp256k1;
+use bitcoin::secp256k1::Signature;
+use bitcoin::Address;
+use internet2::tlv;
+use lnp::payment::ShortChannelId;
+use lnp::Features;
+use lnpbp::chain::AssetId;
+use lnpbp::seals::OutpointHash;
+use lnpbp::P2pNetworkId;
+use miniscript::{descriptor::DescriptorPublicKey, Descriptor};
+use wallet::{HashLock, Psbt};
 
-#[derive(Tlv)]
-#[lnpbp_crate(crate)]
+// #[derive(Tlv)]
 pub enum FieldType {
-    #[tlv(type = 0x01)]
+    // #[tlv(type = 0x01)]
     Payers,
 }
 
-#[derive(Lnp)]
-#[tlv_types(FieldType)]
-#[lnpbp_crate(crate)]
+// #[derive(Api)]
+// #[tlv_types(FieldType)]
 pub struct Invoice {
     network: P2pNetworkId,
 
@@ -40,8 +41,8 @@ pub struct Invoice {
     beneficiaries: Vec<Beneficiary>,
 
     /// Optional list of payers authored to pay
-    #[tlv(type = FieldType::Payers)]
-    payers: Vec<Payer>,
+    // #[tlv(type = FieldType::Payers)]
+    // payers: Vec<Payer>,
     quantity: Quantity,
     price: Option<AmountExt>,
 
@@ -55,14 +56,14 @@ pub struct Invoice {
     details: Option<Details>,
     expiry: Option<i64>,
 
-    #[tlv_unknown]
+    // #[tlv_unknown]
     unknown: Vec<tlv::Map>,
     signature: Option<Signature>,
 }
 
 #[non_exhaustive]
 pub enum Beneficiary {
-    /// Addresses are usefult when you do not like to leak public key
+    /// Addresses are useful when you do not like to leak public key
     /// information
     Address(Address),
 
@@ -71,7 +72,8 @@ pub enum Beneficiary {
     /// UTXO behind the hashed version (using some salt)
     BlindUtxo(OutpointHash),
 
-    /// Miniscript-based descriptors allowing custom derivation & key generation
+    /// Miniscript-based descriptors allowing custom derivation & key
+    /// generation
     Descriptor(Descriptor<DescriptorPublicKey>),
 
     /// Full transaction template in PSBT format

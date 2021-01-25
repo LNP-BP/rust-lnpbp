@@ -1,0 +1,40 @@
+[package]
+name = "lnpbp_invoice"
+version = "0.1.0-alpha.1"
+license = "Apache-2.0"
+authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
+description = "LNP/BP universal invoices library implementing LNPBP-38 standard"
+repository = "https://github.com/LNP-BP/rust-lnpbp"
+homepage = "https://github.com/LNP-BP"
+keywords = ["bitcoin", "lightning", "lnp-bp", "rgb", "invoice"]
+categories = ["cryptography::cryptocurrencies"]
+readme = "README.md"
+edition = "2018"
+
+[lib]
+name = "lnpbp_invoice"
+path = "src/lib.rs"
+crate-type = ["rlib", "staticlib"]
+
+[dependencies]
+# Dependencies on other LNP/BP repositories
+# -----------------------------------------
+amplify = { version = "3", features = ["stringly_conversions", "std"] }
+amplify_derive = "2.4.3"
+strict_encoding = { version = "1", features = ["miniscript"] }
+strict_encoding_derive = { version = "1" }
+lightning_encoding = "0.3.11"
+descriptor-wallet = "0.3.4"
+internet2 = "0.3.9"
+lnpbp = "0.3"
+lnp-core = "0.3"
+# Dependencies on core rust-bitcoin ecosystem projects
+# ----------------------------------------------------
+bitcoin = { version = "~0.26.0", features = ["rand"] }
+bech32 = "~0.7.2"
+miniscript = { version = "5", features = ["compiler"] }
+# Serialization
+# -------------
+serde_crate = { package = "serde", version = "~1.0.0", features = ["derive"], optional = true }
+serde_with = { version = "~1.5.0", features = ["hex"], optional = true }
+url = "2.2"

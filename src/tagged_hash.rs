@@ -16,6 +16,8 @@
 use amplify::Wrapper;
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::hashes::{hex, sha256, sha256t, Hash, HashEngine};
+#[cfg(feature = "serde")]
+use serde_with::{As, DisplayFromStr};
 use wallet::Slice32;
 
 /// Helper class for tests and creation of tagged hashes with dynamically-
@@ -24,7 +26,6 @@ use wallet::Slice32;
 /// macro instead.
 #[cfg_attr(
     feature = "serde",
-    serde_as,
     derive(Serialize, Deserialize),
     serde(crate = "serde_crate", transparent)
 )]
@@ -55,7 +56,7 @@ impl Midstate {
         let tag_hash = sha256::Hash::hash(tag.as_ref());
         engine.input(&tag_hash[..]);
         engine.input(&tag_hash[..]);
-        Self::from_inner(engine.midstate().into_inner())
+        Self::from_inner(engine.midstate().into_inner().into())
     }
 }
 
