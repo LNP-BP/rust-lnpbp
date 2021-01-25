@@ -16,16 +16,37 @@
 use amplify::Wrapper;
 use bitcoin::hashes::hex::FromHex;
 use bitcoin::hashes::{hex, sha256, sha256t, Hash, HashEngine};
+use wallet::Slice32;
 
 /// Helper class for tests and creation of tagged hashes with dynamically-
 /// defined tags. Do not use in all other cases; utilize
 /// [`bitcoin::hashes::sha256t`] type and [`bitcoin::sha256t_hash_newtype!`]
 /// macro instead.
-#[derive(
-    Wrapper, Clone, Copy, PartialEq, Eq, Hash, Debug, Display, Default, From,
+#[cfg_attr(
+    feature = "serde",
+    serde_as,
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate", transparent)
 )]
-#[display("{0:#x?}")]
-pub struct Midstate([u8; 32]);
+#[derive(
+    Wrapper,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Debug,
+    Display,
+    From,
+)]
+#[display(LowerHex)]
+#[wrapper(FromStr, LowerHex, UpperHex)]
+pub struct Midstate(
+    #[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))]
+    Slice32,
+);
 
 impl Midstate {
     /// Constructs tagged hash midstate for a given tag data
