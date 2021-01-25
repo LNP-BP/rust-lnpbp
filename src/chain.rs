@@ -18,8 +18,7 @@ use std::{convert::TryFrom, fmt, io, str::FromStr};
 use bitcoin::hashes::hex::{self, FromHex, ToHex};
 use bitcoin::hashes::{sha256d, Hash};
 use bitcoin::BlockHash;
-
-use crate::strict_encoding::{
+use strict_encoding::{
     self, strict_deserialize, strict_serialize, StrictDecode, StrictEncode,
 };
 
@@ -187,8 +186,13 @@ hash_newtype!(
            normal, non-reverse order",
     false
 );
+
 impl strict_encoding::Strategy for AssetId {
     type Strategy = strict_encoding::strategies::HashFixedBytes;
+}
+
+impl lightning_encoding::Strategy for AssetId {
+    type Strategy = lightning_encoding::strategies::AsBitcoinHash;
 }
 
 impl From<BlockHash> for AssetId {
