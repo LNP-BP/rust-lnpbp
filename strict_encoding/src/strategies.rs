@@ -59,7 +59,7 @@ where
 {
     #[inline]
     fn strict_encode<E: io::Write>(&self, e: E) -> Result<usize, Error> {
-        Ok(self.as_inner().to_inner().strict_encode(e)?)
+        Ok(self.as_inner().as_inner().strict_encode(e)?)
     }
 }
 
