@@ -48,7 +48,7 @@ pub enum Error {
     WrongData,
 
     /// Requested object type does not match used Bech32 HRP
-    WrongType,
+    WrongPrefix,
 
     /// Provided raw data use unknown encoding version {0}
     UnknownRawDataEncoding(u8),
@@ -94,6 +94,115 @@ where
     }
 }
 
+// -- Common (non-LNPBP-40) traits
+
+pub trait ToBech32String {
+    fn to_bech32_string(&self) -> String;
+}
+
+pub trait FromBech32Str {
+    const HRP: &'static str;
+
+    fn from_bech32_str(s: &str) -> Result<Self, Error>
+    where
+        Self: Sized;
+}
+
+pub mod strategies {
+    use super::*;
+    use amplify::{Holder, Wrapper};
+    use strict_encoding::{StrictDecode, StrictEncode};
+
+    pub struct UsingStrictEncoding;
+    pub struct Wrapped;
+
+    pub trait Strategy {
+        const HRP: &'static str;
+        type Strategy;
+    }
+
+    impl<T> ToBech32String for T
+    where
+        T: Strategy + Clone,
+        Holder<T, <T as Strategy>::Strategy>: ToBech32String,
+    {
+        #[inline]
+        fn to_bech32_string(&self) -> String {
+            Holder::new(self.clone()).to_bech32_string()
+        }
+    }
+
+    impl<T> FromBech32Str for T
+    where
+        T: Strategy,
+        Holder<T, <T as Strategy>::Strategy>: FromBech32Str,
+    {
+        const HRP: &'static str = T::HRP;
+
+        #[inline]
+        fn from_bech32_str(s: &str) -> Result<Self, Error> {
+            Ok(Holder::from_bech32_str(s)?.into_inner())
+        }
+    }
+
+    impl<T> ToBech32String for Holder<T, Wrapped>
+    where
+        T: Wrapper,
+        T::Inner: ToBech32String,
+    {
+        #[inline]
+        fn to_bech32_string(&self) -> String {
+            self.as_inner().as_inner().to_bech32_string()
+        }
+    }
+
+    impl<T> FromBech32Str for Holder<T, Wrapped>
+    where
+        T: Wrapper + Strategy,
+        T::Inner: FromBech32Str,
+    {
+        const HRP: &'static str = T::HRP;
+
+        #[inline]
+        fn from_bech32_str(s: &str) -> Result<Self, Error> {
+            Ok(Self::new(T::from_inner(T::Inner::from_bech32_str(s)?)))
+        }
+    }
+
+    impl<T> ToBech32String for Holder<T, UsingStrictEncoding>
+    where
+        T: StrictEncode + Strategy,
+    {
+        #[inline]
+        fn to_bech32_string(&self) -> String {
+            let data = self
+                .as_inner()
+                .strict_serialize()
+                .expect("in-memory strict encoding failure");
+            ::bech32::encode(T::HRP, data.to_base32()).expect("prefix failed")
+        }
+    }
+
+    impl<T> FromBech32Str for Holder<T, UsingStrictEncoding>
+    where
+        T: StrictDecode + Strategy,
+    {
+        const HRP: &'static str = T::HRP;
+
+        #[inline]
+        fn from_bech32_str(s: &str) -> Result<Self, Error> {
+            let (hrp, data) = ::bech32::decode(s)?;
+            if hrp.as_str() != Self::HRP {
+                return Err(Error::WrongPrefix);
+            }
+            Ok(Self::new(T::strict_deserialize(Vec::<u8>::from_base32(
+                &data,
+            )?)?))
+        }
+    }
+}
+pub use strategies::Strategy;
+
 // -- Sealed traits & their implementation
 
 /// Special trait for preventing implementation of [`FromBech32DataStr`] and
@@ -138,7 +247,7 @@ where
     fn from_bech32_data_str(s: &str) -> Result<Self, Error> {
         let (hrp, data) = bech32::decode(&s)?;
         if &hrp != HRP_DATA {
-            return Err(Error::WrongType);
+            return Err(Error::WrongPrefix);
         }
         Self::from_bech32_payload(Vec::<u8>::from_base32(&data)?)
     }
@@ -186,7 +295,7 @@ mod zip {
 
             let (hrp, data) = bech32::decode(&s)?;
             if &hrp != HRP_ZIP {
-                return Err(Error::WrongType);
+                return Err(Error::WrongPrefix);
             }
             let data = Vec::<u8>::from_base32(&data)?;
             let mut reader: &[u8] = data.as_ref();
@@ -239,7 +348,7 @@ where
     fn from_bech32_id_str(s: &str) -> Result<T, Error> {
         let (hrp, id) = ::bech32::decode(&s)?;
         if &hrp != HRP_ID {
-            return Err(Error::WrongType);
+            return Err(Error::WrongPrefix);
         }
         let vec = Vec::<u8>::from_base32(&id)?;
         Ok(Self::from_slice(&vec)?)
