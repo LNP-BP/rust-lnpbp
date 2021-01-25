@@ -11,6 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use chrono::NaiveDateTime;
 use url::Url;
 
 use bitcoin::hashes::sha256d;
@@ -22,42 +23,34 @@ use lnp::payment::ShortChannelId;
 use lnp::Features;
 use lnpbp::chain::AssetId;
 use lnpbp::seals::OutpointHash;
-use lnpbp::P2pNetworkId;
 use miniscript::{descriptor::DescriptorPublicKey, Descriptor};
 use wallet::{HashLock, Psbt};
 
-// #[derive(Tlv)]
-pub enum FieldType {
-    // #[tlv(type = 0x01)]
-    Payers,
-}
-
 // #[derive(Api)]
-// #[tlv_types(FieldType)]
 pub struct Invoice {
-    network: P2pNetworkId,
-
     /// List of beneficiary dests ordered in most desirable first order
     beneficiaries: Vec<Beneficiary>,
 
-    /// Optional list of payers authored to pay
-    // #[tlv(type = FieldType::Payers)]
-    // payers: Vec<Payer>,
     quantity: Quantity,
     price: Option<AmountExt>,
 
     /// If the price of the asset provided by fiat provider URL goes below this
     /// limit the merchant will not accept the payment and it will become
     /// expired
-    fiat_requirement: Option<Fiat>,
+    fiat_requirement: Option<CurrencyData>,
     merchant: Option<String>,
+
+    /// AssetId can also be used to define blockchain. If it's empty it implies
+    /// bitcoin mainnet
     asset: Option<AssetId>,
     purpose: Option<String>,
     details: Option<Details>,
-    expiry: Option<i64>,
 
-    // #[tlv_unknown]
-    unknown: Vec<tlv::Map>,
+    expiry: Option<NaiveDateTime>, // Must be mapped to i64
+
+    // #[tlv(unknown)]
+    unknown: tlv::Map,
+
     signature: Option<Signature>,
 }
 
@@ -67,7 +60,7 @@ pub enum Beneficiary {
     /// information
     Address(Address),
 
-    /// Ssed by protocols that work with existing UTXOs and can assign some
+    /// Used by protocols that work with existing UTXOs and can assign some
     /// client-validated data to them (like in RGB). We always hide the real
     /// UTXO behind the hashed version (using some salt)
     BlindUtxo(OutpointHash),
@@ -90,7 +83,9 @@ pub enum Beneficiary {
 pub struct LnAddress {
     node_id: secp256k1::PublicKey,
     features: Features,
-    hash_lock: HashLock,
+    lock: HashLock, /* When PTLC will be available the same field will be
+                     * re-used for them + the use will be indicated with a
+                     * feature flag */
     min_final_cltv_expiry: Option<u16>,
     path_hints: Vec<LnPathHint>,
 }
@@ -116,7 +111,7 @@ pub struct Details {
     source: Url,
 }
 
-pub struct Fiat {
+pub struct CurrencyData {
     iso4217: [u8; 3],
     coins: u32,
     fractions: u8,

@@ -38,3 +38,4 @@ miniscript = { version = "5", features = ["compiler"] }
 serde_crate = { package = "serde", version = "~1.0.0", features = ["derive"], optional = true }
 serde_with = { version = "~1.5.0", features = ["hex"], optional = true }
 url = "2.2"
+chrono = "0.4.19"
