@@ -704,7 +704,7 @@ dependencies = [
 
 [[package]]
 name = "lnpbp"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -758,7 +758,7 @@ dependencies = [
  "internet2",
  "lightning_encoding",
  "lnp-core",
- "lnpbp 0.3.1",
+ "lnpbp 0.3.2",
  "miniscript",
  "serde",
  "serde_with",

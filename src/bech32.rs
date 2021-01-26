@@ -115,6 +115,8 @@ pub mod strategies {
 
     pub struct UsingStrictEncoding;
     pub struct Wrapped;
+    #[cfg(feature = "zip")]
+    pub struct CompressedStrictEncoding;
 
     pub trait Strategy {
         const HRP: &'static str;
@@ -179,7 +181,8 @@ pub mod strategies {
                 .as_inner()
                 .strict_serialize()
                 .expect("in-memory strict encoding failure");
-            ::bech32::encode(T::HRP, data.to_base32()).expect("prefix failed")
+            ::bech32::encode(T::HRP, data.to_base32())
+                .unwrap_or(s!("Error: wrong bech32 prefix"))
         }
     }
 
@@ -256,26 +259,49 @@ where
 impl<T> FromBech32DataStr for T where T: sealed::FromPayload {}
 
 #[cfg(feature = "zip")]
-mod zip {
+pub mod zip {
     use super::*;
+    use amplify::Holder;
+    use strict_encoding::{StrictDecode, StrictEncode};
 
-    fn payload_to_bech32_zip_string(payload: &[u8]) -> String {
+    fn payload_to_bech32_zip_string(hrp: &str, payload: &[u8]) -> String {
         use std::io::Write;
 
         // We initialize writer with a version byte, indicating deflation
         // algorithm used
         let writer = vec![RAW_DATA_ENCODING_DEFLATE];
         let mut encoder = DeflateEncoder::new(writer, Compression::Best);
-        encoder.write(payload).expect("in-memory encoder failure");
+        encoder
+            .write(payload)
+            .expect("in-memory strict encoder failure");
         let data = encoder.finish().expect("zip algorithm failure");
 
-        ::bech32::encode(HRP_ZIP, data.to_base32())
+        ::bech32::encode(hrp, data.to_base32())
             .expect("HRP is hardcoded and can't fail")
+    }
+
+    fn bech32_zip_str_to_payload(hrp: &str, s: &str) -> Result<Vec<u8>, Error> {
+        use bitcoin::consensus::encode::ReadExt;
+
+        let (prefix, data) = bech32::decode(&s)?;
+        if &prefix != hrp {
+            return Err(Error::WrongPrefix);
+        }
+        let data = Vec::<u8>::from_base32(&data)?;
+        let mut reader: &[u8] = data.as_ref();
+        match reader.read_u8()? {
+            RAW_DATA_ENCODING_DEFLATE => {
+                let decoded = inflate::inflate_bytes(&mut reader)
+                    .map_err(|e| Error::InflateError(e))?;
+                Ok(decoded)
+            }
+            unknown_ver => Err(Error::UnknownRawDataEncoding(unknown_ver))?,
+        }
     }
 
     pub trait ToBech32ZipString: sealed::ToPayload {
         fn to_bech32_zip_string(&self) -> String {
-            payload_to_bech32_zip_string(&self.to_bech32_payload())
+            payload_to_bech32_zip_string(HRP_ZIP, &self.to_bech32_payload())
         }
     }
 
@@ -283,7 +309,7 @@ mod zip {
 
     pub trait Bech32ZipString: sealed::AsPayload {
         fn bech32_zip_string(&self) -> String {
-            payload_to_bech32_zip_string(&self.as_bech32_payload())
+            payload_to_bech32_zip_string(HRP_ZIP, &self.as_bech32_payload())
         }
     }
 
@@ -291,26 +317,39 @@ mod zip {
 
     pub trait FromBech32ZipStr: sealed::FromPayload {
         fn from_bech32_zip_str(s: &str) -> Result<Self, Error> {
-            use bitcoin::consensus::encode::ReadExt;
-
-            let (hrp, data) = bech32::decode(&s)?;
-            if &hrp != HRP_ZIP {
-                return Err(Error::WrongPrefix);
-            }
-            let data = Vec::<u8>::from_base32(&data)?;
-            let mut reader: &[u8] = data.as_ref();
-            match reader.read_u8()? {
-                RAW_DATA_ENCODING_DEFLATE => {
-                    let decoded = inflate::inflate_bytes(&mut reader)
-                        .map_err(|e| Error::InflateError(e))?;
-                    Ok(Self::from_bech32_payload(decoded)?)
-                }
-                unknown_ver => Err(Error::UnknownRawDataEncoding(unknown_ver))?,
-            }
+            Self::from_bech32_payload(bech32_zip_str_to_payload(HRP_ZIP, s)?)
         }
     }
 
     impl<T> FromBech32ZipStr for T where T: sealed::FromPayload {}
+
+    impl<T> ToBech32String for Holder<T, strategies::CompressedStrictEncoding>
+    where
+        T: StrictEncode + Strategy,
+    {
+        #[inline]
+        fn to_bech32_string(&self) -> String {
+            let data = self
+                .as_inner()
+                .strict_serialize()
+                .expect("in-memory strict encoding failure");
+            payload_to_bech32_zip_string(T::HRP, &data)
+        }
+    }
+
+    impl<T> FromBech32Str for Holder<T, strategies::CompressedStrictEncoding>
+    where
+        T: StrictDecode + Strategy,
+    {
+        const HRP: &'static str = T::HRP;
+
+        #[inline]
+        fn from_bech32_str(s: &str) -> Result<Self, Error> {
+            Ok(Self::new(T::strict_deserialize(
+                bech32_zip_str_to_payload(Self::HRP, s)?,
+            )?))
+        }
+    }
 }
 pub use zip::*;
 

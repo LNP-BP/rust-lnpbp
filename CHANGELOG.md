@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+v0.3.2
+------
+- Compressed Bech32 encodings with derivation strategy `CompressedStrictEncoding`
+
 v0.3.1
 ------
 - Bech32 encodings (LNPBP-39 & general traits)
