@@ -28,8 +28,7 @@ struct Other {
     b: u8,
 }
 
-//#[derive(StrictEncode, StrictDecode)]
-//#[strict_error(Error)]
+#[derive(StrictEncode, StrictDecode)]
 enum Hi<T> {
     /// Docstring
     First(u8),
@@ -42,8 +41,7 @@ enum Hi<T> {
     Seventh,
 }
 
-//#[derive(StrictEncode, StrictDecode)]
-//#[strict_error(Error)]
+#[derive(StrictEncode, StrictDecode)]
 enum CustomErr<E: std::error::Error> {
     Other(E),
 }

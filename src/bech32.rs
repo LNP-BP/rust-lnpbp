@@ -12,7 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 //! Types that need to have `data1...` and `z1...` bech 32 implementation
-//! according to LNPBP-40 must implement [`ToBech32Payload`] and
+//! according to LNPBP-39 must implement [`ToBech32Payload`] and
 //! [`FromBech32Payload`] traits.
 //!
 //! Bech32 `id1...` representation is provided automatically only for hash types
@@ -94,7 +94,7 @@ where
     }
 }
 
-// -- Common (non-LNPBP-40) traits
+// -- Common (non-LNPBP-39) traits
 
 pub trait ToBech32String {
     fn to_bech32_string(&self) -> String;

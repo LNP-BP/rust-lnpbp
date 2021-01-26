@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+v0.3.1
+------
+- Bech32 encodings (LNPBP-39 & general traits)
+- Fixed tagged hash midstate representation
+
 v0.3.0
 ------
 - RGB Core Library is extracted and externalized from LNP/BP Core Library to
