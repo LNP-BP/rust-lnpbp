@@ -712,7 +712,7 @@ dependencies = [
 [[package]]
 name = "lnpbp"
 version = "0.4.0-alpha.1"
-source = "git+https://github.com/LNP-BP/rust-lnpbp#cb6639920ccbe086c14da6f7def696ec15c7038c"
+source = "git+https://github.com/LNP-BP/rust-lnpbp#25c6e2249068f2394a4d75c7a7206dd38c56abe9"
 dependencies = [
  "amplify",
  "amplify_derive",

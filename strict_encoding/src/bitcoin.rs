@@ -14,6 +14,7 @@
 use std::io;
 
 use bitcoin::hashes::{hash160, hmac, sha256, sha256d, sha256t, sha512, Hash};
+use bitcoin::util::address::{self, Address};
 use bitcoin::util::psbt::PartiallySignedTransaction;
 use bitcoin::{
     secp256k1, util::bip32, BlockHash, OutPoint, PubkeyHash, Script,
@@ -22,6 +23,7 @@ use bitcoin::{
 };
 
 use crate::{strategies, Error, Strategy, StrictDecode, StrictEncode};
+use bitcoin::bech32::u5;
 
 impl Strategy for Txid {
     type Strategy = strategies::HashFixedBytes;
@@ -333,6 +335,53 @@ impl StrictDecode for bip32::ExtendedPrivKey {
                 "Extended privkey integrity is broken".to_string(),
             )
         })?)
+    }
+}
+
+impl StrictEncode for Address {
+    fn strict_encode<E: io::Write>(&self, mut e: E) -> Result<usize, Error> {
+        let mut len = 0usize;
+        len += self.network.strict_encode(&mut e)?;
+        match &self.payload {
+            address::Payload::PubkeyHash(pkh) => {
+                len += 32u8.strict_encode(&mut e)?;
+                len += pkh.strict_encode(&mut e)?;
+            }
+            address::Payload::ScriptHash(sh) => {
+                len += 33u8.strict_encode(&mut e)?;
+                len += sh.strict_encode(&mut e)?;
+            }
+            address::Payload::WitnessProgram { version, program } => {
+                len += version.to_u8().strict_encode(&mut e)?;
+                len += program.strict_encode(&mut e)?;
+            }
+        };
+        Ok(len)
+    }
+}
+
+impl StrictDecode for Address {
+    fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, Error> {
+        let network = bitcoin::Network::strict_decode(&mut d)?;
+        let payload = match u8::strict_decode(&mut d)? {
+            32u8 => {
+                address::Payload::PubkeyHash(PubkeyHash::strict_decode(&mut d)?)
+            }
+            33u8 => {
+                address::Payload::ScriptHash(ScriptHash::strict_decode(&mut d)?)
+            }
+            version => address::Payload::WitnessProgram {
+                version: u5::try_from_u8(version).map_err(|_| {
+                    Error::ValueOutOfRange(
+                        "witness program version",
+                        0..17,
+                        version as u128,
+                    )
+                })?,
+                program: StrictDecode::strict_decode(&mut d)?,
+            },
+        };
+        Ok(Address { network, payload })
     }
 }
 
