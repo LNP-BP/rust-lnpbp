@@ -50,6 +50,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "amplify_derive_helpers"
+version = "0.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9076b2ac55f9451a0b7f36921d1c7d3a4c8822c3cbf6ecb5eece6fab90c7fc22"
+dependencies = [
+ "proc-macro2 1.0.24",
+ "syn 1.0.60",
+]
+
+[[package]]
 name = "arrayvec"
 version = "0.3.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -368,14 +378,31 @@ dependencies = [
 
 [[package]]
 name = "descriptor-wallet"
-version = "0.3.4"
+version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4f39edda72110de952fb4d43848e86438666ef61547b9301b74e0a9cdb32dfbf"
+checksum = "76314d7029ed883018642059066735c3a21718ae42a120dfbf239e86936098dd"
 dependencies = [
  "amplify",
  "amplify_derive",
  "bitcoin",
  "lazy_static",
+ "lightning_encoding 0.3.11",
+ "miniscript",
+ "regex",
+ "strict_encoding 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "descriptor-wallet"
+version = "0.4.0-alpha.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "50404f20ee9342951683a223b9d87ae49c5e51b5270a3d60fce15eb118070dbc"
+dependencies = [
+ "amplify",
+ "amplify_derive",
+ "bitcoin",
+ "lazy_static",
+ "lightning_encoding 0.4.0-alpha.2+1",
  "miniscript",
  "regex",
  "serde",
@@ -586,6 +613,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "inet2_derive"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "699be13416c6ae5da4a6b9bd5a57cd67133c0927ba03878daf59a5eafbfad39a"
+dependencies = [
+ "amplify",
+ "proc-macro2 1.0.24",
+ "quote 1.0.8",
+ "syn 1.0.60",
+]
+
+[[package]]
 name = "inflate"
 version = "0.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -604,11 +643,30 @@ dependencies = [
  "amplify_derive",
  "bitcoin",
  "chacha20poly1305",
- "descriptor-wallet",
+ "descriptor-wallet 0.3.5",
  "inet2_addr",
- "inet2_derive",
+ "inet2_derive 0.3.6",
  "lazy_static",
- "lnpbp 0.3.0",
+ "lnpbp 0.3.2",
+ "strict_encoding 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "url",
+ "zmq",
+]
+
+[[package]]
+name = "internet2"
+version = "0.4.0-alpha.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fedd88cba44c403ceed506c8a15e69a7128dde49f2abe549996fa2a7dbe5eb1a"
+dependencies = [
+ "amplify",
+ "amplify_derive",
+ "bitcoin",
+ "chacha20poly1305",
+ "inet2_addr",
+ "inet2_derive 0.4.0",
+ "lazy_static",
+ "lightning_encoding 0.4.0-alpha.2+1",
  "strict_encoding 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "url",
  "zmq",
@@ -647,7 +705,32 @@ dependencies = [
  "amplify",
  "amplify_derive",
  "bitcoin",
- "lightning_encoding_derive",
+ "lightning_encoding_derive 0.3.12",
+ "strict_encoding 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "lightning_encoding"
+version = "0.4.0-alpha.1"
+source = "git+https://github.com/LNP-BP/lnp-core#f9761dfb53441a7b37d38a82c9db4179496035c4"
+dependencies = [
+ "amplify",
+ "amplify_derive",
+ "bitcoin",
+ "lightning_encoding_derive 0.3.12",
+ "strict_encoding 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "lightning_encoding"
+version = "0.4.0-alpha.2+1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1ddd25c1dc1c9318c1521ebf042783d45ebe5f38e5fd07472cd6059b1eb4fa52"
+dependencies = [
+ "amplify",
+ "amplify_derive",
+ "bitcoin",
+ "lightning_encoding_derive 0.4.0-alpha.1",
  "strict_encoding 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -664,6 +747,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "lightning_encoding_derive"
+version = "0.4.0-alpha.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b378884459b815f2fff39a160d94fb49ee3a201ae661a19a63ee637291937471"
+dependencies = [
+ "amplify",
+ "amplify_derive_helpers",
+ "proc-macro2 1.0.24",
+ "quote 1.0.8",
+ "syn 1.0.60",
+]
+
+[[package]]
 name = "linked-hash-map"
 version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -672,39 +768,24 @@ checksum = "7fb9b38af92608140b86b693604b9ffcc5824240a484d1ecd4795bacb2fe88f3"
 [[package]]
 name = "lnp-core"
 version = "0.4.0-alpha.1"
-source = "git+https://github.com/LNP-BP/lnp-core#d02ce7bfeed0da7ac8924ec28cc618dfefe86eb3"
+source = "git+https://github.com/LNP-BP/lnp-core#f9761dfb53441a7b37d38a82c9db4179496035c4"
 dependencies = [
  "amplify",
  "amplify_derive",
  "bitcoin",
- "descriptor-wallet",
- "internet2",
+ "descriptor-wallet 0.3.5",
+ "internet2 0.4.0-alpha.2",
  "lazy_static",
- "lnpbp 0.4.0-alpha.1",
+ "lightning_encoding 0.4.0-alpha.1",
+ "lnpbp 0.3.2",
  "strict_encoding 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "lnpbp"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2918519f7b03b2ae360e03ce944f2f13d315a26fa0eb01cc6fb68cad3dc88768"
-dependencies = [
- "amplify",
- "amplify_derive",
- "bitcoin",
- "bitcoin_hashes",
- "client_side_validation 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "descriptor-wallet",
- "lazy_static",
- "miniscript",
- "strict_encoding 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "strict_encoding_derive 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "lnpbp"
 version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "63aa11f5f04899dcd2ab0379709bb733ec880e1dfe8c0c5d5ca07549bf58b0f2"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -713,14 +794,11 @@ dependencies = [
  "bitcoin_hashes",
  "client_side_validation 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "deflate",
- "descriptor-wallet",
+ "descriptor-wallet 0.3.5",
  "inflate",
  "lazy_static",
- "lightning_encoding",
+ "lightning_encoding 0.3.11",
  "miniscript",
- "serde",
- "serde_with",
- "serde_with_macros",
  "strict_encoding 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "strict_encoding_derive 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -728,7 +806,6 @@ dependencies = [
 [[package]]
 name = "lnpbp"
 version = "0.4.0-alpha.1"
-source = "git+https://github.com/LNP-BP/rust-lnpbp#9c6f67a0a957f87b96048a719a6f1f83041c84a1"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -737,11 +814,14 @@ dependencies = [
  "bitcoin_hashes",
  "client_side_validation 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "deflate",
- "descriptor-wallet",
+ "descriptor-wallet 0.4.0-alpha.1",
  "inflate",
  "lazy_static",
- "lightning_encoding",
+ "lightning_encoding 0.4.0-alpha.2+1",
  "miniscript",
+ "serde",
+ "serde_with",
+ "serde_with_macros",
  "strict_encoding 1.0.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "strict_encoding_derive 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -754,11 +834,11 @@ dependencies = [
  "amplify_derive",
  "bitcoin",
  "chrono",
- "descriptor-wallet",
- "internet2",
- "lightning_encoding",
+ "descriptor-wallet 0.3.5",
+ "internet2 0.3.9",
+ "lightning_encoding 0.3.11",
  "lnp-core",
- "lnpbp 0.3.2",
+ "lnpbp 0.4.0-alpha.1",
  "miniscript",
  "serde",
  "serde_with",
@@ -1483,9 +1563,9 @@ dependencies = [
 
 [[package]]
 name = "tinyvec"
-version = "1.1.0"
+version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ccf8dbc19eb42fba10e8feaaec282fb50e2c14b2726d6301dbfeed0f73306a6f"
+checksum = "317cca572a0e89c3ce0ca1f1bdc9369547fe318a683418e42ac8f59d14701023"
 dependencies = [
  "tinyvec_macros",
 ]
