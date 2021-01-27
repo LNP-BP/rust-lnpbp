@@ -39,9 +39,9 @@ amplify = { version = "3", features = ["stringly_conversions", "std"] }
 amplify_derive = "2.4.3"
 strict_encoding = { version = "1", features = ["miniscript"] }
 strict_encoding_derive = { version = "1" }
-lightning_encoding = "0.4.0-alpha.2"
+lightning_encoding = { git = "https://github.com/LNP-BP/lnp-core" }
 client_side_validation = { version = "0.3" }
-descriptor-wallet = "0.4.0-alpha.1"
+descriptor-wallet = { git = "https://github.com/LNP-BP/descriptor-wallet" }
 # Dependencies on core rust-bitcoin ecosystem projects
 # ----------------------------------------------------
 bitcoin = { version = "~0.26.0", features = ["rand"] }
