@@ -13,24 +13,26 @@
 
 use chrono::NaiveDateTime;
 use std::fmt::{self, Display, Formatter};
-use url::Url;
+// use url::Url;
+use std::io;
 
 use bitcoin::hashes::sha256d;
 use bitcoin::secp256k1;
 use bitcoin::secp256k1::Signature;
 use bitcoin::Address;
 use internet2::tlv;
+use lnp::features::InitFeatures;
 use lnp::payment::ShortChannelId;
-use lnp::Features;
 use lnpbp::bech32::{self, ToBech32String};
 use lnpbp::chain::AssetId;
 use lnpbp::seals::OutpointHash;
 use miniscript::{descriptor::DescriptorPublicKey, Descriptor};
+use strict_encoding::{StrictDecode, StrictEncode};
 use wallet::{HashLock, Psbt};
 
+// TODO: Derive `Eq` & `Hash` once Psbt will support them
 #[derive(
     Clone,
-    Eq,
     PartialEq,
     Debug,
     Display,
@@ -45,16 +47,18 @@ pub struct Invoice {
     /// List of beneficiary dests ordered in most desirable first order
     pub beneficiaries: Vec<Beneficiary>,
 
+    #[tlv(type = 4)]
     pub expiry: Option<NaiveDateTime>, // Must be mapped to i64
 
+    #[tlv(type = 1)]
     pub signature: Option<Signature>,
 
     /// AssetId can also be used to define blockchain. If it's empty it implies
     /// bitcoin mainnet
-    #[tlv(type = 1)]
+    #[tlv(type = 2)]
     pub asset: Option<AssetId>,
 
-    #[tlv(type = 2)]
+    #[tlv(type = 6)]
     pub quantity: Option<Quantity>,
 
     #[tlv(type = 3)]
@@ -85,18 +89,9 @@ impl bech32::Strategy for Invoice {
     type Strategy = bech32::strategies::UsingStrictEncoding;
 }
 
+// TODO: Derive `Eq` & `Hash` once Psbt will support them
 #[derive(
-    Clone,
-    Eq,
-    PartialEq,
-    Hash,
-    Debug,
-    Display,
-    From,
-    StrictEncode,
-    StrictDecode,
-    LightningEncode,
-    LightningDecode,
+    Clone, PartialEq, Debug, Display, From, StrictEncode, StrictDecode,
 )]
 #[display(inner)]
 #[non_exhaustive]
@@ -126,9 +121,12 @@ pub enum Beneficiary {
     #[from]
     Lightning(LnAddress),
 
-    /// Failback option for all future variants
-    #[display(Vec::bech32_data_string)]
+    /// Fallback option for all future variants
     Unknown(Vec<u8>),
+}
+
+impl lightning_encoding::Strategy for Beneficiary {
+    type Strategy = lightning_encoding::strategies::AsStrict;
 }
 
 #[derive(
@@ -148,7 +146,7 @@ pub enum Beneficiary {
 #[display("{node_id}")]
 pub struct LnAddress {
     pub node_id: secp256k1::PublicKey,
-    pub features: Features,
+    pub features: InitFeatures,
     pub lock: HashLock, /* When PTLC will be available the same field will
                          * be re-used for them + the
                          * use will be indicated with a
@@ -197,8 +195,6 @@ pub struct LnPathHint {
     From,
     StrictEncode,
     StrictDecode,
-    LightningEncode,
-    LightningDecode,
 )]
 pub enum AmountExt {
     #[from]
@@ -207,6 +203,10 @@ pub enum AmountExt {
 
     #[display("{0}.{1}")]
     Milli(u64, u16),
+}
+
+impl lightning_encoding::Strategy for AmountExt {
+    type Strategy = lightning_encoding::strategies::AsStrict;
 }
 
 #[derive(
@@ -226,7 +226,35 @@ pub enum AmountExt {
 #[display("{source}")]
 pub struct Details {
     pub commitment: sha256d::Hash,
-    pub source: Url,
+    pub source: String, // Url
+}
+
+#[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, From)]
+// TODO: Move to amplify library
+pub struct Iso4217([u8; 3]);
+
+impl StrictEncode for Iso4217 {
+    fn strict_encode<E: io::Write>(
+        &self,
+        mut e: E,
+    ) -> Result<usize, strict_encoding::Error> {
+        e.write(&self.0)?;
+        Ok(3)
+    }
+}
+
+impl StrictDecode for Iso4217 {
+    fn strict_decode<D: io::Read>(
+        mut d: D,
+    ) -> Result<Self, strict_encoding::Error> {
+        let mut me = Self([0u8; 3]);
+        d.read_exact(&mut me.0)?;
+        Ok(me)
+    }
+}
+
+impl lightning_encoding::Strategy for Iso4217 {
+    type Strategy = lightning_encoding::strategies::AsStrict;
 }
 
 #[derive(
@@ -245,10 +273,10 @@ pub struct Details {
 )]
 #[display("{coins} {fractions} {iso4217}")]
 pub struct CurrencyData {
-    pub iso4217: [u8; 3],
+    pub iso4217: Iso4217,
     pub coins: u32,
     pub fractions: u8,
-    pub price_provider: Url,
+    pub price_provider: String, // Url,
 }
 
 #[derive(
@@ -288,7 +316,7 @@ impl Display for Quantity {
         write!(f, "{} items", self.default)?;
         match (self.min, self.max) {
             (0, Some(max)) => write!(f, " (or any amount up to {})", max),
-            (0, None) => {}
+            (0, None) => Ok(()),
             (_, Some(max)) => write!(f, " (or from {} to {})", self.min, max),
             (_, None) => write!(f, " (or any amount above {})", self.min),
         }

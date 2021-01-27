@@ -12,7 +12,7 @@ readme = "README.md"
 edition = "2018"
 
 [lib]
-name = "lnpbp_invoice"
+name = "invoice"
 path = "src/lib.rs"
 crate-type = ["rlib", "staticlib"]
 
@@ -21,7 +21,7 @@ crate-type = ["rlib", "staticlib"]
 # -----------------------------------------
 amplify = { version = "3", features = ["stringly_conversions", "std"] }
 amplify_derive = "2.4.3"
-strict_encoding = { version = "1", features = ["miniscript"] }
+strict_encoding = { version = "1.0.6", features = ["miniscript"] }
 strict_encoding_derive = { version = "1" }
 lightning_encoding = { git = "https://github.com/LNP-BP/lnp-core" }
 descriptor-wallet = { git = "https://github.com/LNP-BP/descriptor-wallet", features = ["keygen"] }

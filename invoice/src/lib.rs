@@ -27,8 +27,6 @@
 #[macro_use]
 extern crate amplify_derive;
 #[macro_use]
-extern crate lnpbp;
-#[macro_use]
 extern crate lightning_encoding;
 
 #[cfg(feature = "serde")]
