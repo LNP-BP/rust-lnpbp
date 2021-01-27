@@ -21,7 +21,8 @@
 use bech32::{FromBase32, ToBase32};
 #[cfg(feature = "zip")]
 use deflate::{write::DeflateEncoder, Compression};
-use std::convert::TryFrom;
+use std::convert::{Infallible, TryFrom};
+use std::str::FromStr;
 
 pub const HRP_ID: &'static str = "id";
 pub const HRP_DATA: &'static str = "data";
@@ -45,6 +46,7 @@ pub enum Error {
     #[from(strict_encoding::Error)]
     #[from(bitcoin::consensus::encode::Error)]
     #[from(bitcoin::hashes::Error)]
+    #[from(Infallible)]
     WrongData,
 
     /// Requested object type does not match used Bech32 HRP
@@ -58,6 +60,47 @@ pub enum Error {
 
     /// Error inflating compressed data from payload: {0}
     InflateError(String),
+}
+
+/// Type for wrapping Vec<u8> data in cases you need to do a convenient
+/// enum variant display derives with `#[display(inner)]`
+#[derive(
+    Wrapper,
+    Clone,
+    Ord,
+    PartialOrd,
+    Eq,
+    PartialEq,
+    Hash,
+    Default,
+    Debug,
+    Display,
+    From,
+    StrictEncode,
+    StrictDecode,
+)]
+#[wrap(
+    Index,
+    IndexMut,
+    IndexRange,
+    IndexFull,
+    IndexFrom,
+    IndexTo,
+    IndexInclusive
+)]
+#[display(Vec::bech32_data_string)]
+// We get `(To)Bech32DataString` and `FromBech32DataString` for free b/c
+// the wrapper creates `From<Vec<u8>>` impl for us, which with rust stdlib
+// implies `TryFrom<Vec<u8>>`, for which we have auto trait derivation
+// `FromBech32Payload`, for which the traits above are automatically derived
+pub struct Blob(Vec<u8>);
+
+impl FromStr for Blob {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Blob::from_bech32_data_str(s)
+    }
 }
 
 pub trait ToBech32Payload {
