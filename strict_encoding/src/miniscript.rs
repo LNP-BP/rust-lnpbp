@@ -16,7 +16,7 @@ use std::io;
 use std::str::FromStr;
 
 use miniscript::descriptor::DescriptorSinglePub;
-use miniscript::{policy, Miniscript, MiniscriptKey};
+use miniscript::{policy, Descriptor, Miniscript, MiniscriptKey};
 
 use crate::{Error, StrictDecode, StrictEncode};
 
@@ -77,7 +77,30 @@ where
 {
     fn strict_decode<D: io::Read>(d: D) -> Result<Self, Error> {
         String::strict_decode(d)?.parse().map_err(|_| {
-            Error::DataIntegrityError(s!("Unparsable miniscript string"))
+            Error::DataIntegrityError(s!("Can't parse miniscript string"))
+        })
+    }
+}
+
+impl<Pk> StrictEncode for Descriptor<Pk>
+where
+    Pk: MiniscriptKey + FromStr,
+{
+    fn strict_encode<E: io::Write>(&self, e: E) -> Result<usize, Error> {
+        self.to_string().strict_encode(e)
+    }
+}
+
+impl<Pk> StrictDecode for Descriptor<Pk>
+where
+    Pk: MiniscriptKey + FromStr,
+    <Pk as FromStr>::Err: Display,
+    <Pk as MiniscriptKey>::Hash: FromStr,
+    <<Pk as MiniscriptKey>::Hash as FromStr>::Err: Display,
+{
+    fn strict_decode<D: io::Read>(d: D) -> Result<Self, Error> {
+        String::strict_decode(d)?.parse().map_err(|_| {
+            Error::DataIntegrityError(s!("Can't parse descriptor string"))
         })
     }
 }
