@@ -17,7 +17,7 @@ use bitcoin::hashes::{hash160, hmac, sha256, sha256d, sha256t, sha512, Hash};
 use bitcoin::util::address::{self, Address};
 use bitcoin::util::psbt::PartiallySignedTransaction;
 use bitcoin::{
-    secp256k1, util::bip32, BlockHash, OutPoint, PubkeyHash, Script,
+    secp256k1, util::bip32, Amount, BlockHash, OutPoint, PubkeyHash, Script,
     ScriptHash, SigHash, Transaction, TxIn, TxOut, Txid, WPubkeyHash,
     WScriptHash, Wtxid, XpubIdentifier,
 };
@@ -92,6 +92,18 @@ impl Strategy for Transaction {
 }
 impl Strategy for PartiallySignedTransaction {
     type Strategy = strategies::BitcoinConsensus;
+}
+
+impl StrictEncode for Amount {
+    fn strict_encode<E: io::Write>(&self, e: E) -> Result<usize, Error> {
+        self.as_sat().strict_encode(e)
+    }
+}
+
+impl StrictDecode for Amount {
+    fn strict_decode<D: io::Read>(d: D) -> Result<Self, Error> {
+        Ok(Amount::from_sat(u64::strict_decode(d)?))
+    }
 }
 
 impl StrictEncode for Script {
