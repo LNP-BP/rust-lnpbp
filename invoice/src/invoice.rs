@@ -12,7 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use chrono::NaiveDateTime;
-use std::fmt::{self, Display, Formatter};
+use std::fmt::{self, Display, Formatter, Write};
 // use url::Url;
 use std::io;
 
@@ -23,7 +23,7 @@ use bitcoin::Address;
 use internet2::tlv;
 use lnp::features::InitFeatures;
 use lnp::payment::ShortChannelId;
-use lnpbp::bech32::{self, ToBech32String};
+use lnpbp::bech32::{self, Blob, ToBech32String};
 use lnpbp::chain::AssetId;
 use lnpbp::seals::OutpointHash;
 use miniscript::{descriptor::DescriptorPublicKey, Descriptor};
@@ -44,6 +44,9 @@ use wallet::{HashLock, Psbt};
 )]
 #[display(Invoice::to_bech32_string)]
 pub struct Invoice {
+    /// Version byte, always 0 for the initial version
+    pub version: u8,
+
     /// List of beneficiary dests ordered in most desirable first order
     pub beneficiaries: Vec<Beneficiary>,
 
@@ -114,6 +117,8 @@ pub enum Beneficiary {
 
     /// Full transaction template in PSBT format
     #[from]
+    // TODO: Fix display once PSBT implement `Display`
+    #[display("PSBT!")]
     Psbt(Psbt),
 
     /// Lightning node receiving the payment. Not the same as lightning invoice
@@ -122,7 +127,7 @@ pub enum Beneficiary {
     Lightning(LnAddress),
 
     /// Fallback option for all future variants
-    Unknown(Vec<u8>),
+    Unknown(Blob),
 }
 
 impl lightning_encoding::Strategy for Beneficiary {
@@ -232,6 +237,14 @@ pub struct Details {
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, From)]
 // TODO: Move to amplify library
 pub struct Iso4217([u8; 3]);
+
+impl Display for Iso4217 {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.write_char(self.0[0].into())?;
+        f.write_char(self.0[1].into())?;
+        f.write_char(self.0[2].into())
+    }
+}
 
 impl StrictEncode for Iso4217 {
     fn strict_encode<E: io::Write>(
