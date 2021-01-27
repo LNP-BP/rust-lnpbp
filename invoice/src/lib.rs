@@ -24,10 +24,12 @@
 )]
 // TODO: when we will be ready for the release #![deny(missing_docs)]
 
-// #[macro_use]
-extern crate amplify;
-// #[macro_use]
+#[macro_use]
 extern crate amplify_derive;
+#[macro_use]
+extern crate lnpbp;
+#[macro_use]
+extern crate lightning_encoding;
 
 #[cfg(feature = "serde")]
 #[macro_use]
