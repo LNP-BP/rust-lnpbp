@@ -408,13 +408,13 @@ pub mod zip {
 pub use zip::*;
 
 /// Trait representing given bitcoin hash type as a Bech32 `id1...` value
-pub trait IntoBech32IdString<Tag>
+pub trait ToBech32IdString<Tag>
 where
     Self: sealed::HashType<Tag>,
     Tag: sha256t::Tag,
 {
     /// Returns Bech32-encoded string in form of `id1...` representing the type
-    fn into_bech32_id_string(self) -> String;
+    fn to_bech32_id_string(&self) -> String;
 }
 
 /// Trait that can generate the type from a given Bech32 `id1...` value
@@ -426,13 +426,13 @@ where
     fn from_bech32_id_str(s: &str) -> Result<Self, Error>;
 }
 
-impl<T, Tag> IntoBech32IdString<Tag> for T
+impl<T, Tag> ToBech32IdString<Tag> for T
 where
     Self: sealed::HashType<Tag>,
     Tag: sha256t::Tag,
 {
-    fn into_bech32_id_string(self) -> String {
-        ::bech32::encode(HRP_ID, self.into_inner().to_base32())
+    fn to_bech32_id_string(&self) -> String {
+        ::bech32::encode(HRP_ID, self.to_inner().to_base32())
             .expect("HRP is hardcoded and can't fail")
     }
 }
