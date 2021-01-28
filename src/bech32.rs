@@ -19,6 +19,7 @@
 //! implementing [`bitcoin::hashes::Hash`] trait
 
 use bech32::{FromBase32, ToBase32};
+use bitcoin::hashes::{sha256t, Hash};
 #[cfg(feature = "zip")]
 use deflate::{write::DeflateEncoder, Compression};
 use std::convert::{Infallible, TryFrom};
@@ -256,13 +257,23 @@ pub use strategies::Strategy;
 /// <https://rust-lang.github.io/api-guidelines/future-proofing.html#sealed-traits-protect-against-downstream-implementations-c-sealed>
 mod sealed {
     use super::*;
+    use amplify::Wrapper;
 
-    pub trait Hash: bitcoin::hashes::Hash + ToBase32 {}
+    pub trait HashType<Tag>: Wrapper<Inner = sha256t::Hash<Tag>>
+    where
+        Tag: sha256t::Tag,
+    {
+    }
     pub trait ToPayload: ToBech32Payload {}
     pub trait AsPayload: AsBech32Payload {}
     pub trait FromPayload: FromBech32Payload {}
 
-    impl<T> Hash for T where T: bitcoin::hashes::Hash + ToBase32 {}
+    impl<T, Tag> HashType<Tag> for T
+    where
+        T: Wrapper<Inner = sha256t::Hash<Tag>>,
+        Tag: sha256t::Tag,
+    {
+    }
     impl<T> ToPayload for T where T: ToBech32Payload {}
     impl<T> AsPayload for T where T: AsBech32Payload {}
     impl<T> FromPayload for T where T: FromBech32Payload {}
@@ -397,35 +408,39 @@ pub mod zip {
 pub use zip::*;
 
 /// Trait representing given bitcoin hash type as a Bech32 `id1...` value
-pub trait IntoBech32IdString
+pub trait IntoBech32IdString<Tag>
 where
-    Self: sealed::Hash,
+    Self: sealed::HashType<Tag>,
+    Tag: sha256t::Tag,
 {
     /// Returns Bech32-encoded string in form of `id1...` representing the type
     fn into_bech32_id_string(self) -> String;
 }
 
 /// Trait that can generate the type from a given Bech32 `id1...` value
-pub trait FromBech32IdStr
+pub trait FromBech32IdStr<Tag>
 where
-    Self: sealed::Hash,
+    Self: sealed::HashType<Tag> + Sized,
+    Tag: sha256t::Tag,
 {
     fn from_bech32_id_str(s: &str) -> Result<Self, Error>;
 }
 
-impl<T> IntoBech32IdString for T
+impl<T, Tag> IntoBech32IdString<Tag> for T
 where
-    Self: sealed::Hash,
+    Self: sealed::HashType<Tag>,
+    Tag: sha256t::Tag,
 {
     fn into_bech32_id_string(self) -> String {
-        ::bech32::encode(HRP_ID, self.to_base32())
+        ::bech32::encode(HRP_ID, self.into_inner().to_base32())
             .expect("HRP is hardcoded and can't fail")
     }
 }
 
-impl<T> FromBech32IdStr for T
+impl<T, Tag> FromBech32IdStr<Tag> for T
 where
-    Self: sealed::Hash,
+    Self: sealed::HashType<Tag>,
+    Tag: sha256t::Tag,
 {
     fn from_bech32_id_str(s: &str) -> Result<T, Error> {
         let (hrp, id) = ::bech32::decode(&s)?;
@@ -433,6 +448,6 @@ where
             return Err(Error::WrongPrefix);
         }
         let vec = Vec::<u8>::from_base32(&id)?;
-        Ok(Self::from_slice(&vec)?)
+        Ok(Self::from_inner(Self::Inner::from_slice(&vec)?))
     }
 }
