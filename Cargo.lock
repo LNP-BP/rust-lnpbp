@@ -1336,7 +1336,7 @@ dependencies = [
 
 [[package]]
 name = "strict_encoding"
-version = "1.0.7"
+version = "1.1.0"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1355,7 +1355,7 @@ dependencies = [
  "amplify",
  "proc-macro2 1.0.24",
  "quote 1.0.8",
- "strict_encoding 1.0.7",
+ "strict_encoding 1.1.0",
  "syn 1.0.60",
 ]
 
