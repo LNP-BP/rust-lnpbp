@@ -59,48 +59,20 @@ impl StrictDecode for ed25519_dalek::Signature {
 }
 
 #[cfg(feature = "grin_secp256k1zkp")]
-impl StrictEncode for secp256k1zkp::SecretKey {
-    fn strict_encode<E: io::Write>(&self, e: E) -> Result<usize, Error> {
-        self.0.as_ref().strict_encode(e)
-    }
-}
-
-#[cfg(feature = "grin_secp256k1zkp")]
-impl StrictDecode for secp256k1zkp::SecretKey {
-    fn strict_decode<D: io::Read>(d: D) -> Result<Self, Error> {
-        let secp = secp256k1zkp::Secp256k1::with_caps(
-            secp256k1zkp::ContextFlag::Commit,
-        );
-        let data = Vec::<u8>::strict_decode(d)?;
-        Self::from_slice(&secp, &data).map_err(|_| {
-            Error::DataIntegrityError(
-                "Wrong private key data in pedersen commitment private key"
-                    .to_string(),
-            )
-        })
-    }
-}
-
-#[cfg(feature = "grin_secp256k1zkp")]
 impl StrictEncode for secp256k1zkp::pedersen::Commitment {
     #[inline]
-    fn strict_encode<E: io::Write>(&self, e: E) -> Result<usize, Error> {
-        self.0.as_ref().strict_encode(e)
+    fn strict_encode<E: io::Write>(&self, mut e: E) -> Result<usize, Error> {
+        Ok(e.write(&self[..])?)
     }
 }
 
 #[cfg(feature = "grin_secp256k1zkp")]
 impl StrictDecode for secp256k1zkp::pedersen::Commitment {
     #[inline]
-    fn strict_decode<D: io::Read>(d: D) -> Result<Self, Error> {
-        let data = Vec::<u8>::strict_decode(d)?;
-        if data.len() != secp256k1zkp::constants::PEDERSEN_COMMITMENT_SIZE {
-            Err(Error::DataIntegrityError(format!(
-                "Wrong size of Pedersen commitment: {}",
-                data.len()
-            )))?
-        }
-        Ok(Self::from_vec(data))
+    fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, Error> {
+        let mut buf = [0u8; secp256k1zkp::constants::PEDERSEN_COMMITMENT_SIZE];
+        d.read_exact(&mut buf)?;
+        Ok(Self::from_vec(buf.to_vec()))
     }
 }
 
