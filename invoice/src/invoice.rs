@@ -84,6 +84,7 @@ pub struct Invoice {
 
     #[tlv(unknown)]
     pub unknown: tlv::Map,
+    // TODO: Add RGB feature vec optional field
 }
 
 impl bech32::Strategy for Invoice {

@@ -1,6 +1,6 @@
 [package]
 name = "lnpbp"
-version = "0.4.0-alpha.1"
+version = "0.4.0-beta"
 license = "MIT"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 description = "LNP/BP Core Library implementing LNPBP specifications & standards"
@@ -49,7 +49,7 @@ bitcoin_hashes = "~0.9.4" # we need macro from here
 bech32 = "~0.7.2"
 # <https://github.com/LNP-BP/LNPBPs/blob/master/lnpbp-0002.md#deterministic-public-key-extraction-from-bitcoin-script>
 # We have to fix version of miniscript as required by LNPBP-2 specification
-miniscript = { version = "=5.0.0", features = ["compiler"] }
+miniscript = { version = "5", features = ["compiler"] }
 # Serialization
 # -------------
 # This strange naming is a workaround for cargo inability to define required
