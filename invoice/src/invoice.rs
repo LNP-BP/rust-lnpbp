@@ -13,8 +13,8 @@
 
 use chrono::NaiveDateTime;
 use std::fmt::{self, Display, Formatter, Write};
-// use url::Url;
 use std::io;
+use std::str::FromStr;
 
 use bitcoin::hashes::sha256d;
 use bitcoin::secp256k1;
@@ -23,7 +23,7 @@ use bitcoin::Address;
 use internet2::tlv;
 use lnp::features::InitFeatures;
 use lnp::payment::ShortChannelId;
-use lnpbp::bech32::{self, Blob, ToBech32String};
+use lnpbp::bech32::{self, Blob, FromBech32Str, ToBech32String};
 use lnpbp::chain::AssetId;
 use lnpbp::seals::OutpointHash;
 use miniscript::{descriptor::DescriptorPublicKey, Descriptor};
@@ -91,6 +91,14 @@ impl bech32::Strategy for Invoice {
     const HRP: &'static str = "i";
 
     type Strategy = bech32::strategies::UsingStrictEncoding;
+}
+
+impl FromStr for Invoice {
+    type Err = bech32::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Invoice::from_bech32_str(s)
+    }
 }
 
 // TODO: Derive `Eq` & `Hash` once Psbt will support them
