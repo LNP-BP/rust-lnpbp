@@ -12,6 +12,8 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use chrono::NaiveDateTime;
+#[cfg(feature = "serde")]
+use serde_with::{As, DisplayFromStr};
 use std::fmt::{self, Display, Formatter, Write};
 use std::io;
 use std::str::FromStr;
@@ -43,6 +45,11 @@ use wallet::{HashLock, Psbt};
     LightningEncode,
     LightningDecode,
 )]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 #[display(Invoice::to_bech32_string)]
 pub struct Invoice {
     /// Version byte, always 0 for the initial version
@@ -52,11 +59,16 @@ pub struct Invoice {
     pub amount: AmountExt,
 
     /// List of beneficiary ordered in most desirable-first order
+    #[cfg_attr(feature = "serde", serde(with = "As::<Vec<DisplayFromStr>>"))]
     pub beneficiaries: Vec<Beneficiary>,
 
     /// AssetId can also be used to define blockchain. If it's empty it implies
     /// bitcoin mainnet
     #[tlv(type = 1)]
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "As::<Option<DisplayFromStr>>")
+    )]
     pub asset: Option<AssetId>,
 
     /// Interval between recurrent payments
@@ -64,6 +76,10 @@ pub struct Invoice {
     pub recurrent: Option<Recurrent>,
 
     #[tlv(type = 3)]
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "As::<Option<<DisplayFromStr>>")
+    )]
     pub expiry: Option<NaiveDateTime>, // Must be mapped to i64
 
     #[tlv(type = 4)]
@@ -76,6 +92,10 @@ pub struct Invoice {
     /// limit the merchant will not accept the payment and it will become
     /// expired
     #[tlv(type = 6)]
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "As::<Option<DisplayFromStr>>")
+    )]
     pub currency_requirement: Option<CurrencyData>,
 
     #[tlv(type = 7)]
@@ -88,9 +108,14 @@ pub struct Invoice {
     pub details: Option<Details>,
 
     #[tlv(type = 0)]
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "As::<Option<DisplayFromStr>>")
+    )]
     pub signature: Option<Signature>,
 
     #[tlv(unknown)]
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub unknown: tlv::Map,
     // TODO: Add RGB feature vec optional field
 }
@@ -142,6 +167,11 @@ impl Eq for Invoice {}
     StrictEncode,
     StrictDecode,
 )]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate", rename = "lowercase")
+)]
 #[non_exhaustive]
 pub enum Recurrent {
     #[display("non-recurrent")]
@@ -165,6 +195,11 @@ impl lightning_encoding::Strategy for Recurrent {
 #[derive(
     Clone, PartialEq, Debug, Display, From, StrictEncode, StrictDecode,
 )]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate", rename = "lowercase")
+)]
 #[display(inner)]
 #[non_exhaustive]
 pub enum Beneficiary {
@@ -177,12 +212,18 @@ pub enum Beneficiary {
     /// client-validated data to them (like in RGB). We always hide the real
     /// UTXO behind the hashed version (using some salt)
     #[from]
-    BlindUtxo(OutpointHash),
+    BlindUtxo(
+        #[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))]
+        OutpointHash,
+    ),
 
     /// Miniscript-based descriptors allowing custom derivation & key
     /// generation
     #[from]
-    Descriptor(Descriptor<DescriptorPublicKey>),
+    Descriptor(
+        #[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))]
+        Descriptor<DescriptorPublicKey>,
+    ),
 
     /// Full transaction template in PSBT format
     #[from]
@@ -193,10 +234,16 @@ pub enum Beneficiary {
     /// Lightning node receiving the payment. Not the same as lightning invoice
     /// since many of the invoice data now will be part of [`Invoice`] here.
     #[from]
-    Lightning(LnAddress),
+    Lightning(
+        #[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))]
+        LnAddress,
+    ),
 
     /// Fallback option for all future variants
-    Unknown(Blob),
+    Unknown(
+        #[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))]
+        Blob,
+    ),
 }
 
 impl lightning_encoding::Strategy for Beneficiary {
@@ -217,15 +264,23 @@ impl lightning_encoding::Strategy for Beneficiary {
     LightningEncode,
     LightningDecode,
 )]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 #[display("{node_id}")]
 pub struct LnAddress {
+    #[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))]
     pub node_id: secp256k1::PublicKey,
     pub features: InitFeatures,
+    #[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))]
     pub lock: HashLock, /* When PTLC will be available the same field will
                          * be re-used for them + the
                          * use will be indicated with a
                          * feature flag */
     pub min_final_cltv_expiry: Option<u16>,
+    #[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))]
     pub path_hints: Vec<LnPathHint>,
 }
 
@@ -247,8 +302,14 @@ pub struct LnAddress {
     LightningEncode,
     LightningDecode,
 )]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 #[display("{short_channel_id}@{node_id}")]
 pub struct LnPathHint {
+    #[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))]
     pub node_id: secp256k1::PublicKey,
     pub short_channel_id: ShortChannelId,
     pub fee_base_msat: u32,
@@ -306,8 +367,14 @@ impl lightning_encoding::Strategy for AmountExt {
     LightningEncode,
     LightningDecode,
 )]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 #[display("{source}")]
 pub struct Details {
+    #[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))]
     pub commitment: sha256d::Hash,
     pub source: String, // Url
 }
@@ -362,7 +429,7 @@ impl lightning_encoding::Strategy for Iso4217 {
     LightningEncode,
     LightningDecode,
 )]
-#[display("{coins} {fractions} {iso4217}")]
+#[display("{coins}.{fractions} {iso4217}")]
 pub struct CurrencyData {
     pub iso4217: Iso4217,
     pub coins: u32,
@@ -384,6 +451,11 @@ pub struct CurrencyData {
     StrictDecode,
     LightningEncode,
     LightningDecode,
+)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
 )]
 pub struct Quantity {
     pub min: u32, // We will default to zero
