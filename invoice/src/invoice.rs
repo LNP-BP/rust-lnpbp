@@ -48,30 +48,34 @@ pub struct Invoice {
     /// Version byte, always 0 for the initial version
     pub version: u8,
 
-    /// List of beneficiary dests ordered in most desirable first order
+    /// Amount in the specified asset
+    pub amount: AmountExt,
+
+    /// List of beneficiary ordered in most desirable-first order
     pub beneficiaries: Vec<Beneficiary>,
-
-    #[tlv(type = 4)]
-    pub expiry: Option<NaiveDateTime>, // Must be mapped to i64
-
-    #[tlv(type = 1)]
-    pub signature: Option<Signature>,
 
     /// AssetId can also be used to define blockchain. If it's empty it implies
     /// bitcoin mainnet
-    #[tlv(type = 2)]
+    #[tlv(type = 1)]
     pub asset: Option<AssetId>,
 
-    #[tlv(type = 6)]
-    pub quantity: Option<Quantity>,
+    /// Interval between recurrent payments
+    #[tlv(type = 2)]
+    pub recurrent: Option<Recurrent>,
 
     #[tlv(type = 3)]
+    pub expiry: Option<NaiveDateTime>, // Must be mapped to i64
+
+    #[tlv(type = 4)]
     pub price: Option<AmountExt>,
+
+    #[tlv(type = 5)]
+    pub quantity: Option<Quantity>,
 
     /// If the price of the asset provided by fiat provider URL goes below this
     /// limit the merchant will not accept the payment and it will become
     /// expired
-    #[tlv(type = 5)]
+    #[tlv(type = 6)]
     pub currency_requirement: Option<CurrencyData>,
 
     #[tlv(type = 7)]
@@ -80,8 +84,11 @@ pub struct Invoice {
     #[tlv(type = 9)]
     pub purpose: Option<String>,
 
-    #[tlv(type = 11)]
+    #[tlv(type = 10)]
     pub details: Option<Details>,
+
+    #[tlv(type = 0)]
+    pub signature: Option<Signature>,
 
     #[tlv(unknown)]
     pub unknown: tlv::Map,
@@ -121,6 +128,38 @@ impl std::hash::Hash for Invoice {
 }
 
 impl Eq for Invoice {}
+
+#[derive(
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Debug,
+    Display,
+    From,
+    StrictEncode,
+    StrictDecode,
+)]
+#[non_exhaustive]
+pub enum Recurrent {
+    #[display("non-recurrent")]
+    NonRecurrent,
+
+    #[display("each {0} seconds")]
+    Seconds(u64),
+
+    #[display("each {0} months")]
+    Months(u8),
+
+    #[display("each {0} years")]
+    Years(u8),
+}
+
+impl lightning_encoding::Strategy for Recurrent {
+    type Strategy = lightning_encoding::strategies::AsStrict;
+}
 
 // TODO: Derive `Eq` & `Hash` once Psbt will support them
 #[derive(
@@ -232,12 +271,21 @@ pub struct LnPathHint {
     StrictDecode,
 )]
 pub enum AmountExt {
+    /// Payments for any amount is accepted: useful for charity/donations, etc
+    Any,
+
     #[from]
     #[display(inner)]
     Normal(u64),
 
     #[display("{0}.{1}")]
     Milli(u64, u16),
+}
+
+impl Default for AmountExt {
+    fn default() -> Self {
+        AmountExt::Any
+    }
 }
 
 impl lightning_encoding::Strategy for AmountExt {
