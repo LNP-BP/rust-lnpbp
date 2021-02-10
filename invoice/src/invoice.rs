@@ -27,6 +27,7 @@ use lnpbp::bech32::{self, Blob, FromBech32Str, ToBech32String};
 use lnpbp::chain::AssetId;
 use lnpbp::seals::OutpointHash;
 use miniscript::{descriptor::DescriptorPublicKey, Descriptor};
+use std::cmp::Ordering;
 use strict_encoding::{StrictDecode, StrictEncode};
 use wallet::{HashLock, Psbt};
 
@@ -100,6 +101,20 @@ impl FromStr for Invoice {
         Invoice::from_bech32_str(s)
     }
 }
+
+impl Ord for Invoice {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.to_string().cmp(&other.to_string())
+    }
+}
+
+impl PartialOrd for Invoice {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Eq for Invoice {}
 
 // TODO: Derive `Eq` & `Hash` once Psbt will support them
 #[derive(
