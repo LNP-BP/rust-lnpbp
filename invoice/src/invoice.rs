@@ -114,6 +114,12 @@ impl PartialOrd for Invoice {
     }
 }
 
+impl std::hash::Hash for Invoice {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.to_string().hash(state)
+    }
+}
+
 impl Eq for Invoice {}
 
 // TODO: Derive `Eq` & `Hash` once Psbt will support them
