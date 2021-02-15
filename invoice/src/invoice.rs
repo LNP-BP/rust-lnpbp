@@ -73,7 +73,7 @@ pub struct Invoice {
 
     /// Interval between recurrent payments
     #[tlv(type = 2)]
-    pub recurrent: Option<Recurrent>,
+    pub recurrent: Recurrent,
 
     #[tlv(type = 3)]
     #[cfg_attr(
@@ -189,6 +189,12 @@ pub enum Recurrent {
 
 impl lightning_encoding::Strategy for Recurrent {
     type Strategy = lightning_encoding::strategies::AsStrict;
+}
+
+impl Default for Recurrent {
+    fn default() -> Self {
+        Recurrent::NonRecurrent
+    }
 }
 
 // TODO: Derive `Eq` & `Hash` once Psbt will support them
