@@ -192,7 +192,7 @@ impl Invoice {
             if chain == &Chain::Mainnet {
                 None
             } else {
-                Some(AssetId::native(&chain))
+                Some(chain.native_asset())
             },
         )
     }
