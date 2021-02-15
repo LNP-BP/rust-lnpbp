@@ -45,7 +45,6 @@ use wallet::{HashLock, Psbt};
     PartialEq,
     Debug,
     Display,
-    Default,
     StrictEncode,
     StrictDecode,
     LightningEncode,
@@ -61,14 +60,19 @@ pub struct Invoice {
     #[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))]
     pub amount: AmountExt,
 
-    /// List of beneficiary ordered in most desirable-first order
-    // FIXME: use full serde serialization once `serde_with` will be fixed
-    #[cfg_attr(feature = "serde", serde(with = "As::<Vec<DisplayFromStr>>"))]
-    pub beneficiaries: Vec<Beneficiary>,
+    /// Main beneficiary. Separating the first beneficiary into a standalone
+    /// field allows to ensure that there is always at lease one beneficiary
+    /// at compile time
+    pub beneficiary: Beneficiary,
+
+    /// List of beneficiary ordered in most desirable-first order, which follow
+    /// `beneficiary` value
+    #[tlv(type = 1)]
+    pub alt_beneficiaries: Vec<Beneficiary>,
 
     /// AssetId can also be used to define blockchain. If it's empty it implies
     /// bitcoin mainnet
-    #[tlv(type = 1)]
+    #[tlv(type = 2)]
     #[cfg_attr(
         feature = "serde",
         serde(with = "As::<Option<DisplayFromStr>>")
@@ -76,34 +80,32 @@ pub struct Invoice {
     pub asset: Option<AssetId>,
 
     /// Interval between recurrent payments
-    #[tlv(type = 2)]
+    #[tlv(type = 3)]
     pub recurrent: Recurrent,
 
-    #[tlv(type = 3)]
+    #[tlv(type = 4)]
     #[cfg_attr(
         feature = "serde",
         serde(with = "As::<Option<DisplayFromStr>>")
     )]
     pub expiry: Option<NaiveDateTime>, // Must be mapped to i64
 
-    #[tlv(type = 4)]
+    #[tlv(type = 5)]
     pub quantity: Option<Quantity>,
 
     /// If the price of the asset provided by fiat provider URL goes below this
     /// limit the merchant will not accept the payment and it will become
     /// expired
-    #[tlv(type = 5)]
-    // FIXME: once serde_with implementation will be fixed
-    #[cfg_attr(feature = "serde", serde(skip))]
+    #[tlv(type = 6)]
     pub currency_requirement: Option<CurrencyData>,
 
-    #[tlv(type = 6)]
+    #[tlv(type = 7)]
     pub merchant: Option<String>,
 
-    #[tlv(type = 7)]
+    #[tlv(type = 8)]
     pub purpose: Option<String>,
 
-    #[tlv(type = 8)]
+    #[tlv(type = 9)]
     pub details: Option<Details>,
 
     #[tlv(type = 0)]
@@ -122,7 +124,7 @@ pub struct Invoice {
 impl bech32::Strategy for Invoice {
     const HRP: &'static str = "i";
 
-    type Strategy = bech32::strategies::UsingStrictEncoding;
+    type Strategy = bech32::strategies::CompressedStrictEncoding;
 }
 
 impl FromStr for Invoice {
@@ -238,14 +240,11 @@ pub enum Beneficiary {
     #[from]
     // TODO: Fix display once PSBT implement `Display`
     #[display("PSBT!")]
-    #[cfg_attr(feature = "serde", serde(skip))]
     Psbt(Psbt),
 
     /// Lightning node receiving the payment. Not the same as lightning invoice
     /// since many of the invoice data now will be part of [`Invoice`] here.
     #[from]
-    // FIXME: once `serde_with` will be fixed
-    #[cfg_attr(feature = "serde", serde(skip))]
     Lightning(LnAddress),
 
     /// Fallback option for all future variants
