@@ -41,7 +41,7 @@ use crate::commit_verify::CommitVerify;
     derive(Serialize, Deserialize),
     serde(crate = "serde_crate")
 )]
-#[display(Debug)]
+#[display("{txid}:{vout}!{blinding}")]
 pub struct OutpointReveal {
     /// Blinding factor preventing rainbow table bruteforce attack based on
     /// the existing blockchain txid set
