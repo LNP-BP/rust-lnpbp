@@ -14,22 +14,21 @@
 use chrono::NaiveDateTime;
 #[cfg(feature = "serde")]
 use serde_with::{As, DisplayFromStr};
+use std::cmp::Ordering;
 use std::fmt::{self, Display, Formatter, Write};
 use std::io;
 use std::str::FromStr;
 
 use bitcoin::hashes::sha256d;
-use bitcoin::secp256k1;
-use bitcoin::secp256k1::Signature;
+use bitcoin::secp256k1::{self, Signature};
 use bitcoin::Address;
 use internet2::tlv;
 use lnp::features::InitFeatures;
 use lnp::payment::ShortChannelId;
 use lnpbp::bech32::{self, Blob, FromBech32Str, ToBech32String};
-use lnpbp::chain::AssetId;
+use lnpbp::chain::{AssetId, Chain};
 use lnpbp::seals::OutpointHash;
 use miniscript::{descriptor::DescriptorPublicKey, Descriptor};
-use std::cmp::Ordering;
 use strict_encoding::{StrictDecode, StrictEncode};
 use wallet::{HashLock, Psbt};
 
@@ -180,6 +179,22 @@ impl Invoice {
             signature: None,
             unknown: Default::default(),
         }
+    }
+
+    pub fn native(
+        beneficiary: Beneficiary,
+        amount: Option<u64>,
+        chain: &Chain,
+    ) -> Invoice {
+        Invoice::new(
+            beneficiary,
+            amount,
+            if chain == &Chain::Mainnet {
+                None
+            } else {
+                Some(AssetId::native(&chain))
+            },
+        )
     }
 
     pub fn beneficiaries(&self) -> BeneficiariesIter {

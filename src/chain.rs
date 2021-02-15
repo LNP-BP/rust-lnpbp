@@ -767,6 +767,11 @@ impl Chain {
             _ => None,
         }
     }
+
+    /// Returns native chain asset
+    pub fn native_asset(&self) -> AssetId {
+        AssetId::native(&self)
+    }
 }
 
 impl StrictEncode for Chain {
