@@ -33,7 +33,6 @@ extern crate lightning_encoding;
 #[macro_use]
 extern crate serde_with;
 #[cfg(feature = "serde")]
-#[macro_use]
 extern crate serde_crate as serde;
 
 mod invoice;

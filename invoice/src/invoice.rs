@@ -34,6 +34,12 @@ use strict_encoding::{StrictDecode, StrictEncode};
 use wallet::{HashLock, Psbt};
 
 // TODO: Derive `Eq` & `Hash` once Psbt will support them
+#[cfg_attr(
+    feature = "serde",
+    serde_as,
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 #[derive(
     Clone,
     PartialEq,
@@ -45,20 +51,18 @@ use wallet::{HashLock, Psbt};
     LightningEncode,
     LightningDecode,
 )]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(crate = "serde_crate")
-)]
 #[display(Invoice::to_bech32_string)]
 pub struct Invoice {
     /// Version byte, always 0 for the initial version
     pub version: u8,
 
-    /// Amount in the specified asset
+    /// Amount in the specified asset - a price per single item, if `quantity`
+    /// options is set
+    #[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))]
     pub amount: AmountExt,
 
     /// List of beneficiary ordered in most desirable-first order
+    // FIXME: use full serde serialization once `serde_with` will be fixed
     #[cfg_attr(feature = "serde", serde(with = "As::<Vec<DisplayFromStr>>"))]
     pub beneficiaries: Vec<Beneficiary>,
 
@@ -78,33 +82,28 @@ pub struct Invoice {
     #[tlv(type = 3)]
     #[cfg_attr(
         feature = "serde",
-        serde(with = "As::<Option<<DisplayFromStr>>")
+        serde(with = "As::<Option<DisplayFromStr>>")
     )]
     pub expiry: Option<NaiveDateTime>, // Must be mapped to i64
 
     #[tlv(type = 4)]
-    pub price: Option<AmountExt>,
-
-    #[tlv(type = 5)]
     pub quantity: Option<Quantity>,
 
     /// If the price of the asset provided by fiat provider URL goes below this
     /// limit the merchant will not accept the payment and it will become
     /// expired
-    #[tlv(type = 6)]
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "As::<Option<DisplayFromStr>>")
-    )]
+    #[tlv(type = 5)]
+    // FIXME: once serde_with implementation will be fixed
+    #[cfg_attr(feature = "serde", serde(skip))]
     pub currency_requirement: Option<CurrencyData>,
 
-    #[tlv(type = 7)]
+    #[tlv(type = 6)]
     pub merchant: Option<String>,
 
-    #[tlv(type = 9)]
+    #[tlv(type = 7)]
     pub purpose: Option<String>,
 
-    #[tlv(type = 10)]
+    #[tlv(type = 8)]
     pub details: Option<Details>,
 
     #[tlv(type = 0)]
@@ -198,13 +197,14 @@ impl Default for Recurrent {
 }
 
 // TODO: Derive `Eq` & `Hash` once Psbt will support them
-#[derive(
-    Clone, PartialEq, Debug, Display, From, StrictEncode, StrictDecode,
-)]
 #[cfg_attr(
     feature = "serde",
+    serde_as,
     derive(Serialize, Deserialize),
-    serde(crate = "serde_crate", rename = "lowercase")
+    serde(crate = "serde_crate", rename = "lowercase", tag = "format")
+)]
+#[derive(
+    Clone, PartialEq, Debug, Display, From, StrictEncode, StrictDecode,
 )]
 #[display(inner)]
 #[non_exhaustive]
@@ -212,7 +212,10 @@ pub enum Beneficiary {
     /// Addresses are useful when you do not like to leak public key
     /// information
     #[from]
-    Address(Address),
+    Address(
+        #[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))]
+        Address,
+    ),
 
     /// Used by protocols that work with existing UTXOs and can assign some
     /// client-validated data to them (like in RGB). We always hide the real
@@ -235,15 +238,15 @@ pub enum Beneficiary {
     #[from]
     // TODO: Fix display once PSBT implement `Display`
     #[display("PSBT!")]
+    #[cfg_attr(feature = "serde", serde(skip))]
     Psbt(Psbt),
 
     /// Lightning node receiving the payment. Not the same as lightning invoice
     /// since many of the invoice data now will be part of [`Invoice`] here.
     #[from]
-    Lightning(
-        #[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))]
-        LnAddress,
-    ),
+    // FIXME: once `serde_with` will be fixed
+    #[cfg_attr(feature = "serde", serde(skip))]
+    Lightning(LnAddress),
 
     /// Fallback option for all future variants
     Unknown(
@@ -256,6 +259,40 @@ impl lightning_encoding::Strategy for Beneficiary {
     type Strategy = lightning_encoding::strategies::AsStrict;
 }
 
+#[derive(
+    Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug, Display, Error,
+)]
+#[display(doc_comments)]
+/// Incorrect beneficiary format
+pub struct BeneficiaryParseError;
+
+// TODO: Since we can't present full beneficiary data in a string form (because
+//       of the lightning part) we have to remove this implementation once
+//       serde_with will be working
+impl FromStr for Beneficiary {
+    type Err = BeneficiaryParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if let Ok(address) = Address::from_str(s) {
+            Ok(Beneficiary::Address(address))
+        } else if let Ok(outpoint) = OutpointHash::from_str(s) {
+            Ok(Beneficiary::BlindUtxo(outpoint))
+        } else if let Ok(descriptor) =
+            Descriptor::<DescriptorPublicKey>::from_str(s)
+        {
+            Ok(Beneficiary::Descriptor(descriptor))
+        } else {
+            Err(BeneficiaryParseError)
+        }
+    }
+}
+
+#[cfg_attr(
+    feature = "serde",
+    serde_as,
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 #[derive(
     Clone,
     Ord,
@@ -270,11 +307,6 @@ impl lightning_encoding::Strategy for Beneficiary {
     LightningEncode,
     LightningDecode,
 )]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(crate = "serde_crate")
-)]
 #[display("{node_id}")]
 pub struct LnAddress {
     #[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))]
@@ -286,13 +318,18 @@ pub struct LnAddress {
                          * use will be indicated with a
                          * feature flag */
     pub min_final_cltv_expiry: Option<u16>,
-    #[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))]
     pub path_hints: Vec<LnPathHint>,
 }
 
 /// Path hints for a lightning network payment, equal to the value of the `r`
 /// key of the lightning BOLT-11 invoice
 /// <https://github.com/lightningnetwork/lightning-rfc/blob/master/11-payment-encoding.md#tagged-fields>
+#[cfg_attr(
+    feature = "serde",
+    serde_as,
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 #[derive(
     Copy,
     Clone,
@@ -308,15 +345,11 @@ pub struct LnAddress {
     LightningEncode,
     LightningDecode,
 )]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(crate = "serde_crate")
-)]
 #[display("{short_channel_id}@{node_id}")]
 pub struct LnPathHint {
     #[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))]
     pub node_id: secp256k1::PublicKey,
+    #[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))]
     pub short_channel_id: ShortChannelId,
     pub fee_base_msat: u32,
     pub fee_proportional_millionths: u32,
@@ -339,6 +372,7 @@ pub struct LnPathHint {
 )]
 pub enum AmountExt {
     /// Payments for any amount is accepted: useful for charity/donations, etc
+    #[display("any")]
     Any,
 
     #[from]
@@ -357,6 +391,32 @@ impl Default for AmountExt {
 
 impl lightning_encoding::Strategy for AmountExt {
     type Strategy = lightning_encoding::strategies::AsStrict;
+}
+
+#[derive(
+    Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug, Display, Error, From,
+)]
+#[display(doc_comments)]
+#[from(std::num::ParseIntError)]
+/// Incorrect beneficiary format
+pub struct AmountParseError;
+
+impl FromStr for AmountExt {
+    type Err = AmountParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.trim().to_lowercase() == "any" {
+            return Ok(AmountExt::Any);
+        }
+        let mut split = s.split(".");
+        Ok(match (split.next(), split.next()) {
+            (Some(amt), None) => AmountExt::Normal(amt.parse()?),
+            (Some(int), Some(frac)) => {
+                AmountExt::Milli(int.parse()?, frac.parse()?)
+            }
+            _ => Err(AmountParseError)?,
+        })
+    }
 }
 
 #[derive(
@@ -397,6 +457,29 @@ impl Display for Iso4217 {
     }
 }
 
+#[derive(
+    Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display, Error,
+)]
+#[display(doc_comments)]
+pub enum Iso4217Error {
+    /// Wrong string length to parse ISO4217 data
+    WrongLen,
+}
+
+impl FromStr for Iso4217 {
+    type Err = Iso4217Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if s.bytes().len() != 3 {
+            return Err(Iso4217Error::WrongLen);
+        }
+
+        let mut inner = [0u8; 3];
+        inner.copy_from_slice(&s.bytes().collect::<Vec<u8>>()[0..3]);
+        Ok(Iso4217(inner))
+    }
+}
+
 impl StrictEncode for Iso4217 {
     fn strict_encode<E: io::Write>(
         &self,
@@ -421,6 +504,12 @@ impl lightning_encoding::Strategy for Iso4217 {
     type Strategy = lightning_encoding::strategies::AsStrict;
 }
 
+#[cfg_attr(
+    feature = "serde",
+    serde_as,
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 #[derive(
     Clone,
     Ord,
@@ -437,6 +526,7 @@ impl lightning_encoding::Strategy for Iso4217 {
 )]
 #[display("{coins}.{fractions} {iso4217}")]
 pub struct CurrencyData {
+    #[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))]
     pub iso4217: Iso4217,
     pub coins: u32,
     pub fractions: u8,
