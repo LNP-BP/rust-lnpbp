@@ -221,6 +221,7 @@ dependencies = [
  "libc",
  "num-integer",
  "num-traits",
+ "serde",
  "time",
  "winapi",
 ]
@@ -573,8 +574,12 @@ dependencies = [
  "amplify_derive",
  "ed25519-dalek",
  "parse_arg",
+ "serde",
+ "serde_json",
+ "serde_yaml",
  "strict_encoding 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "stringly_conversions",
+ "toml 0.5.8",
  "torut",
 ]
 
@@ -612,6 +617,9 @@ dependencies = [
  "inet2_derive",
  "lazy_static",
  "lightning_encoding",
+ "serde",
+ "serde_with",
+ "serde_with_macros",
  "strict_encoding 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "url",
  "zmq",
@@ -684,6 +692,8 @@ dependencies = [
  "lazy_static",
  "lightning_encoding",
  "lnpbp 0.4.0-alpha.1",
+ "serde",
+ "serde_with",
  "strict_encoding 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -1598,6 +1608,7 @@ dependencies = [
  "idna",
  "matches",
  "percent-encoding",
+ "serde",
 ]
 
 [[package]]
