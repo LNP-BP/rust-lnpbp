@@ -125,6 +125,17 @@ pub mod commit_strategy {
         }
     }
 
+    // Marker trait for automatically implementing the CommitEncode trait
+    //  (with Merklization strategy) for a vector of that given type
+    pub trait VectorCommitEncode {}
+
+    impl<T> CommitEncodeWithStrategy for Vec<T>
+    where
+        T: VectorCommitEncode
+    {
+        type Strategy = commit_strategy::Merklization;
+    }
+
     impl CommitEncodeWithStrategy for usize {
         type Strategy = UsingStrict;
     }
