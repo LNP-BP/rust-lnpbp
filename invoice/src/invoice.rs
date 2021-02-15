@@ -204,10 +204,25 @@ impl Invoice {
         use bitcoin::hashes::{sha256t, Hash};
 
         match self.asset {
-            None if chain == &Chain::Mainnet => {
-                AssetClass::Native(Chain::Mainnet)
-            }
+            None if chain == &Chain::Mainnet => AssetClass::Native,
             None => AssetClass::InvalidNativeChain,
+            Some(asset_id) if asset_id == chain.native_asset() => {
+                AssetClass::Native
+            }
+            Some(asset_id)
+                if *&[
+                    Chain::Mainnet,
+                    Chain::Signet,
+                    Chain::LiquidV1,
+                    Chain::Testnet3,
+                ]
+                .iter()
+                .map(Chain::native_asset)
+                .find(|id| id == &asset_id)
+                .is_some() =>
+            {
+                AssetClass::InvalidNativeChain
+            }
             #[cfg(feature = "rgb")]
             Some(asset_id) => AssetClass::Rgb(rgb::ContractId::from_inner(
                 sha256t::Hash::from_inner(asset_id.into_inner()),
@@ -228,7 +243,7 @@ impl Invoice {
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
 #[non_exhaustive]
 pub enum AssetClass {
-    Native(Chain),
+    Native,
     #[cfg(feature = "rgb")]
     Rgb(rgb::ContractId),
     #[cfg(not(feature = "rgb"))]
