@@ -36,6 +36,6 @@ extern crate serde_with;
 #[macro_use]
 extern crate serde_crate as serde;
 
-pub mod invoice;
+mod invoice;
 
-pub use invoice::Invoice;
+pub use invoice::*;
