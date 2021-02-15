@@ -806,6 +806,7 @@ impl TryFrom<&Chain> for bitcoin::Network {
         Ok(match chain {
             Chain::Mainnet => bitcoin::Network::Bitcoin,
             Chain::Testnet3 => bitcoin::Network::Testnet,
+            Chain::Signet => bitcoin::Network::Signet,
             Chain::Regtest(hash)
                 if hash == &CHAIN_PARAMS_REGTEST.genesis_hash =>
             {
