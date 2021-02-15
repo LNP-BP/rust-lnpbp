@@ -41,6 +41,7 @@ use wallet::{HashLock, Psbt};
     serde(crate = "serde_crate")
 )]
 #[derive(
+    Getters,
     Clone,
     PartialEq,
     Debug,
@@ -53,22 +54,22 @@ use wallet::{HashLock, Psbt};
 #[display(Invoice::to_bech32_string)]
 pub struct Invoice {
     /// Version byte, always 0 for the initial version
-    pub version: u8,
+    version: u8,
 
     /// Amount in the specified asset - a price per single item, if `quantity`
     /// options is set
     #[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))]
-    pub amount: AmountExt,
+    amount: AmountExt,
 
     /// Main beneficiary. Separating the first beneficiary into a standalone
     /// field allows to ensure that there is always at lease one beneficiary
     /// at compile time
-    pub beneficiary: Beneficiary,
+    beneficiary: Beneficiary,
 
     /// List of beneficiary ordered in most desirable-first order, which follow
     /// `beneficiary` value
     #[tlv(type = 1)]
-    pub alt_beneficiaries: Vec<Beneficiary>,
+    alt_beneficiaries: Vec<Beneficiary>,
 
     /// AssetId can also be used to define blockchain. If it's empty it implies
     /// bitcoin mainnet
@@ -77,47 +78,47 @@ pub struct Invoice {
         feature = "serde",
         serde(with = "As::<Option<DisplayFromStr>>")
     )]
-    pub asset: Option<AssetId>,
+    asset: Option<AssetId>,
 
     /// Interval between recurrent payments
     #[tlv(type = 3)]
-    pub recurrent: Recurrent,
+    recurrent: Recurrent,
 
     #[tlv(type = 4)]
     #[cfg_attr(
         feature = "serde",
         serde(with = "As::<Option<DisplayFromStr>>")
     )]
-    pub expiry: Option<NaiveDateTime>, // Must be mapped to i64
+    expiry: Option<NaiveDateTime>, // Must be mapped to i64
 
     #[tlv(type = 5)]
-    pub quantity: Option<Quantity>,
+    quantity: Option<Quantity>,
 
     /// If the price of the asset provided by fiat provider URL goes below this
     /// limit the merchant will not accept the payment and it will become
     /// expired
     #[tlv(type = 6)]
-    pub currency_requirement: Option<CurrencyData>,
+    currency_requirement: Option<CurrencyData>,
 
     #[tlv(type = 7)]
-    pub merchant: Option<String>,
+    merchant: Option<String>,
 
     #[tlv(type = 8)]
-    pub purpose: Option<String>,
+    purpose: Option<String>,
 
     #[tlv(type = 9)]
-    pub details: Option<Details>,
+    details: Option<Details>,
 
     #[tlv(type = 0)]
     #[cfg_attr(
         feature = "serde",
         serde(with = "As::<Option<DisplayFromStr>>")
     )]
-    pub signature: Option<Signature>,
+    signature: Option<Signature>,
 
     #[tlv(unknown)]
     #[cfg_attr(feature = "serde", serde(skip))]
-    pub unknown: tlv::Map,
+    unknown: tlv::Map,
     // TODO: Add RGB feature vec optional field
 }
 
@@ -154,6 +155,59 @@ impl std::hash::Hash for Invoice {
 }
 
 impl Eq for Invoice {}
+
+impl Invoice {
+    pub fn new(
+        beneficiary: Beneficiary,
+        amount: Option<u64>,
+        asset: Option<AssetId>,
+    ) -> Invoice {
+        Invoice {
+            version: 0,
+            amount: amount
+                .map(|value| AmountExt::Normal(value))
+                .unwrap_or(AmountExt::Any),
+            beneficiary,
+            alt_beneficiaries: vec![],
+            asset,
+            recurrent: Default::default(),
+            expiry: None,
+            quantity: None,
+            currency_requirement: None,
+            merchant: None,
+            purpose: None,
+            details: None,
+            signature: None,
+            unknown: Default::default(),
+        }
+    }
+
+    pub fn beneficiaries(&self) -> BeneficiariesIter {
+        BeneficiariesIter {
+            invoice: self,
+            index: 0,
+        }
+    }
+}
+
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct BeneficiariesIter<'a> {
+    invoice: &'a Invoice,
+    index: usize,
+}
+
+impl<'a> Iterator for BeneficiariesIter<'a> {
+    type Item = &'a Beneficiary;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.index += 1;
+        if self.index == 1 {
+            Some(&self.invoice.beneficiary)
+        } else {
+            self.invoice.alt_beneficiaries.get(self.index - 2)
+        }
+    }
+}
 
 #[derive(
     Clone,
