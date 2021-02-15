@@ -738,6 +738,9 @@ dependencies = [
  "lazy_static",
  "lightning_encoding",
  "miniscript",
+ "serde",
+ "serde_with",
+ "serde_with_macros",
  "strict_encoding 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "strict_encoding_derive 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -756,6 +759,7 @@ dependencies = [
  "lnp-core",
  "lnpbp 0.4.0-beta (git+https://github.com/LNP-BP/rust-lnpbp)",
  "miniscript",
+ "rgb-core",
  "serde",
  "serde_with",
  "strict_encoding 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -810,6 +814,17 @@ name = "nodrop"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72ef4a56884ca558e5ddb05a1d1e7e1bfd9a68d9ed024c21704cc98872dae1bb"
+
+[[package]]
+name = "num-derive"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "876a53fff98e03a936a674b29568b0e605f06b29372c2489ff4de23f1949743d"
+dependencies = [
+ "proc-macro2 1.0.24",
+ "quote 1.0.9",
+ "syn 1.0.60",
+]
 
 [[package]]
 name = "num-integer"
@@ -1151,6 +1166,35 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b5eb417147ba9860a96cfe72a0b93bf88fee1744b5636ec99ab20c1aa9376581"
 
 [[package]]
+name = "rgb-core"
+version = "0.4.0-beta"
+source = "git+https://github.com/rgb-org/rgb-core#441bf1b3d2bf2b9bdb11be6d4093be5c63b0a5f0"
+dependencies = [
+ "amplify",
+ "amplify_derive",
+ "bech32",
+ "bitcoin",
+ "bitcoin_hashes",
+ "chrono",
+ "deflate",
+ "descriptor-wallet",
+ "ed25519-dalek",
+ "grin_secp256k1zkp",
+ "inflate",
+ "lazy_static",
+ "lightning_encoding",
+ "lnpbp 0.4.0-beta (git+https://github.com/LNP-BP/rust-lnpbp)",
+ "miniscript",
+ "num-derive",
+ "num-traits",
+ "regex",
+ "serde",
+ "serde_with",
+ "serde_with_macros",
+ "strict_encoding 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "rustc-serialize"
 version = "0.3.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1368,6 +1412,8 @@ dependencies = [
  "amplify_derive",
  "bitcoin",
  "chrono",
+ "ed25519-dalek",
+ "grin_secp256k1zkp",
  "miniscript",
  "strict_encoding_derive 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]

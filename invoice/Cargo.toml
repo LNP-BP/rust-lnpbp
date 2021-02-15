@@ -28,6 +28,7 @@ descriptor-wallet = { git = "https://github.com/LNP-BP/descriptor-wallet", featu
 internet2 = { git = "https://github.com/internet2-org/rust-internet2" }
 lnpbp = { git = "https://github.com/LNP-BP/rust-lnpbp" }
 lnp-core = { git = "https://github.com/LNP-BP/lnp-core" }
+rgb-core = { git = "https://github.com/rgb-org/rgb-core", optional = true }
 # Dependencies on core rust-bitcoin ecosystem projects
 # ----------------------------------------------------
 bitcoin = { version = "~0.26.0", features = ["rand"] }
@@ -41,8 +42,9 @@ chrono = "0.4.19"
 
 [features]
 default = []
-all = ["serde"]
+all = ["serde", "rgb"]
 serde = ["serde_crate", "serde_with", "amplify/serde", "descriptor-wallet/serde",
          "lnp-core/serde", "internet2/serde", "lnp-core/serde",
          "bitcoin/use-serde", "miniscript/serde",
          "chrono/serde", "url/serde"]
+rgb = ["rgb-core"]

@@ -197,12 +197,43 @@ impl Invoice {
         )
     }
 
+    pub fn classify_asset(&self, chain: &Chain) -> AssetClass {
+        #[cfg(feature = "rgb")]
+        use amplify::Wrapper;
+        #[cfg(feature = "rgb")]
+        use bitcoin::hashes::{sha256t, Hash};
+
+        match self.asset {
+            None if chain == &Chain::Mainnet => {
+                AssetClass::Native(Chain::Mainnet)
+            }
+            None => AssetClass::InvalidNativeChain,
+            #[cfg(feature = "rgb")]
+            Some(asset_id) => AssetClass::Rgb(rgb::ContractId::from_inner(
+                sha256t::Hash::from_inner(asset_id.into_inner()),
+            )),
+            #[cfg(not(feature = "rgb"))]
+            Some(asset_id) => AssetClass::Other(asset_id),
+        }
+    }
+
     pub fn beneficiaries(&self) -> BeneficiariesIter {
         BeneficiariesIter {
             invoice: self,
             index: 0,
         }
     }
+}
+
+#[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
+#[non_exhaustive]
+pub enum AssetClass {
+    Native(Chain),
+    #[cfg(feature = "rgb")]
+    Rgb(rgb::ContractId),
+    #[cfg(not(feature = "rgb"))]
+    Other(AssetId),
+    InvalidNativeChain,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug)]
