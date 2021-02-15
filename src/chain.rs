@@ -201,6 +201,32 @@ impl From<BlockHash> for AssetId {
     }
 }
 
+impl AssetId {
+    pub fn native(chain: &Chain) -> AssetId {
+        chain.chain_params().genesis_hash.into()
+    }
+}
+
+pub trait NativeAsset {
+    fn is_native(&self, chain: &Chain) -> bool;
+}
+
+impl NativeAsset for AssetId {
+    fn is_native(&self, chain: &Chain) -> bool {
+        self.into_inner() == [0u8; 32]
+            || *self == chain.chain_params().genesis_hash.into()
+    }
+}
+
+impl NativeAsset for Option<AssetId> {
+    fn is_native(&self, chain: &Chain) -> bool {
+        match self {
+            Some(asset_id) => asset_id.is_native(chain),
+            None => true,
+        }
+    }
+}
+
 /// Genesis block hash for bitcoin mainnet
 pub const GENESIS_HASH_MAINNET: &[u8] = &[
     0x6f, 0xe2, 0x8c, 0x0a, 0xb6, 0xf1, 0xb3, 0x72, 0xc1, 0xa6, 0xa2, 0x46,
