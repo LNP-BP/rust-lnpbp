@@ -507,6 +507,16 @@ impl lightning_encoding::Strategy for AmountExt {
     type Strategy = lightning_encoding::strategies::AsStrict;
 }
 
+impl AmountExt {
+    pub fn atomic_value(&self) -> Option<u64> {
+        match self {
+            AmountExt::Any => None,
+            AmountExt::Normal(val) => Some(*val),
+            AmountExt::Milli(_, _) => None,
+        }
+    }
+}
+
 #[derive(
     Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Debug, Display, Error, From,
 )]
