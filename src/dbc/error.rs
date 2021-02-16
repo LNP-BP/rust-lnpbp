@@ -80,6 +80,11 @@ impl From<descriptor::Error> for Error {
             descriptor::Error::UncompressedKeyInSegWitContext => {
                 Error::UncompressedKey
             }
+            // Since we never parse strings, this error must not happen
+            descriptor::Error::CantParseDescriptor => unreachable!(),
+            // If other errors appear this must crash so we know about that the
+            // new implementation is required
+            _ => unimplemented!(),
         }
     }
 }
