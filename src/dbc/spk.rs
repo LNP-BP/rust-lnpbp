@@ -56,7 +56,11 @@ pub enum ScriptEncodeMethod {
 #[derive(
     Clone, PartialEq, Eq, Hash, Debug, Display, StrictEncode, StrictDecode,
 )]
-#[cfg_attr(feature = "serde", derive(Serialize), serde(crate = "serde_crate"))]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 #[display(doc_comments)]
 #[non_exhaustive]
 pub enum ScriptEncodeData {
