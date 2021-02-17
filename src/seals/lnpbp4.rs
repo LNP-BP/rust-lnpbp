@@ -17,10 +17,11 @@ use bitcoin::hashes::{sha256d, Hash, HashEngine};
 use bitcoin::secp256k1::rand::{thread_rng, Rng};
 use bitcoin::util::uint::Uint256;
 use client_side_validation::commit_verify::TryCommitVerify;
+use wallet::Slice32;
 
 /// Source data for creation of multi-message commitments according to LNPBP-4
 /// procedure
-pub type ProtocolId = [u8; 32];
+pub type ProtocolId = Slice32;
 pub type Commitment = sha256d::Hash;
 pub type MessageMap = BTreeMap<ProtocolId, Commitment>;
 
@@ -90,7 +91,7 @@ impl TryCommitVerify<MessageMap> for MultimsgCommitment {
             // TODO: Modify arithmetics in LNPBP-4 spec
             //       <https://github.com/LNP-BP/LNPBPs/issues/19>
             if multimsg.into_iter().all(|(protocol, digest)| {
-                let rem = Uint256::from_be_bytes(*protocol)
+                let rem = Uint256::from_be_bytes(**protocol)
                     % Uint256::from_u64(n as u64)
                         .expect("Bitcoin U256 struct is broken");
                 ordered
