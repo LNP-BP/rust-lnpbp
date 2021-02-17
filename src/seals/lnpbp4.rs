@@ -29,7 +29,11 @@ pub type MessageMap = BTreeMap<ProtocolId, Commitment>;
 #[display(Debug)]
 pub struct TooManyMessagesError;
 
-#[cfg_attr(feature = "serde", derive(Serialize), serde(crate = "serde_crate"))]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 #[derive(
     Clone,
     PartialEq,
@@ -57,7 +61,11 @@ impl MultimsgCommitmentItem {
 }
 
 /// Multimessage commitment data according to LNPBP-4 specification
-#[cfg_attr(feature = "serde", derive(Serialize), serde(crate = "serde_crate"))]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 #[derive(
     Clone,
     PartialEq,
