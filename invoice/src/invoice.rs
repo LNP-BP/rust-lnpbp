@@ -19,7 +19,11 @@ use std::fmt::{self, Display, Formatter, Write};
 use std::io;
 use std::str::FromStr;
 
+#[cfg(feature = "rgb")]
+use amplify::Wrapper;
 use bitcoin::hashes::sha256d;
+#[cfg(feature = "rgb")]
+use bitcoin::hashes::{sha256t, Hash};
 use bitcoin::secp256k1::{self, Signature};
 use bitcoin::Address;
 use internet2::tlv;
@@ -199,24 +203,30 @@ impl Invoice {
 
     #[cfg(feature = "rgb")]
     pub fn is_rgb(&self) -> bool {
-        *&[
-            Chain::Mainnet,
-            Chain::Signet,
-            Chain::LiquidV1,
-            Chain::Testnet3,
-        ]
-        .iter()
-        .map(Chain::native_asset)
-        .find(|id| Some(*id) == self.asset)
-        .is_none()
+        self.rgb_asset().is_none()
+    }
+
+    #[cfg(feature = "rgb")]
+    pub fn rgb_asset(&self) -> Option<rgb::ContractId> {
+        self.asset.and_then(|asset_id| {
+            *&[
+                Chain::Mainnet,
+                Chain::Signet,
+                Chain::LiquidV1,
+                Chain::Testnet3,
+            ]
+            .iter()
+            .map(Chain::native_asset)
+            .find(|id| *id == asset_id)
+            .map(|asset_id| {
+                rgb::ContractId::from_inner(sha256t::Hash::from_inner(
+                    asset_id.into_inner(),
+                ))
+            })
+        })
     }
 
     pub fn classify_asset(&self, chain: Option<Chain>) -> AssetClass {
-        #[cfg(feature = "rgb")]
-        use amplify::Wrapper;
-        #[cfg(feature = "rgb")]
-        use bitcoin::hashes::{sha256t, Hash};
-
         match (self.asset, chain) {
             (None, Some(Chain::Mainnet)) => AssetClass::Native,
             (None, _) => AssetClass::InvalidNativeChain,
