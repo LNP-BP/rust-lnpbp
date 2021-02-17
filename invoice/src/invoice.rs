@@ -197,6 +197,20 @@ impl Invoice {
         )
     }
 
+    #[cfg(feature = "rgb")]
+    pub fn is_rgb(&self) -> bool {
+        *&[
+            Chain::Mainnet,
+            Chain::Signet,
+            Chain::LiquidV1,
+            Chain::Testnet3,
+        ]
+        .iter()
+        .map(Chain::native_asset)
+        .find(|id| Some(*id) == self.asset)
+        .is_none()
+    }
+
     pub fn classify_asset(&self, chain: Option<Chain>) -> AssetClass {
         #[cfg(feature = "rgb")]
         use amplify::Wrapper;
