@@ -28,6 +28,7 @@ pub type MessageMap = BTreeMap<ProtocolId, Commitment>;
 #[display(Debug)]
 pub struct TooManyMessagesError;
 
+#[cfg_attr(feature = "serde", derive(Serialize), serde(crate = "serde_crate"))]
 #[derive(
     Clone,
     PartialEq,

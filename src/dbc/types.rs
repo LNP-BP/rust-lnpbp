@@ -35,6 +35,7 @@ pub trait Container: Sized {
 #[derive(
     Clone, PartialEq, Eq, Hash, Debug, Display, StrictEncode, StrictDecode,
 )]
+#[cfg_attr(feature = "serde", derive(Serialize), serde(crate = "serde_crate"))]
 #[display("proof({pubkey}, {source}")]
 pub struct Proof {
     pub pubkey: secp256k1::PublicKey,

@@ -376,7 +376,7 @@ dependencies = [
 [[package]]
 name = "descriptor-wallet"
 version = "0.4.0-beta"
-source = "git+https://github.com/LNP-BP/descriptor-wallet#b7aade2da373255aa203add00a0c7ff3ecbebe78"
+source = "git+https://github.com/LNP-BP/descriptor-wallet#e3a08ea4e961baf8df35f21886370a26bba671b0"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -726,7 +726,7 @@ dependencies = [
 [[package]]
 name = "lnpbp"
 version = "0.4.0-beta"
-source = "git+https://github.com/LNP-BP/rust-lnpbp#d48237833923306e04444533bc96e46dca6d8a31"
+source = "git+https://github.com/LNP-BP/rust-lnpbp#8e5e1a715efba0704b38fe7d2a24ce71e7b2b23f"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1170,7 +1170,7 @@ checksum = "b5eb417147ba9860a96cfe72a0b93bf88fee1744b5636ec99ab20c1aa9376581"
 [[package]]
 name = "rgb-core"
 version = "0.4.0-beta"
-source = "git+https://github.com/rgb-org/rgb-core#441bf1b3d2bf2b9bdb11be6d4093be5c63b0a5f0"
+source = "git+https://github.com/rgb-org/rgb-core#5984c301c583161643cbecd3ae20405399f43ab4"
 dependencies = [
  "amplify",
  "amplify_derive",
