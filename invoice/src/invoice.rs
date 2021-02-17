@@ -197,19 +197,21 @@ impl Invoice {
         )
     }
 
-    pub fn classify_asset(&self, chain: &Chain) -> AssetClass {
+    pub fn classify_asset(&self, chain: Option<Chain>) -> AssetClass {
         #[cfg(feature = "rgb")]
         use amplify::Wrapper;
         #[cfg(feature = "rgb")]
         use bitcoin::hashes::{sha256t, Hash};
 
-        match self.asset {
-            None if chain == &Chain::Mainnet => AssetClass::Native,
-            None => AssetClass::InvalidNativeChain,
-            Some(asset_id) if asset_id == chain.native_asset() => {
+        match (self.asset, chain) {
+            (None, Some(Chain::Mainnet)) => AssetClass::Native,
+            (None, _) => AssetClass::InvalidNativeChain,
+            (Some(asset_id), Some(chain))
+                if asset_id == chain.native_asset() =>
+            {
                 AssetClass::Native
             }
-            Some(asset_id)
+            (Some(asset_id), _)
                 if *&[
                     Chain::Mainnet,
                     Chain::Signet,
@@ -224,11 +226,13 @@ impl Invoice {
                 AssetClass::InvalidNativeChain
             }
             #[cfg(feature = "rgb")]
-            Some(asset_id) => AssetClass::Rgb(rgb::ContractId::from_inner(
-                sha256t::Hash::from_inner(asset_id.into_inner()),
-            )),
+            (Some(asset_id), _) => {
+                AssetClass::Rgb(rgb::ContractId::from_inner(
+                    sha256t::Hash::from_inner(asset_id.into_inner()),
+                ))
+            }
             #[cfg(not(feature = "rgb"))]
-            Some(asset_id) => AssetClass::Other(asset_id),
+            (Some(asset_id), _) => AssetClass::Other(asset_id),
         }
     }
 
