@@ -209,7 +209,7 @@ impl Invoice {
     #[cfg(feature = "rgb")]
     pub fn rgb_asset(&self) -> Option<rgb::ContractId> {
         self.asset.and_then(|asset_id| {
-            *&[
+            if *&[
                 Chain::Mainnet,
                 Chain::Signet,
                 Chain::LiquidV1,
@@ -217,12 +217,14 @@ impl Invoice {
             ]
             .iter()
             .map(Chain::native_asset)
-            .find(|id| *id == asset_id)
-            .map(|asset_id| {
-                rgb::ContractId::from_inner(sha256t::Hash::from_inner(
+            .all(|id| id != asset_id)
+            {
+                Some(rgb::ContractId::from_inner(sha256t::Hash::from_inner(
                     asset_id.into_inner(),
-                ))
-            })
+                )))
+            } else {
+                None
+            }
         })
     }
 
