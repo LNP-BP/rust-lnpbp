@@ -65,9 +65,6 @@ lazy_static = "~1.4.0"
 deflate = { version = "~0.8.6", optional = true }
 inflate = { version = "~0.4.5", optional = true }
 
-[target.'cfg(target_os="windows")'.dependencies]
-openssl = { version = "0.10", features = ["vendored"], optional = true }
-
 # Features
 # ========
 [features]
