@@ -17,9 +17,13 @@ use bitcoin_hashes::{sha256, sha256d, Hash, HashEngine};
 
 use super::commit_verify::{self, CommitVerify};
 
-// TODO: Refactor all `CommitEncode`s into not requiring cloning
 pub trait CommitEncode {
     fn commit_encode<E: io::Write>(&self, e: E) -> usize;
+    fn commit_serialize(&self) -> Vec<u8> {
+        let mut vec = Vec::new();
+        self.commit_encode(&mut vec);
+        vec
+    }
 }
 
 pub trait CommitEncodeWithStrategy {
