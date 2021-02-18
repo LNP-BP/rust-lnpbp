@@ -176,18 +176,6 @@ pub mod commit_strategy {
     impl CommitEncodeWithStrategy for &[u8] {
         type Strategy = UsingStrict;
     }
-    impl CommitEncodeWithStrategy for Vec<u8> {
-        type Strategy = UsingStrict;
-    }
-    impl CommitEncodeWithStrategy for Vec<u16> {
-        type Strategy = Merklization;
-    }
-    impl CommitEncodeWithStrategy for Vec<u32> {
-        type Strategy = Merklization;
-    }
-    impl CommitEncodeWithStrategy for Vec<u64> {
-        type Strategy = Merklization;
-    }
     impl CommitEncodeWithStrategy for MerkleNode {
         type Strategy = UsingStrict;
     }
@@ -208,6 +196,9 @@ pub mod commit_strategy {
     impl<T> CommitEncodeWithStrategy for BTreeSet<T> {
         type Strategy = Merklization;
     }
+    impl<T> CommitEncodeWithStrategy for Vec<T> {
+        type Strategy = Merklization;
+    }
 
     impl<T> CommitEncodeWithStrategy for &T
     where
@@ -226,14 +217,14 @@ pub trait ConsensusCommit: Sized + CommitEncode {
     type Commitment: commit_verify::CommitVerify<Vec<u8>>;
 
     #[inline]
-    fn consensus_commit(self) -> Self::Commitment {
+    fn consensus_commit(&self) -> Self::Commitment {
         let mut encoder = io::Cursor::new(vec![]);
         self.commit_encode(&mut encoder);
         Self::Commitment::commit(&encoder.into_inner())
     }
 
     #[inline]
-    fn consensus_verify(self, commitment: &Self::Commitment) -> bool {
+    fn consensus_verify(&self, commitment: &Self::Commitment) -> bool {
         let mut encoder = io::Cursor::new(vec![]);
         self.commit_encode(&mut encoder);
         commitment.verify(&encoder.into_inner())
@@ -368,10 +359,20 @@ mod test {
         impl ConsensusCommit for BTreeMap<usize, Item> {
             type Commitment = MerkleNode;
         }
+        impl ConsensusCommit for Vec<Item> {
+            type Commitment = MerkleNode;
+        }
 
         let item = Item(s!("Some text"));
-        println!("{}", item.strict_serialize().unwrap().to_hex());
-        println!("{}", item.commit_serialize().to_hex());
+        assert_eq!(&b"\x09\x00Some text"[..], item.strict_serialize().unwrap());
+        assert_eq!(
+            "6680bbec0d05d3eaac9c8b658c40f28d2f0cb0f245c7b1cabf5a61c35bd03d8e",
+            item.commit_serialize().to_hex()
+        );
+        assert_eq!(
+            "df08dc157bbd5676d5aeb1b437fa0cded8d3e21699adee2fcbbadef131a9e895",
+            item.consensus_commit().to_hex()
+        );
         assert_ne!(item.commit_serialize(), item.strict_serialize().unwrap());
         assert_eq!(
             MerkleNode::hash(&item.commit_serialize()),
@@ -383,8 +384,27 @@ mod test {
             1 => Item(s!("My second case with a very long string")),
             3 => Item(s!("My third case to make the Merkle tree two layered"))
         };
-        println!("{}", collection.strict_serialize().unwrap().to_hex());
-        println!("{}", collection.commit_serialize().to_hex());
+        assert_eq!(
+            &b"\x03\x00\
+             \x00\x00\
+             \x0d\x00\
+             My first case\
+             \x01\x00\
+             \x26\x00\
+             My second case with a very long string\
+             \x03\x00\
+             \x31\x00\
+             My third case to make the Merkle tree two layered"[..],
+            collection.strict_serialize().unwrap()
+        );
+        assert_eq!(
+            "d88abaa2e8d2222c98a3596abbe99bf40aef7b95db93552a1fd9e1610fb2c6cb",
+            collection.commit_serialize().to_hex()
+        );
+        assert_eq!(
+            "c10a53779cb10d64268deb4b16d0ddcc02fa81143755d84c40725b4345a2f2e8",
+            collection.consensus_commit().to_hex()
+        );
         assert_ne!(
             collection.commit_serialize(),
             collection.strict_serialize().unwrap()
@@ -393,5 +413,35 @@ mod test {
             MerkleNode::hash(&collection.commit_serialize()),
             collection.consensus_commit()
         );
+
+        let vec: Vec<Item> = vec![
+            Item(s!("My first case")),
+            Item(s!("My second case with a very long string")),
+            Item(s!("My third case to make the Merkle tree two layered")),
+        ];
+        assert_eq!(
+            &b"\x03\x00\
+             \x0d\x00\
+             My first case\
+             \x26\x00\
+             My second case with a very long string\
+             \x31\x00\
+             My third case to make the Merkle tree two layered"[..],
+            vec.strict_serialize().unwrap()
+        );
+        assert_eq!(
+            "bb929db2825f7a9a8f98dd8bc9b919a402db6c3803a45c9632108e9616cb9da5",
+            vec.commit_serialize().to_hex()
+        );
+        assert_eq!(
+            "2a5dd4bff32d99ff57da825288bbe240645816ea53501d19fab2c53cdc56d574",
+            vec.consensus_commit().to_hex()
+        );
+        assert_ne!(vec.commit_serialize(), vec.strict_serialize().unwrap());
+        assert_eq!(
+            MerkleNode::hash(&vec.commit_serialize()),
+            vec.consensus_commit()
+        );
+        assert_ne!(vec.consensus_commit(), collection.consensus_commit());
     }
 }
