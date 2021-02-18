@@ -35,6 +35,6 @@ extern crate serde_with;
 #[cfg(feature = "serde")]
 extern crate serde_crate as serde;
 
-mod invoice;
+mod base;
 
-pub use invoice::*;
+pub use base::*;
