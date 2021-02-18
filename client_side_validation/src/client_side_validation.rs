@@ -19,7 +19,7 @@ use super::commit_verify::{self, CommitVerify};
 
 // TODO: Refactor all `CommitEncode`s into not requiring cloning
 pub trait CommitEncode {
-    fn commit_encode<E: io::Write>(self, e: E) -> usize;
+    fn commit_encode<E: io::Write>(&self, e: E) -> usize;
 }
 
 pub trait CommitEncodeWithStrategy {
@@ -44,8 +44,8 @@ pub mod commit_strategy {
     where
         T: strict_encoding::StrictEncode,
     {
-        fn commit_encode<E: io::Write>(self, e: E) -> usize {
-            self.into_inner().strict_encode(e).expect(
+        fn commit_encode<E: io::Write>(&self, e: E) -> usize {
+            self.as_inner().strict_encode(e).expect(
                 "Strict encoding must not fail for types implementing \
                       ConsensusCommit via marker trait ConsensusCommitFromStrictEncoding",
             )
@@ -57,8 +57,8 @@ pub mod commit_strategy {
         T: Conceal,
         <T as Conceal>::Confidential: CommitEncode,
     {
-        fn commit_encode<E: io::Write>(self, e: E) -> usize {
-            self.into_inner().conceal().commit_encode(e)
+        fn commit_encode<E: io::Write>(&self, e: E) -> usize {
+            self.as_inner().conceal().commit_encode(e)
         }
     }
 
@@ -67,10 +67,10 @@ pub mod commit_strategy {
         H: Hash + strict_encoding::StrictEncode,
         T: strict_encoding::StrictEncode,
     {
-        fn commit_encode<E: io::Write>(self, e: E) -> usize {
+        fn commit_encode<E: io::Write>(&self, e: E) -> usize {
             let mut engine = H::engine();
             engine
-                .input(&strict_encoding::strict_serialize(&self.into_inner()).expect(
+                .input(&strict_encoding::strict_serialize(self.as_inner()).expect(
                     "Strict encoding of hash strategy-based commitment data must not fail",
                 ));
             let hash = H::from_engine(engine);
@@ -83,14 +83,15 @@ pub mod commit_strategy {
 
     impl<T> CommitEncode for amplify::Holder<T, Merklization>
     where
-        T: IntoIterator,
+        T: IntoIterator + Clone,
         <T as IntoIterator>::Item: CommitEncode,
     {
-        fn commit_encode<E: io::Write>(self, e: E) -> usize {
+        fn commit_encode<E: io::Write>(&self, e: E) -> usize {
             merklize(
                 "",
                 &self
-                    .into_inner()
+                    .as_inner()
+                    .clone()
                     .into_iter()
                     .map(|item| {
                         let mut encoder = io::Cursor::new(vec![]);
@@ -109,19 +110,19 @@ pub mod commit_strategy {
         K: CommitEncode,
         V: CommitEncode,
     {
-        fn commit_encode<E: io::Write>(self, mut e: E) -> usize {
+        fn commit_encode<E: io::Write>(&self, mut e: E) -> usize {
             self.0.commit_encode(&mut e) + self.1.commit_encode(&mut e)
         }
     }
 
     impl<T> CommitEncode for T
     where
-        T: CommitEncodeWithStrategy,
+        T: CommitEncodeWithStrategy + Clone,
         amplify::Holder<T, <T as CommitEncodeWithStrategy>::Strategy>:
             CommitEncode,
     {
-        fn commit_encode<E: io::Write>(self, e: E) -> usize {
-            amplify::Holder::new(self).commit_encode(e)
+        fn commit_encode<E: io::Write>(&self, e: E) -> usize {
+            amplify::Holder::new(self.clone()).commit_encode(e)
         }
     }
 
