@@ -405,6 +405,7 @@ pub mod zip {
         }
     }
 }
+#[cfg(feature = "zip")]
 pub use zip::*;
 
 /// Trait representing given bitcoin hash type as a Bech32 `id1...` value

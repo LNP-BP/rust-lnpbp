@@ -691,7 +691,6 @@ mod test {
                 port: None,
                 transport: None,
             };
-            println!("{}", ip);
             let raw = uniform.to_raw_uniform();
             assert_eq!(uniform, raw.try_into().unwrap());
 
@@ -701,7 +700,6 @@ mod test {
                 port: Some(6432),
                 transport: None,
             };
-            println!("{}:6432", ip);
             let raw = uniform.to_raw_uniform();
             assert_eq!(uniform, raw.try_into().unwrap());
 
@@ -711,7 +709,6 @@ mod test {
                 port: None,
                 transport: Some(Transport::Tcp),
             };
-            println!("tcp://{}", ip);
             let raw = uniform.to_raw_uniform();
             assert_eq!(uniform, raw.try_into().unwrap());
 
@@ -721,7 +718,6 @@ mod test {
                 port: Some(32),
                 transport: Some(Transport::Udp),
             };
-            println!("udp://{}:32", ip);
             let raw = uniform.to_raw_uniform();
             assert_eq!(uniform, raw.try_into().unwrap());
         }
@@ -736,7 +732,6 @@ mod test {
                 port: None,
                 transport: None,
             };
-            println!("{}", ip);
             let raw = uniform.to_raw_uniform();
             assert_eq!(uniform, raw.try_into().unwrap());
 
@@ -746,7 +741,6 @@ mod test {
                 port: Some(6432),
                 transport: None,
             };
-            println!("{}:6432", ip);
             let raw = uniform.to_raw_uniform();
             assert_eq!(uniform, raw.try_into().unwrap());
 
@@ -756,7 +750,6 @@ mod test {
                 port: None,
                 transport: Some(Transport::Tcp),
             };
-            println!("tcp://{}", ip);
             let raw = uniform.to_raw_uniform();
             assert_eq!(uniform, raw.try_into().unwrap());
 
@@ -766,7 +759,6 @@ mod test {
                 port: Some(32),
                 transport: Some(Transport::Udp),
             };
-            println!("udp://{}:32", ip);
             let raw = uniform.to_raw_uniform();
             assert_eq!(uniform, raw.try_into().unwrap());
         }
