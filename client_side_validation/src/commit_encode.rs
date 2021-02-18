@@ -59,10 +59,10 @@ pub mod commit_strategy {
     impl<T> CommitEncode for amplify::Holder<T, UsingConceal>
     where
         T: CommitConceal,
-        <T as CommitConceal>::Confidential: CommitEncode,
+        <T as CommitConceal>::ConcealedCommitment: CommitEncode,
     {
         fn commit_encode<E: io::Write>(&self, e: E) -> usize {
-            self.as_inner().conceal().commit_encode(e)
+            self.as_inner().commit_conceal().commit_encode(e)
         }
     }
 
@@ -218,8 +218,8 @@ pub mod commit_strategy {
 }
 
 pub trait CommitConceal {
-    type Confidential;
-    fn conceal(&self) -> Self::Confidential;
+    type ConcealedCommitment;
+    fn commit_conceal(&self) -> Self::ConcealedCommitment;
 }
 
 pub trait ConsensusCommit: Sized + CommitEncode {
@@ -264,6 +264,16 @@ impl strict_encoding::Strategy for MerkleNode {
     type Strategy = strict_encoding::strategies::HashFixedBytes;
 }
 
+impl<MSG> CommitVerify<MSG> for MerkleNode
+where
+    MSG: AsRef<[u8]>,
+{
+    #[inline]
+    fn commit(msg: &MSG) -> MerkleNode {
+        MerkleNode::hash(msg.as_ref())
+    }
+}
+
 /// Merklization procedure that uses tagged hashes with depth commitments
 pub fn merklize(prefix: &str, data: &[MerkleNode], depth: u16) -> MerkleNode {
     let len = data.len();
@@ -301,4 +311,87 @@ pub fn merklize(prefix: &str, data: &[MerkleNode], depth: u16) -> MerkleNode {
         }
     }
     MerkleNode::from_engine(engine)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use amplify::{bmap, s};
+    use bitcoin_hashes::hex::ToHex;
+    use std::collections::BTreeMap;
+    use strict_encoding::StrictEncode;
+
+    #[test]
+    fn collections() {
+        // First, we define a data type
+        #[derive(
+            Clone,
+            PartialEq,
+            Eq,
+            PartialOrd,
+            Ord,
+            Hash,
+            Debug,
+            StrictEncode,
+            StrictDecode,
+        )]
+        struct Item(pub String);
+        // Next, we say that it should be concealed using some function
+        // (double SHA256 hash in this case)
+        impl CommitConceal for Item {
+            type ConcealedCommitment = sha256d::Hash;
+            fn commit_conceal(&self) -> Self::ConcealedCommitment {
+                sha256d::Hash::hash(self.0.as_bytes())
+            }
+        }
+        // Next, we need to specify how the concealed data should be
+        // commit-encoded: this time we strict-serialize the hash
+        impl CommitEncodeWithStrategy for sha256d::Hash {
+            type Strategy = commit_strategy::UsingStrict;
+        }
+        // Now, we define commitment encoding for our concealable type: it
+        // should conceal the data
+        impl CommitEncodeWithStrategy for Item {
+            type Strategy = commit_strategy::UsingConceal;
+        }
+        // Now, we need to say that consensus commit procedure should produce
+        // a final commitment from commit-encoded data (equal to the
+        // strict encoding of the conceal result) using `CommitVerify` type.
+        // Here, we use another round of hashing, producing merkle node hash
+        // from the concealed data.
+        impl ConsensusCommit for Item {
+            type Commitment = MerkleNode;
+        }
+        // When we put such items into a collection, we need to explicitly
+        // specify which type of the final commitment will be produced from
+        // the merkle tree (which is automatically used for any collection type)
+        impl ConsensusCommit for BTreeMap<usize, Item> {
+            type Commitment = MerkleNode;
+        }
+
+        let item = Item(s!("Some text"));
+        println!("{}", item.strict_serialize().unwrap().to_hex());
+        println!("{}", item.commit_serialize().to_hex());
+        assert_ne!(item.commit_serialize(), item.strict_serialize().unwrap());
+        assert_eq!(
+            MerkleNode::hash(&item.commit_serialize()),
+            item.consensus_commit()
+        );
+
+        let collection: BTreeMap<usize, Item> = bmap! {
+            0 => Item(s!("My first case")),
+            1 => Item(s!("My second case with a very long string")),
+            3 => Item(s!("My third case to make the Merkle tree two layered"))
+        };
+        println!("{}", collection.strict_serialize().unwrap().to_hex());
+        println!("{}", collection.commit_serialize().to_hex());
+        assert_ne!(
+            collection.commit_serialize(),
+            collection.strict_serialize().unwrap()
+        );
+        assert_eq!(
+            MerkleNode::hash(&collection.commit_serialize()),
+            collection.consensus_commit()
+        );
+    }
 }

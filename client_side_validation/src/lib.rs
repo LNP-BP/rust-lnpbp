@@ -40,6 +40,9 @@
 extern crate amplify_derive;
 #[macro_use]
 extern crate bitcoin_hashes;
+#[cfg(test)]
+#[macro_use]
+extern crate strict_encoding;
 
 #[macro_use]
 mod commit_encode;
