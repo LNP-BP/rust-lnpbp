@@ -1,9 +1,6 @@
 #![allow(dead_code, bare_trait_objects)]
 
-#[macro_use]
-extern crate strict_encoding_derive;
-
-use ::core::marker::PhantomData;
+use strict_encoding::{StrictDecode, StrictEncode};
 
 #[derive(StrictEncode, StrictDecode)]
 struct Me(u8);
@@ -29,7 +26,7 @@ struct Other {
 }
 
 #[derive(StrictEncode, StrictDecode)]
-enum Hi<T> {
+enum Hi {
     /// Docstring
     First(u8),
     Second(Heap),
@@ -37,13 +34,15 @@ enum Hi<T> {
     Fourth {
         other: Other,
     },
-    Fifth(PhantomData<T>),
     Seventh,
 }
 
 #[derive(StrictEncode, StrictDecode)]
-enum CustomErr<E: std::error::Error> {
-    Other(E),
+enum CustomErr<Err>
+where
+    Err: std::error::Error + StrictEncode + StrictDecode,
+{
+    Other(Err),
 }
 
 fn main() {}
