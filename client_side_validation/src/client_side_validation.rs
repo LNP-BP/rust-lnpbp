@@ -105,6 +105,16 @@ pub mod commit_strategy {
         }
     }
 
+    impl<K, V> CommitEncode for &(K, V)
+    where
+        K: CommitEncode,
+        V: CommitEncode,
+    {
+        fn commit_encode<E: io::Write>(&self, mut e: E) -> usize {
+            self.0.commit_encode(&mut e) + self.1.commit_encode(&mut e)
+        }
+    }
+
     impl<K, V> CommitEncode for (K, V)
     where
         K: CommitEncode,
