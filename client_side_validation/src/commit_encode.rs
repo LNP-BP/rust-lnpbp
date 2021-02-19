@@ -353,10 +353,7 @@ where
     }
 }
 
-pub trait ToMerkleSource
-where
-    Self: IntoIterator,
-{
+pub trait ToMerkleSource {
     type Leaf: ConsensusMerkleCommit;
     fn to_merkle_source(&self) -> MerkleSource<Self::Leaf>;
 }
