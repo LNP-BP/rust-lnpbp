@@ -34,7 +34,6 @@ pub trait CommitEncodeWithStrategy {
 pub mod commit_strategy {
     use super::*;
     use bitcoin_hashes::Hash;
-    use std::collections::{BTreeMap, BTreeSet};
 
     // Defining strategies:
     pub struct UsingStrict;
@@ -42,7 +41,6 @@ pub mod commit_strategy {
     pub struct UsingHash<H>(std::marker::PhantomData<H>)
     where
         H: Hash + strict_encoding::StrictEncode;
-    pub struct Merklization;
 
     impl<T> CommitEncode for amplify::Holder<T, UsingStrict>
     where
@@ -85,40 +83,6 @@ pub mod commit_strategy {
         }
     }
 
-    impl<T> CommitEncode for amplify::Holder<T, Merklization>
-    where
-        T: IntoIterator + Clone,
-        <T as IntoIterator>::Item: CommitEncode,
-    {
-        fn commit_encode<E: io::Write>(&self, e: E) -> usize {
-            merklize(
-                "",
-                &self
-                    .as_inner()
-                    .clone()
-                    .into_iter()
-                    .map(|item| {
-                        let mut encoder = io::Cursor::new(vec![]);
-                        item.commit_encode(&mut encoder);
-                        MerkleNode::hash(&encoder.into_inner())
-                    })
-                    .collect::<Vec<MerkleNode>>(),
-                0,
-            )
-            .commit_encode(e)
-        }
-    }
-
-    impl<K, V> CommitEncode for &(K, V)
-    where
-        K: CommitEncode,
-        V: CommitEncode,
-    {
-        fn commit_encode<E: io::Write>(&self, mut e: E) -> usize {
-            self.0.commit_encode(&mut e) + self.1.commit_encode(&mut e)
-        }
-    }
-
     impl<K, V> CommitEncode for (K, V)
     where
         K: CommitEncode,
@@ -126,6 +90,19 @@ pub mod commit_strategy {
     {
         fn commit_encode<E: io::Write>(&self, mut e: E) -> usize {
             self.0.commit_encode(&mut e) + self.1.commit_encode(&mut e)
+        }
+    }
+
+    impl<A, B, C> CommitEncode for (A, B, C)
+    where
+        A: CommitEncode,
+        B: CommitEncode,
+        C: CommitEncode,
+    {
+        fn commit_encode<E: io::Write>(&self, mut e: E) -> usize {
+            self.0.commit_encode(&mut e)
+                + self.1.commit_encode(&mut e)
+                + self.2.commit_encode(&mut e)
         }
     }
 
@@ -176,6 +153,9 @@ pub mod commit_strategy {
     impl CommitEncodeWithStrategy for &[u8] {
         type Strategy = UsingStrict;
     }
+    impl CommitEncodeWithStrategy for Vec<u8> {
+        type Strategy = UsingStrict;
+    }
     impl CommitEncodeWithStrategy for MerkleNode {
         type Strategy = UsingStrict;
     }
@@ -188,16 +168,6 @@ pub mod commit_strategy {
     #[cfg(feature = "grin_secp256k1zkp")]
     impl CommitEncodeWithStrategy for secp256k1zkp::pedersen::RangeProof {
         type Strategy = commit_strategy::UsingHash<sha256::Hash>;
-    }
-
-    impl<K, V> CommitEncodeWithStrategy for BTreeMap<K, V> {
-        type Strategy = Merklization;
-    }
-    impl<T> CommitEncodeWithStrategy for BTreeSet<T> {
-        type Strategy = Merklization;
-    }
-    impl<T> CommitEncodeWithStrategy for Vec<T> {
-        type Strategy = Merklization;
     }
 
     impl<T> CommitEncodeWithStrategy for &T
@@ -229,6 +199,23 @@ pub trait ConsensusCommit: Sized + CommitEncode {
         self.commit_encode(&mut encoder);
         commitment.verify(&encoder.into_inner())
     }
+}
+
+impl<A, B> ConsensusCommit for (A, B)
+where
+    A: CommitEncode,
+    B: CommitEncode,
+{
+    type Commitment = MerkleNode;
+}
+
+impl<A, B, C> ConsensusCommit for (A, B, C)
+where
+    A: CommitEncode,
+    B: CommitEncode,
+    C: CommitEncode,
+{
+    type Commitment = MerkleNode;
 }
 
 #[macro_export]
@@ -304,12 +291,45 @@ pub fn merklize(prefix: &str, data: &[MerkleNode], depth: u16) -> MerkleNode {
     MerkleNode::from_engine(engine)
 }
 
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
+pub struct MerkleTreeCollection<T>(pub Vec<T>);
+
+impl<T, I> From<I> for MerkleTreeCollection<T>
+where
+    I: IntoIterator<Item = T>,
+    T: CommitEncode,
+{
+    fn from(collection: I) -> Self {
+        Self(collection.into_iter().collect())
+    }
+}
+
+impl<T> CommitEncode for MerkleTreeCollection<T>
+where
+    T: ConsensusCommit<Commitment = MerkleNode>,
+{
+    fn commit_encode<E: io::Write>(&self, e: E) -> usize {
+        let leafs = &self
+            .0
+            .iter()
+            .map(T::consensus_commit)
+            .collect::<Vec<MerkleNode>>();
+        merklize("", leafs, 0).commit_encode(e)
+    }
+}
+
+impl<T> ConsensusCommit for MerkleTreeCollection<T>
+where
+    T: ConsensusCommit<Commitment = MerkleNode> + CommitEncode,
+{
+    type Commitment = MerkleNode;
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
     use amplify::{bmap, s};
     use bitcoin_hashes::hex::ToHex;
-    use std::collections::BTreeMap;
     use strict_encoding::StrictEncode;
 
     #[test]
@@ -353,15 +373,6 @@ mod test {
         impl ConsensusCommit for Item {
             type Commitment = MerkleNode;
         }
-        // When we put such items into a collection, we need to explicitly
-        // specify which type of the final commitment will be produced from
-        // the merkle tree (which is automatically used for any collection type)
-        impl ConsensusCommit for BTreeMap<usize, Item> {
-            type Commitment = MerkleNode;
-        }
-        impl ConsensusCommit for Vec<Item> {
-            type Commitment = MerkleNode;
-        }
 
         let item = Item(s!("Some text"));
         assert_eq!(&b"\x09\x00Some text"[..], item.strict_serialize().unwrap());
@@ -379,11 +390,13 @@ mod test {
             item.consensus_commit()
         );
 
-        let collection: BTreeMap<usize, Item> = bmap! {
-            0 => Item(s!("My first case")),
-            1 => Item(s!("My second case with a very long string")),
-            3 => Item(s!("My third case to make the Merkle tree two layered"))
+        let original = bmap! {
+            0usize => Item(s!("My first case")),
+            1usize => Item(s!("My second case with a very long string")),
+            3usize => Item(s!("My third case to make the Merkle tree two layered"))
         };
+        let collection =
+            MerkleTreeCollection::<(usize, Item)>::from(original.clone());
         assert_eq!(
             &b"\x03\x00\
              \x00\x00\
@@ -395,7 +408,7 @@ mod test {
              \x03\x00\
              \x31\x00\
              My third case to make the Merkle tree two layered"[..],
-            collection.strict_serialize().unwrap()
+            original.strict_serialize().unwrap()
         );
         assert_eq!(
             "d88abaa2e8d2222c98a3596abbe99bf40aef7b95db93552a1fd9e1610fb2c6cb",
@@ -407,18 +420,19 @@ mod test {
         );
         assert_ne!(
             collection.commit_serialize(),
-            collection.strict_serialize().unwrap()
+            original.strict_serialize().unwrap()
         );
         assert_eq!(
             MerkleNode::hash(&collection.commit_serialize()),
             collection.consensus_commit()
         );
 
-        let vec: Vec<Item> = vec![
+        let original = vec![
             Item(s!("My first case")),
             Item(s!("My second case with a very long string")),
             Item(s!("My third case to make the Merkle tree two layered")),
         ];
+        let vec: MerkleTreeCollection<Item> = original.clone().into();
         assert_eq!(
             &b"\x03\x00\
              \x0d\x00\
@@ -427,7 +441,7 @@ mod test {
              My second case with a very long string\
              \x31\x00\
              My third case to make the Merkle tree two layered"[..],
-            vec.strict_serialize().unwrap()
+            original.strict_serialize().unwrap()
         );
         assert_eq!(
             "bb929db2825f7a9a8f98dd8bc9b919a402db6c3803a45c9632108e9616cb9da5",
@@ -437,7 +451,10 @@ mod test {
             "2a5dd4bff32d99ff57da825288bbe240645816ea53501d19fab2c53cdc56d574",
             vec.consensus_commit().to_hex()
         );
-        assert_ne!(vec.commit_serialize(), vec.strict_serialize().unwrap());
+        assert_ne!(
+            vec.commit_serialize(),
+            original.strict_serialize().unwrap()
+        );
         assert_eq!(
             MerkleNode::hash(&vec.commit_serialize()),
             vec.consensus_commit()
