@@ -40,7 +40,7 @@ amplify_derive = "2.4.3"
 strict_encoding = { version = "1", features = ["miniscript"] }
 strict_encoding_derive = { version = "1" }
 lightning_encoding = { git = "https://github.com/LNP-BP/lnp-core" }
-client_side_validation = { version = "0.3" }
+client_side_validation = { git = "https://github.com/LNP-BP/rust-lnpbp" }
 descriptor-wallet = { git = "https://github.com/LNP-BP/descriptor-wallet" }
 # Dependencies on core rust-bitcoin ecosystem projects
 # ----------------------------------------------------

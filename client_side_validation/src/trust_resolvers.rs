@@ -1,3 +1,6 @@
+//! This is a planned API for v0.5.0 that will help structuring RGB validation
+//! into a more formal process
+
 /*
 /// This simple trait MUST be used by all parties implementing client-side
 /// validation paradigm. The core concept of this paradigm is that a client

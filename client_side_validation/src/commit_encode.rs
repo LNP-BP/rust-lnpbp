@@ -461,11 +461,11 @@ mod test {
             original.strict_serialize().unwrap()
         );
         assert_eq!(
-            "d88abaa2e8d2222c98a3596abbe99bf40aef7b95db93552a1fd9e1610fb2c6cb",
+            "b497ced8b6431336e4c66ffd56a504633c828ea3ec0c0495a31e9a14cb066406",
             collection.commit_serialize().to_hex()
         );
         assert_eq!(
-            "c10a53779cb10d64268deb4b16d0ddcc02fa81143755d84c40725b4345a2f2e8",
+            "066406cb149a1ea395040ceca38e823c6304a556fd6fc6e4361343b6d8ce97b4",
             collection.consensus_commit().to_hex()
         );
         assert_ne!(
@@ -473,7 +473,7 @@ mod test {
             original.strict_serialize().unwrap()
         );
         assert_eq!(
-            MerkleNode::hash(&collection.commit_serialize()),
+            MerkleNode::from_slice(&collection.commit_serialize()).unwrap(),
             collection.consensus_commit()
         );
 
@@ -494,11 +494,11 @@ mod test {
             original.strict_serialize().unwrap()
         );
         assert_eq!(
-            "bb929db2825f7a9a8f98dd8bc9b919a402db6c3803a45c9632108e9616cb9da5",
+            "8a8ebc499d146b0ab551e0ff985cf8166dc05f20f04b0f5991c4b9242dbde205",
             vec.commit_serialize().to_hex()
         );
         assert_eq!(
-            "2a5dd4bff32d99ff57da825288bbe240645816ea53501d19fab2c53cdc56d574",
+            "05e2bd2d24b9c491590f4bf0205fc06d16f85c98ffe051b50a6b149d49bc8e8a",
             vec.consensus_commit().to_hex()
         );
         assert_ne!(
@@ -506,7 +506,7 @@ mod test {
             original.strict_serialize().unwrap()
         );
         assert_eq!(
-            MerkleNode::hash(&vec.commit_serialize()),
+            MerkleNode::from_slice(&vec.commit_serialize()).unwrap(),
             vec.consensus_commit()
         );
         assert_ne!(vec.consensus_commit(), collection.consensus_commit());
