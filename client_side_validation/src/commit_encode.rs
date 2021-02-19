@@ -202,6 +202,12 @@ pub trait ConsensusCommit: Sized + CommitEncode {
     }
 }
 
+pub trait ConsensusMerkleCommit:
+    ConsensusCommit<Commitment = MerkleNode>
+{
+    const MERKLE_NODE_TAG: &'static str;
+}
+
 impl<A, B> ConsensusCommit for (A, B)
 where
     A: CommitEncode,
@@ -258,6 +264,7 @@ pub fn merklize(prefix: &str, data: &[MerkleNode], depth: u16) -> MerkleNode {
     let len = data.len();
 
     let mut engine = MerkleNode::engine();
+    // Computing tagged hash as per BIP-340
     let tag = format!("{}:merkle:{}", prefix, depth);
     let tag_hash = sha256::Hash::hash(tag.as_bytes());
     engine.input(&tag_hash[..]);
@@ -316,7 +323,7 @@ where
 
 impl<L> CommitEncode for MerkleSource<L>
 where
-    L: ConsensusCommit<Commitment = MerkleNode>,
+    L: ConsensusMerkleCommit,
 {
     fn commit_encode<E: io::Write>(&self, e: E) -> usize {
         let leafs = &self
@@ -324,22 +331,33 @@ where
             .iter()
             .map(L::consensus_commit)
             .collect::<Vec<MerkleNode>>();
-        merklize("", leafs, 0).commit_encode(e)
+        merklize(L::MERKLE_NODE_TAG, leafs, 0).commit_encode(e)
     }
 }
 
 impl<L> ConsensusCommit for MerkleSource<L>
 where
-    L: ConsensusCommit<Commitment = MerkleNode> + CommitEncode,
+    L: ConsensusMerkleCommit + CommitEncode,
 {
     type Commitment = MerkleNode;
+
+    #[inline]
+    fn consensus_commit(&self) -> Self::Commitment {
+        MerkleNode::from_slice(&self.commit_serialize())
+            .expect("MerkleSource::commit_serialize must produce MerkleNode")
+    }
+
+    #[inline]
+    fn consensus_verify(&self, commitment: &Self::Commitment) -> bool {
+        self.consensus_commit() == *commitment
+    }
 }
 
 pub trait ToMerkleSource
 where
     Self: IntoIterator,
 {
-    type Leaf: CommitEncode;
+    type Leaf: ConsensusMerkleCommit;
     fn to_merkle_source(&self) -> MerkleSource<Self::Leaf>;
 }
 
@@ -391,6 +409,13 @@ mod test {
         // from the concealed data.
         impl ConsensusCommit for Item {
             type Commitment = MerkleNode;
+        }
+        // Next, we need to provide merkle node tags for each type of the tree
+        impl ConsensusMerkleCommit for Item {
+            const MERKLE_NODE_TAG: &'static str = "item";
+        }
+        impl ConsensusMerkleCommit for (usize, Item) {
+            const MERKLE_NODE_TAG: &'static str = "usize->item";
         }
 
         impl ToMerkleSource for BTreeMap<usize, Item> {
