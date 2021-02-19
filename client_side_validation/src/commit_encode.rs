@@ -12,6 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 use std::io;
+use std::iter::FromIterator;
 
 use bitcoin_hashes::{sha256, sha256d, Hash, HashEngine};
 
@@ -292,37 +293,54 @@ pub fn merklize(prefix: &str, data: &[MerkleNode], depth: u16) -> MerkleNode {
 }
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
-pub struct MerkleTreeCollection<T>(pub Vec<T>);
+pub struct MerkleSource<T>(pub Vec<T>);
 
-impl<T, I> From<I> for MerkleTreeCollection<T>
+impl<L, I> From<I> for MerkleSource<L>
 where
-    I: IntoIterator<Item = T>,
-    T: CommitEncode,
+    I: IntoIterator<Item = L>,
+    L: CommitEncode,
 {
     fn from(collection: I) -> Self {
         Self(collection.into_iter().collect())
     }
 }
 
-impl<T> CommitEncode for MerkleTreeCollection<T>
+impl<L> FromIterator<L> for MerkleSource<L>
 where
-    T: ConsensusCommit<Commitment = MerkleNode>,
+    L: CommitEncode,
+{
+    fn from_iter<T: IntoIterator<Item = L>>(iter: T) -> Self {
+        iter.into_iter().collect::<Vec<_>>().into()
+    }
+}
+
+impl<L> CommitEncode for MerkleSource<L>
+where
+    L: ConsensusCommit<Commitment = MerkleNode>,
 {
     fn commit_encode<E: io::Write>(&self, e: E) -> usize {
         let leafs = &self
             .0
             .iter()
-            .map(T::consensus_commit)
+            .map(L::consensus_commit)
             .collect::<Vec<MerkleNode>>();
         merklize("", leafs, 0).commit_encode(e)
     }
 }
 
-impl<T> ConsensusCommit for MerkleTreeCollection<T>
+impl<L> ConsensusCommit for MerkleSource<L>
 where
-    T: ConsensusCommit<Commitment = MerkleNode> + CommitEncode,
+    L: ConsensusCommit<Commitment = MerkleNode> + CommitEncode,
 {
     type Commitment = MerkleNode;
+}
+
+pub trait ToMerkleSource
+where
+    Self: IntoIterator,
+{
+    type Leaf: CommitEncode;
+    fn to_merkle_source(&self) -> MerkleSource<Self::Leaf>;
 }
 
 #[cfg(test)]
@@ -330,6 +348,7 @@ mod test {
     use super::*;
     use amplify::{bmap, s};
     use bitcoin_hashes::hex::ToHex;
+    use std::collections::BTreeMap;
     use strict_encoding::StrictEncode;
 
     #[test]
@@ -374,6 +393,13 @@ mod test {
             type Commitment = MerkleNode;
         }
 
+        impl ToMerkleSource for BTreeMap<usize, Item> {
+            type Leaf = (usize, Item);
+            fn to_merkle_source(&self) -> MerkleSource<Self::Leaf> {
+                self.iter().map(|(k, v)| (*k, v.clone())).collect()
+            }
+        }
+
         let item = Item(s!("Some text"));
         assert_eq!(&b"\x09\x00Some text"[..], item.strict_serialize().unwrap());
         assert_eq!(
@@ -395,8 +421,7 @@ mod test {
             1usize => Item(s!("My second case with a very long string")),
             3usize => Item(s!("My third case to make the Merkle tree two layered"))
         };
-        let collection =
-            MerkleTreeCollection::<(usize, Item)>::from(original.clone());
+        let collection = original.to_merkle_source();
         assert_eq!(
             &b"\x03\x00\
              \x00\x00\
@@ -432,7 +457,7 @@ mod test {
             Item(s!("My second case with a very long string")),
             Item(s!("My third case to make the Merkle tree two layered")),
         ];
-        let vec: MerkleTreeCollection<Item> = original.clone().into();
+        let vec: MerkleSource<Item> = original.clone().into();
         assert_eq!(
             &b"\x03\x00\
              \x0d\x00\

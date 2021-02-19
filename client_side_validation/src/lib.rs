@@ -52,5 +52,6 @@ pub mod single_use_seals;
 
 pub use crate::commit_encode::{
     commit_strategy, merklize, CommitConceal, CommitEncode,
-    CommitEncodeWithStrategy, ConsensusCommit, MerkleNode,
+    CommitEncodeWithStrategy, ConsensusCommit, MerkleNode, MerkleSource,
+    ToMerkleSource,
 };
