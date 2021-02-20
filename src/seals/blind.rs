@@ -16,7 +16,7 @@ use bitcoin::secp256k1::rand::{thread_rng, RngCore};
 use bitcoin::{OutPoint, Txid};
 
 use crate::client_side_validation::{
-    commit_strategy, CommitEncodeWithStrategy, Conceal,
+    commit_strategy, CommitConceal, CommitEncodeWithStrategy,
 };
 use crate::commit_verify::CommitVerify;
 
@@ -73,15 +73,15 @@ impl From<OutPoint> for OutpointReveal {
 
 impl From<OutPoint> for OutpointHash {
     fn from(outpoint: OutPoint) -> Self {
-        OutpointReveal::from(outpoint).conceal()
+        OutpointReveal::from(outpoint).commit_conceal()
     }
 }
 
-impl Conceal for OutpointReveal {
-    type Confidential = OutpointHash;
+impl CommitConceal for OutpointReveal {
+    type ConcealedCommitment = OutpointHash;
 
     #[inline]
-    fn conceal(&self) -> Self::Confidential {
+    fn commit_conceal(&self) -> Self::ConcealedCommitment {
         self.outpoint_hash()
     }
 }

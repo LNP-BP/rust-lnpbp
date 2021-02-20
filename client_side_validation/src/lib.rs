@@ -40,14 +40,18 @@
 extern crate amplify_derive;
 #[macro_use]
 extern crate bitcoin_hashes;
+#[cfg(test)]
+#[macro_use]
+extern crate strict_encoding;
 
 #[macro_use]
-mod client_side_validation;
+mod commit_encode;
 pub mod commit_verify;
 mod digests;
 pub mod single_use_seals;
 
-pub use crate::client_side_validation::{
-    commit_strategy, merklize, CommitEncode, CommitEncodeWithStrategy, Conceal,
-    ConsensusCommit, MerkleNode,
+pub use crate::commit_encode::{
+    commit_strategy, merklize, CommitConceal, CommitEncode,
+    CommitEncodeWithStrategy, ConsensusCommit, ConsensusMerkleCommit,
+    MerkleNode, MerkleSource, ToMerkleSource,
 };
