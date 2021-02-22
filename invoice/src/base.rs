@@ -37,6 +37,8 @@ use strict_encoding::{StrictDecode, StrictEncode};
 use wallet::{HashLock, Psbt};
 
 // TODO: Derive `Eq` & `Hash` once Psbt will support them
+/// NB: Invoice fields are non-public since each time we update them we must
+/// clear signature
 #[cfg_attr(
     feature = "serde",
     serde_as,

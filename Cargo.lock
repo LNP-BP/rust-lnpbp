@@ -296,7 +296,7 @@ dependencies = [
  "amplify_derive",
  "bitcoin_hashes",
  "grin_secp256k1zkp",
- "strict_encoding 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strict_encoding 1.1.0",
 ]
 
 [[package]]
@@ -308,7 +308,7 @@ dependencies = [
  "amplify_derive",
  "bitcoin_hashes",
  "grin_secp256k1zkp",
- "strict_encoding 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strict_encoding 1.1.0",
 ]
 
 [[package]]
@@ -319,7 +319,7 @@ dependencies = [
  "amplify_derive",
  "bitcoin_hashes",
  "grin_secp256k1zkp",
- "strict_encoding 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strict_encoding 1.1.0",
 ]
 
 [[package]]
@@ -451,7 +451,7 @@ dependencies = [
  "serde",
  "serde_with",
  "slip132",
- "strict_encoding 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strict_encoding 1.1.0",
 ]
 
 [[package]]
@@ -692,7 +692,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yaml",
- "strict_encoding 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strict_encoding 1.1.0",
  "stringly_conversions",
  "toml 0.5.8",
  "torut",
@@ -735,7 +735,7 @@ dependencies = [
  "serde",
  "serde_with",
  "serde_with_macros",
- "strict_encoding 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strict_encoding 1.1.0",
  "url",
  "zmq",
 ]
@@ -782,7 +782,7 @@ dependencies = [
  "amplify_derive",
  "bitcoin",
  "lightning_encoding_derive",
- "strict_encoding 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strict_encoding 1.1.0",
 ]
 
 [[package]]
@@ -818,7 +818,7 @@ dependencies = [
  "lnpbp 0.4.0-beta (git+https://github.com/LNP-BP/rust-lnpbp)",
  "serde",
  "serde_with",
- "strict_encoding 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strict_encoding 1.1.0",
 ]
 
 [[package]]
@@ -841,7 +841,7 @@ dependencies = [
  "serde",
  "serde_with",
  "serde_with_macros",
- "strict_encoding 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strict_encoding 1.1.0",
  "strict_encoding_derive 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -864,7 +864,7 @@ dependencies = [
  "serde",
  "serde_with",
  "serde_with_macros",
- "strict_encoding 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strict_encoding 1.1.0",
  "strict_encoding_derive 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -886,7 +886,7 @@ dependencies = [
  "rgb-core",
  "serde",
  "serde_with",
- "strict_encoding 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strict_encoding 1.1.0",
  "strict_encoding_derive 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "url",
 ]
@@ -1358,7 +1358,7 @@ dependencies = [
  "serde_with",
  "serde_with_macros",
  "serde_yaml",
- "strict_encoding 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strict_encoding 1.1.0",
 ]
 
 [[package]]
@@ -1590,7 +1590,7 @@ dependencies = [
  "amplify",
  "amplify_derive",
  "bitcoin",
- "strict_encoding 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strict_encoding 1.1.0",
 ]
 
 [[package]]
@@ -1614,6 +1614,8 @@ checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 [[package]]
 name = "strict_encoding"
 version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "040e89a9add0494e5a5eef5763ba18f0293ae4eed22bab439998fc893afd2a26"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1627,9 +1629,7 @@ dependencies = [
 
 [[package]]
 name = "strict_encoding"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "040e89a9add0494e5a5eef5763ba18f0293ae4eed22bab439998fc893afd2a26"
+version = "1.2.0"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1648,7 +1648,7 @@ dependencies = [
  "amplify",
  "proc-macro2 1.0.24",
  "quote 1.0.9",
- "strict_encoding 1.1.0",
+ "strict_encoding 1.2.0",
  "syn 1.0.60",
 ]
 

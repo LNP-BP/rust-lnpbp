@@ -13,6 +13,7 @@
 
 use std::io;
 
+use bitcoin::bech32::u5;
 use bitcoin::hashes::{hash160, hmac, sha256, sha256d, sha256t, sha512, Hash};
 use bitcoin::util::address::{self, Address};
 use bitcoin::util::psbt::PartiallySignedTransaction;
@@ -23,7 +24,6 @@ use bitcoin::{
 };
 
 use crate::{strategies, Error, Strategy, StrictDecode, StrictEncode};
-use bitcoin::bech32::u5;
 
 impl Strategy for Txid {
     type Strategy = strategies::HashFixedBytes;
