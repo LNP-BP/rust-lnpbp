@@ -665,6 +665,7 @@ pub enum Chain {
     Mainnet,
 
     /// Bitcoin testnet version 3
+    #[cfg_attr(feature = "serde", serde(rename = "testnet"))]
     Testnet3,
 
     /// Bitcoin regtest network, with provided genesis hash to distinguish
