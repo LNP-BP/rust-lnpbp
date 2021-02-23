@@ -656,12 +656,13 @@ impl Eq for ChainParams {}
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
-    serde(crate = "serde_crate", rename_all = "kebab-case")
+    serde(crate = "serde_crate")
 )]
 #[non_exhaustive]
 #[repr(u32)]
 pub enum Chain {
     /// Bitcoin mainnet
+    #[cfg_attr(feature = "serde", serde(rename = "mainnet"))]
     Mainnet,
 
     /// Bitcoin testnet version 3
@@ -670,20 +671,25 @@ pub enum Chain {
 
     /// Bitcoin regtest network, with provided genesis hash to distinguish
     /// different private networks
+    #[cfg_attr(feature = "serde", serde(rename = "regtest"))]
     Regtest(BlockHash),
 
     /// Default bitcoin signet network
+    #[cfg_attr(feature = "serde", serde(rename = "signet"))]
     Signet,
 
     /// Some private bitcoin signet network, with provided genesis hash to
     /// distinguish private networks from each other
+    #[cfg_attr(feature = "serde", serde(rename = "signetCustom"))]
     SignetCustom(BlockHash),
 
     /// Liquidv1 sidechain & network by Blockstream
+    #[cfg_attr(feature = "serde", serde(rename = "liquidv1"))]
     LiquidV1,
 
     /// All other networks/chains, providing full information on chain
     /// parameters
+    #[cfg_attr(feature = "serde", serde(rename = "custom"))]
     Other(ChainParams),
 }
 
