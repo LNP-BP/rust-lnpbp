@@ -24,13 +24,14 @@ use amplify::Wrapper;
 use bitcoin::hashes::sha256d;
 #[cfg(feature = "rgb")]
 use bitcoin::hashes::{sha256t, Hash};
-use bitcoin::secp256k1::{self, Signature};
+use bitcoin::secp256k1::{self, PublicKey, Signature};
 use bitcoin::Address;
 use internet2::tlv;
 use lnp::features::InitFeatures;
 use lnp::payment::ShortChannelId;
 use lnpbp::bech32::{self, Blob, FromBech32Str, ToBech32String};
 use lnpbp::chain::{AssetId, Chain};
+use lnpbp::client_side_validation::MerkleNode;
 use lnpbp::seals::OutpointHash;
 use miniscript::{descriptor::DescriptorPublicKey, Descriptor};
 use strict_encoding::{StrictDecode, StrictEncode};
@@ -117,9 +118,9 @@ pub struct Invoice {
     #[tlv(type = 0)]
     #[cfg_attr(
         feature = "serde",
-        serde(with = "As::<Option<DisplayFromStr>>")
+        serde(with = "As::<Option<(DisplayFromStr, DisplayFromStr)>>")
     )]
-    signature: Option<Signature>,
+    signature: Option<(PublicKey, Signature)>,
 
     #[tlv(unknown)]
     #[cfg_attr(feature = "serde", serde(skip))]
@@ -269,6 +270,164 @@ impl Invoice {
             invoice: self,
             index: 0,
         }
+    }
+
+    pub fn set_amount(&mut self, amount: AmountExt) -> bool {
+        if self.amount == amount {
+            return false;
+        }
+        self.amount = amount;
+        self.signature = None;
+        return true;
+    }
+
+    pub fn set_recurrent(&mut self, recurrent: Recurrent) -> bool {
+        if self.recurrent == recurrent {
+            return false;
+        }
+        self.recurrent = recurrent;
+        self.signature = None;
+        return true;
+    }
+
+    pub fn set_expiry(&mut self, expiry: NaiveDateTime) -> bool {
+        if self.expiry == Some(expiry) {
+            return false;
+        }
+        self.expiry = Some(expiry);
+        self.signature = None;
+        return true;
+    }
+
+    pub fn set_no_expiry(&mut self) -> bool {
+        if self.expiry == None {
+            return false;
+        }
+        self.expiry = None;
+        self.signature = None;
+        return true;
+    }
+
+    pub fn set_quantity(&mut self, quantity: Quantity) -> bool {
+        if self.quantity == Some(quantity) {
+            return false;
+        }
+        self.quantity = Some(quantity);
+        self.signature = None;
+        return true;
+    }
+
+    pub fn remove_quantity(&mut self) -> bool {
+        if self.quantity == None {
+            return false;
+        }
+        self.quantity = None;
+        self.signature = None;
+        return true;
+    }
+
+    pub fn set_currency_requirement(
+        &mut self,
+        currency_data: CurrencyData,
+    ) -> bool {
+        let currency_data = Some(currency_data);
+        if self.currency_requirement == currency_data {
+            return false;
+        }
+        self.currency_requirement = currency_data;
+        self.signature = None;
+        return true;
+    }
+
+    pub fn remove_currency_requirement(&mut self) -> bool {
+        if self.currency_requirement == None {
+            return false;
+        }
+        self.currency_requirement = None;
+        self.signature = None;
+        return true;
+    }
+
+    pub fn set_merchant(&mut self, merchant: String) -> bool {
+        let merchant = if merchant.is_empty() {
+            None
+        } else {
+            Some(merchant)
+        };
+        if self.merchant == merchant {
+            return false;
+        }
+        self.merchant = merchant;
+        self.signature = None;
+        return true;
+    }
+
+    pub fn remove_merchant(&mut self) -> bool {
+        if self.merchant == None {
+            return false;
+        }
+        self.merchant = None;
+        self.signature = None;
+        return true;
+    }
+
+    pub fn set_purpose(&mut self, purpose: String) -> bool {
+        let purpose = if purpose.is_empty() {
+            None
+        } else {
+            Some(purpose)
+        };
+        if self.purpose == purpose {
+            return false;
+        }
+        self.purpose = purpose;
+        self.signature = None;
+        return true;
+    }
+
+    pub fn remove_purpose(&mut self) -> bool {
+        if self.purpose == None {
+            return false;
+        }
+        self.purpose = None;
+        self.signature = None;
+        return true;
+    }
+
+    pub fn set_details(&mut self, details: Details) -> bool {
+        let details = Some(details);
+        if self.details == details {
+            return false;
+        }
+        self.details = details;
+        self.signature = None;
+        return true;
+    }
+
+    pub fn remove_details(&mut self) -> bool {
+        if self.details == None {
+            return false;
+        }
+        self.details = None;
+        self.signature = None;
+        return true;
+    }
+
+    pub fn signature_hash(&self) -> MerkleNode {
+        // TODO: Change signature encoding algorithm to a merkle-tree based
+        MerkleNode::hash(
+            &self.strict_serialize().expect(
+                "invoice data are inconsistent for strict serialization",
+            ),
+        )
+    }
+
+    pub fn set_signature(&mut self, pubkey: PublicKey, signature: Signature) {
+        self.signature = Some((pubkey, signature))
+    }
+
+    pub fn remove_signature(&mut self) {
+        self.signature = None
     }
 }
 
