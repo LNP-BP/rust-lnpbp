@@ -18,12 +18,18 @@
 //! Bech32 `id1...` representation is provided automatically only for hash types
 //! implementing [`bitcoin::hashes::Hash`] trait
 
-use bech32::{FromBase32, ToBase32};
-use bitcoin::hashes::{sha256t, Hash};
 #[cfg(feature = "zip")]
 use deflate::{write::DeflateEncoder, Compression};
+use serde::{
+    de::{Error as SerdeError, Unexpected, Visitor},
+    Deserializer, Serializer,
+};
 use std::convert::{Infallible, TryFrom};
+use std::fmt;
 use std::str::FromStr;
+
+use bech32::{FromBase32, ToBase32};
+use bitcoin::hashes::{sha256t, Hash};
 
 pub const HRP_ID: &'static str = "id";
 pub const HRP_DATA: &'static str = "data";
@@ -405,6 +411,8 @@ pub mod zip {
         }
     }
 }
+use std::fmt::Formatter;
+use std::marker::PhantomData;
 #[cfg(feature = "zip")]
 pub use zip::*;
 
@@ -450,5 +458,43 @@ where
         }
         let vec = Vec::<u8>::from_base32(&id)?;
         Ok(Self::from_inner(Self::Inner::from_slice(&vec)?))
+    }
+}
+
+pub fn serialize<T, S>(data: &T, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+    T: ToBech32String,
+{
+    serializer.serialize_str(&data.to_bech32_string())
+}
+
+pub fn deserialize<'de, T, D>(deserializer: D) -> Result<T, D::Error>
+where
+    D: Deserializer<'de>,
+    T: FromBech32Str,
+{
+    deserializer.deserialize_str(Bech32Visitor::<T>(PhantomData))
+}
+
+struct Bech32Visitor<Value>(PhantomData<Value>);
+
+impl<'de, ValueT> Visitor<'de> for Bech32Visitor<ValueT>
+where
+    ValueT: FromBech32Str,
+{
+    type Value = ValueT;
+
+    fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
+        formatter.write_str("a bech32m-encoded string")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: SerdeError,
+    {
+        Self::Value::from_bech32_str(v).map_err(|_| {
+            E::invalid_value(Unexpected::Str(v), &"valid bech32 string")
+        })
     }
 }
