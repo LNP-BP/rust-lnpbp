@@ -11,7 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use bitcoin::hashes::{sha256, sha256t, Hash, HashEngine};
+use bitcoin::hashes::{sha256, sha256d, sha256t, Hash, HashEngine};
 use bitcoin::secp256k1::rand::{thread_rng, RngCore};
 use bitcoin::{OutPoint, Txid};
 use std::str::FromStr;
@@ -96,20 +96,13 @@ impl OutpointReveal {
     }
 }
 
-static MIDSTATE_OUTPOINT_HASH: [u8; 32] = [
-    0xe8, 0xfb, 0x9e, 0x0d, 0xab, 0x40, 0x5c, 0x70, 0xe5, 0x34, 0xf4, 0x1f,
-    0x58, 0x89, 0x19, 0x24, 0x55, 0x06, 0x72, 0x70, 0x9d, 0x52, 0x9f, 0xa5,
-    0x84, 0xe2, 0x04, 0xd7, 0x94, 0x56, 0x30, 0x14,
-];
-
 /// Tag used for [`SchemaId`] hash type
 pub struct OutpointHashTag;
 
 impl sha256t::Tag for OutpointHashTag {
     #[inline]
     fn engine() -> sha256::HashEngine {
-        let midstate = sha256::Midstate::from_inner(MIDSTATE_OUTPOINT_HASH);
-        sha256::HashEngine::from_midstate(midstate, 64)
+        sha256::HashEngine::default()
     }
 }
 
@@ -157,12 +150,17 @@ impl CommitEncodeWithStrategy for OutpointHash {
 
 impl CommitVerify<OutpointReveal> for OutpointHash {
     fn commit(reveal: &OutpointReveal) -> Self {
-        let mut engine = sha256t::Hash::<OutpointHashTag>::engine();
+        let mut engine = sha256::Hash::engine();
+        // NB: We are using different serialization byte order comparing to
+        //     strict encode
         engine.input(&reveal.blinding.to_be_bytes()[..]);
         engine.input(&reveal.txid[..]);
         engine.input(&reveal.vout.to_be_bytes()[..]);
-        let inner = sha256t::Hash::<OutpointHashTag>::from_engine(engine);
-        OutpointHash::from_hash(inner)
+
+        let inner = sha256d::Hash::from_engine(engine);
+        OutpointHash::from_hash(sha256t::Hash::<OutpointHashTag>::from_inner(
+            inner.into_inner(),
+        ))
     }
 }
 
@@ -179,13 +177,31 @@ impl crate::bech32::Strategy for sha256t::Hash<OutpointHashTag> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::tagged_hash;
     use bitcoin::hashes::hex::FromHex;
+    use bitcoin::hashes::sha256d;
+    use bitcoin::hashes::sha256t::Tag;
 
     #[test]
     fn outpoint_hash_midstate() {
-        let midstate = tagged_hash::Midstate::with(b"lnpbp:utxob");
-        assert_eq!(**midstate, MIDSTATE_OUTPOINT_HASH);
+        assert_eq!(
+            OutpointHashTag::engine().midstate(),
+            sha256::HashEngine::default().midstate()
+        );
+    }
+
+    #[test]
+    fn outpoint_hash_is_sha256d() {
+        let reveal = OutpointReveal {
+            blinding: 54683213134637,
+            txid: Txid::from_hex("646ca5c1062619e2a2d60771c9dfd820551fb773e4dc8c4ed67965a8d1fae839").unwrap(),
+            vout: 2,
+        };
+        let outpoint_hash = reveal.outpoint_hash();
+        let mut engine = sha256::HashEngine::default();
+        engine.input(&reveal.blinding.to_be_bytes()[..]);
+        engine.input(&reveal.txid[..]);
+        engine.input(&reveal.vout.to_be_bytes()[..]);
+        assert_eq!(**outpoint_hash, *sha256d::Hash::from_engine(engine))
     }
 
     #[test]
@@ -196,7 +212,7 @@ mod test {
             vout: 2,
         }.outpoint_hash();
         let bech32 =
-            "utxob1jy04k3kfv70n3gtgph7m4j5w6g09csyzdlnqkatsv6wgqsemlcxspewtfc";
+            "utxob1ahrfaknwtv28c4yyhat5d9uel045ph797kxauj63p2gzykta9lkskn6smk";
         assert_eq!(bech32, outpoint_hash.to_string());
         assert_eq!(outpoint_hash.to_string(), outpoint_hash.to_bech32_string());
         let reconstructed = OutpointHash::from_str(bech32).unwrap();
