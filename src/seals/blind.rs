@@ -14,8 +14,9 @@
 use bitcoin::hashes::{sha256, sha256t, Hash, HashEngine};
 use bitcoin::secp256k1::rand::{thread_rng, RngCore};
 use bitcoin::{OutPoint, Txid};
+use std::str::FromStr;
 
-use crate::bech32::ToBech32String;
+use crate::bech32::{FromBech32Str, ToBech32String};
 use crate::client_side_validation::{
     commit_strategy, CommitConceal, CommitEncodeWithStrategy,
 };
@@ -138,6 +139,14 @@ pub struct OutpointHash(
     sha256t::Hash<OutpointHashTag>,
 );
 
+impl FromStr for OutpointHash {
+    type Err = crate::bech32::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        OutpointHash::from_bech32_str(s)
+    }
+}
+
 impl strict_encoding::Strategy for OutpointHash {
     type Strategy = strict_encoding::strategies::Wrapped;
 }
@@ -186,10 +195,11 @@ mod test {
             txid: Txid::from_hex("646ca5c1062619e2a2d60771c9dfd820551fb773e4dc8c4ed67965a8d1fae839").unwrap(),
             vout: 2,
         }.outpoint_hash();
-        assert_eq!(
-            "utxob1jy04k3kfv70n3gtgph7m4j5w6g09csyzdlnqkatsv6wgqsemlcxspewtfc",
-            outpoint_hash.to_string()
-        );
+        let bech32 =
+            "utxob1jy04k3kfv70n3gtgph7m4j5w6g09csyzdlnqkatsv6wgqsemlcxspewtfc";
+        assert_eq!(bech32, outpoint_hash.to_string());
         assert_eq!(outpoint_hash.to_string(), outpoint_hash.to_bech32_string());
+        let reconstructed = OutpointHash::from_str(bech32).unwrap();
+        assert_eq!(reconstructed, outpoint_hash);
     }
 }
