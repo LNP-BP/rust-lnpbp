@@ -289,17 +289,6 @@ dependencies = [
 [[package]]
 name = "client_side_validation"
 version = "0.4.0-beta"
-dependencies = [
- "amplify",
- "amplify_derive",
- "bitcoin_hashes",
- "grin_secp256k1zkp",
- "strict_encoding 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "client_side_validation"
-version = "0.4.0-beta"
 source = "git+https://github.com/LNP-BP/rust-lnpbp?branch=fix/commit-encode#2f0d69a407894af25a44251e18bb9627f5a979af"
 dependencies = [
  "amplify",
@@ -313,6 +302,17 @@ dependencies = [
 name = "client_side_validation"
 version = "0.4.0-beta"
 source = "git+https://github.com/LNP-BP/rust-lnpbp#e9d5ab45a5058ec0cf8c44cc40c4383b3bf6c50e"
+dependencies = [
+ "amplify",
+ "amplify_derive",
+ "bitcoin_hashes",
+ "grin_secp256k1zkp",
+ "strict_encoding 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "client_side_validation"
+version = "0.4.0-beta"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -823,13 +823,14 @@ dependencies = [
 [[package]]
 name = "lnpbp"
 version = "0.4.0-beta"
+source = "git+https://github.com/LNP-BP/rust-lnpbp#e9d5ab45a5058ec0cf8c44cc40c4383b3bf6c50e"
 dependencies = [
  "amplify",
  "amplify_derive",
  "bech32",
  "bitcoin",
  "bitcoin_hashes",
- "client_side_validation 0.4.0-beta (git+https://github.com/LNP-BP/rust-lnpbp)",
+ "client_side_validation 0.4.0-beta (git+https://github.com/LNP-BP/rust-lnpbp?branch=fix/commit-encode)",
  "deflate",
  "descriptor-wallet",
  "inflate",
@@ -846,14 +847,13 @@ dependencies = [
 [[package]]
 name = "lnpbp"
 version = "0.4.0-beta"
-source = "git+https://github.com/LNP-BP/rust-lnpbp#e9d5ab45a5058ec0cf8c44cc40c4383b3bf6c50e"
 dependencies = [
  "amplify",
  "amplify_derive",
  "bech32",
  "bitcoin",
  "bitcoin_hashes",
- "client_side_validation 0.4.0-beta (git+https://github.com/LNP-BP/rust-lnpbp?branch=fix/commit-encode)",
+ "client_side_validation 0.4.0-beta (git+https://github.com/LNP-BP/rust-lnpbp)",
  "deflate",
  "descriptor-wallet",
  "inflate",
