@@ -11,6 +11,11 @@ categories = ["cryptography::cryptocurrencies"]
 readme = "README.md"
 edition = "2018"
 
+[[bin]]
+name = "invoice"
+path = "src/main.rs"
+required-features = ["cli"]
+
 [lib]
 name = "invoice"
 path = "src/lib.rs"
@@ -31,12 +36,21 @@ lnp-core = { git = "https://github.com/LNP-BP/lnp-core" }
 rgb-core = { git = "https://github.com/rgb-org/rgb-core", optional = true }
 # Dependencies on core rust-bitcoin ecosystem projects
 # ----------------------------------------------------
-bitcoin = { version = "~0.26.0", features = ["rand"] }
+bitcoin = { version = "0.26", features = ["rand"] }
 miniscript = { version = "5", features = ["compiler"] }
 # Serialization
 # -------------
-serde_crate = { package = "serde", version = "~1.0.0", features = ["derive"], optional = true }
-serde_with = { version = "~1.5.0", features = ["hex"], optional = true }
+base64-compat = { version = "1", optional = true } # Used by cli only
+base58 = { version = "0.1", optional = true } # Used by cli only
+bech32 = { version = "0", optional = true } # Used by cli only
+serde_crate = { package = "serde", version = "1", features = ["derive"], optional = true }
+serde_with = { version = "1.5", features = ["hex"], optional = true }
+serde_json = { version = "1", optional = true } # Used by cli only
+serde_yaml = { version = "0.8", optional = true } # Used by cli only
+toml = { version = "0.5", optional = true } # Used by cli only
+clap = { version = "3.0.0-beta.2", optional = true } # Used by cli only
+# Internal data representations
+# -----------------------------
 url = "2.2"
 chrono = "0.4.19"
 
@@ -46,6 +60,7 @@ openssl = { version = "0.10", features = ["vendored"] }
 [features]
 default = []
 all = ["serde", "rgb"]
+cli = ["clap", "base64-compat", "base58", "bech32", "serde", "serde_yaml", "serde_json", "toml"]
 serde = ["serde_crate", "serde_with", "amplify/serde", "descriptor-wallet/serde",
          "lnp-core/serde", "internet2/serde", "lnp-core/serde",
          "bitcoin/use-serde", "miniscript/serde",
