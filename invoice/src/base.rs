@@ -205,8 +205,7 @@ impl Invoice {
     }
 
     pub fn with_address(address: Address, amount: Option<u64>) -> Invoice {
-        let chain = address.network.into();
-        Invoice::native(Beneficiary::Address(address), amount, &chain)
+        Invoice::new(Beneficiary::Address(address), amount, None)
     }
 
     #[cfg(feature = "rgb")]
