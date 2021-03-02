@@ -126,8 +126,6 @@ impl TryCommitVerify<MessageMap> for MultimsgCommitment {
             match ordered.get(&i) {
                 None => {
                     let mut engine = Commitment::engine();
-                    // TODO: Make it hashed tag
-                    // Using 512 bytes input
                     for _ in 0..4 {
                         engine.input(&entropy.to_le_bytes());
                         engine.input(&i.to_le_bytes());

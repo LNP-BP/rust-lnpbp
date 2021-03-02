@@ -188,13 +188,13 @@ impl Invoice {
         }
     }
 
-    pub fn native(
-        beneficiary: Beneficiary,
+    pub fn with_descriptor(
+        descr: Descriptor<DescriptorPublicKey>,
         amount: Option<u64>,
         chain: &Chain,
     ) -> Invoice {
         Invoice::new(
-            beneficiary,
+            Beneficiary::Descriptor(descr),
             amount,
             if chain == &Chain::Mainnet {
                 None
@@ -202,6 +202,11 @@ impl Invoice {
                 Some(chain.native_asset())
             },
         )
+    }
+
+    pub fn with_address(address: Address, amount: Option<u64>) -> Invoice {
+        let chain = address.network.into();
+        Invoice::native(Beneficiary::Address(address), amount, &chain)
     }
 
     #[cfg(feature = "rgb")]
