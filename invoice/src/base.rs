@@ -205,7 +205,12 @@ impl Invoice {
     }
 
     pub fn with_address(address: Address, amount: Option<u64>) -> Invoice {
-        Invoice::new(Beneficiary::Address(address), amount, None)
+        let asset = if address.network != bitcoin::Network::Bitcoin {
+            Some(AssetId::native(&address.network.into()))
+        } else {
+            None
+        };
+        Invoice::new(Beneficiary::Address(address), amount, asset)
     }
 
     #[cfg(feature = "rgb")]
