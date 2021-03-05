@@ -310,7 +310,7 @@ dependencies = [
 [[package]]
 name = "client_side_validation"
 version = "0.4.0-beta"
-source = "git+https://github.com/LNP-BP/rust-lnpbp#dd28d6083763bcf4bd91f51dd09b9e4005779add"
+source = "git+https://github.com/LNP-BP/rust-lnpbp#b80e290c7c73f2770c8add58f7913aa96ee9d537"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -445,7 +445,7 @@ dependencies = [
 [[package]]
 name = "descriptor-wallet"
 version = "0.4.0-beta"
-source = "git+https://github.com/LNP-BP/descriptor-wallet#6d5fca58fd983d9d079260b2b881be8def36d839"
+source = "git+https://github.com/LNP-BP/descriptor-wallet#ac355be29410bf48c69b656e609c8acdc75c72ef"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -646,9 +646,9 @@ dependencies = [
 
 [[package]]
 name = "hex"
-version = "0.4.2"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "644f9158b2f133fd50f5fb3242878846d9eb792e445c893805ff0e3824006e35"
+checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "hmac"
@@ -832,7 +832,7 @@ dependencies = [
 [[package]]
 name = "lnpbp"
 version = "0.4.0-beta"
-source = "git+https://github.com/LNP-BP/rust-lnpbp#dd28d6083763bcf4bd91f51dd09b9e4005779add"
+source = "git+https://github.com/LNP-BP/rust-lnpbp#b80e290c7c73f2770c8add58f7913aa96ee9d537"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1071,9 +1071,9 @@ checksum = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
 
 [[package]]
 name = "pin-project-lite"
-version = "0.2.5"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0cf491442e4b033ed1c722cb9f0df5fcfcf4de682466c46469c36bc47dc5548a"
+checksum = "dc0e1f259c92177c30a4c9d177246edd0a3568b25756a977d0632cf8fa37e905"
 
 [[package]]
 name = "pkg-config"
@@ -1347,7 +1347,7 @@ checksum = "b5eb417147ba9860a96cfe72a0b93bf88fee1744b5636ec99ab20c1aa9376581"
 [[package]]
 name = "rgb-core"
 version = "0.4.0-beta"
-source = "git+https://github.com/rgb-org/rgb-core#bf93e430a5278e6de8117a4a24bf3b7b0f84f5da"
+source = "git+https://github.com/rgb-org/rgb-core#33633a55f8462b9a388b51d1d573a27e8ec55eb7"
 dependencies = [
  "amplify",
  "amplify_derive",

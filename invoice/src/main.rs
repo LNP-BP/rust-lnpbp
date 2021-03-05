@@ -44,7 +44,7 @@ pub struct Opts {
 pub enum Command {
     /// Converting between different representations of invoice data
     Convert {
-        /// invoice data; if none are given reads from STDIN
+        /// Invoice data; if none are given reads from STDIN
         invoice: Option<String>,
 
         /// Formatting of the input invoice data
@@ -53,6 +53,19 @@ pub enum Command {
 
         /// Formatting for the output invoice data
         #[clap(short, long, default_value = "yaml")]
+        output: Format,
+    },
+
+    RgbConvert {
+        /// Asset id in any format
+        asset: Option<String>,
+
+        /// Formatting of the input invoice data
+        #[clap(short, long, default_value = "hex")]
+        input: Format,
+
+        /// Formatting for the output invoice data
+        #[clap(short, long, default_value = "bech32")]
         output: Format,
     },
 }
@@ -222,6 +235,14 @@ fn main() -> Result<(), String> {
         } => {
             let invoice: Invoice = input_read(invoice, input)?;
             output_write(io::stdout(), invoice, output)?;
+        }
+        Command::RgbConvert {
+            asset,
+            input,
+            output,
+        } => {
+            let asset: rgb::ContractId = input_read(asset, input)?;
+            output_write(io::stdout(), asset, output)?;
         }
     }
 
