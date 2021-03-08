@@ -762,7 +762,7 @@ impl FromStr for AmountExt {
     derive(Serialize, Deserialize),
     serde(crate = "serde_crate")
 )]
-#[display("{source}")]
+#[display("{source}#commitment")]
 pub struct Details {
     #[cfg_attr(feature = "serde", serde(with = "As::<DisplayFromStr>"))]
     pub commitment: sha256d::Hash,
