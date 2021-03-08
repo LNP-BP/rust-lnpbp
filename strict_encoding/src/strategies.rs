@@ -78,6 +78,7 @@ impl<T> StrictEncode for amplify::Holder<T, HashFixedBytes>
 where
     T: bitcoin::hashes::Hash,
 {
+    // TODO: Verify byte order for hash encodings
     #[inline]
     fn strict_encode<E: io::Write>(&self, mut e: E) -> Result<usize, Error> {
         e.write_all(&self.as_inner()[..])?;

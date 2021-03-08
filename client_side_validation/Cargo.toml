@@ -1,6 +1,6 @@
 [package]
 name = "client_side_validation"
-version = "0.4.0-beta"
+version = "0.4.0"
 license = "Apache-2.0"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 description = "Client-side validation library"
@@ -15,7 +15,6 @@ exclude = ["derive"]
 [lib]
 name = "client_side_validation"
 path = "src/lib.rs"
-crate-type = ["dylib", "rlib", "staticlib"]
 
 [dependencies]
 amplify = "3"
