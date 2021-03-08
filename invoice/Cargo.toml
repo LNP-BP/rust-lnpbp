@@ -28,8 +28,8 @@ amplify = { version = "3", features = ["stringly_conversions", "std"] }
 amplify_derive = "2.4.3"
 strict_encoding = { version = "1.0.6", features = ["miniscript"] }
 strict_encoding_derive = { version = "1" }
-lightning_encoding = { git = "https://github.com/LNP-BP/lnp-core" }
-descriptor-wallet = { git = "https://github.com/LNP-BP/descriptor-wallet", features = ["keygen"] }
+lightning_encoding = "0.4.0-beta.1"
+descriptor-wallet = { version = "0.4", features = ["keygen"] }
 internet2 = { git = "https://github.com/internet2-org/rust-internet2" }
 lnpbp = { git = "https://github.com/LNP-BP/rust-lnpbp" }
 lnp-core = { git = "https://github.com/LNP-BP/lnp-core" }

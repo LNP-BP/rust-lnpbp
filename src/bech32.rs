@@ -20,12 +20,12 @@
 
 #[cfg(feature = "zip")]
 use deflate::{write::DeflateEncoder, Compression};
+#[cfg(feature = "serde")]
 use serde::{
     de::{Error as SerdeError, Unexpected, Visitor},
     Deserializer, Serializer,
 };
 use std::convert::{Infallible, TryFrom};
-use std::fmt;
 use std::str::FromStr;
 
 use bech32::{FromBase32, ToBase32};
@@ -411,8 +411,6 @@ pub mod zip {
         }
     }
 }
-use std::fmt::Formatter;
-use std::marker::PhantomData;
 #[cfg(feature = "zip")]
 pub use zip::*;
 
@@ -461,6 +459,7 @@ where
     }
 }
 
+#[cfg(feature = "serde")]
 pub fn serialize<T, S>(data: &T, serializer: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
@@ -469,23 +468,29 @@ where
     serializer.serialize_str(&data.to_bech32_string())
 }
 
+#[cfg(feature = "serde")]
 pub fn deserialize<'de, T, D>(deserializer: D) -> Result<T, D::Error>
 where
     D: Deserializer<'de>,
     T: FromBech32Str,
 {
-    deserializer.deserialize_str(Bech32Visitor::<T>(PhantomData))
+    deserializer.deserialize_str(Bech32Visitor::<T>(std::marker::PhantomData))
 }
 
-struct Bech32Visitor<Value>(PhantomData<Value>);
+#[cfg(feature = "serde")]
+struct Bech32Visitor<Value>(std::marker::PhantomData<Value>);
 
+#[cfg(feature = "serde")]
 impl<'de, ValueT> Visitor<'de> for Bech32Visitor<ValueT>
 where
     ValueT: FromBech32Str,
 {
     type Value = ValueT;
 
-    fn expecting(&self, formatter: &mut Formatter) -> fmt::Result {
+    fn expecting(
+        &self,
+        formatter: &mut std::fmt::Formatter,
+    ) -> std::fmt::Result {
         formatter.write_str("a bech32m-encoded string")
     }
 

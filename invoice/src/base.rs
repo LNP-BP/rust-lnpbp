@@ -21,9 +21,9 @@ use std::str::FromStr;
 
 #[cfg(feature = "rgb")]
 use amplify::Wrapper;
-use bitcoin::hashes::sha256d;
 #[cfg(feature = "rgb")]
-use bitcoin::hashes::{sha256t, Hash};
+use bitcoin::hashes::sha256t;
+use bitcoin::hashes::{sha256d, Hash};
 use bitcoin::secp256k1::{self, PublicKey, Signature};
 use bitcoin::Address;
 use internet2::tlv;

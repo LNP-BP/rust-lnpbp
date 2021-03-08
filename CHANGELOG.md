@@ -1,6 +1,16 @@
 Change Log
 ==========
 
+v0.4.0
+------
+- Serde serialization/deserialization for DBCs and multimessage commitments
+- Chain type improvements: signet support, native asset types
+- Bech32 helpers
+- Resolvers API improvements
+- Tagged hashes refactoring
+- Script type system convertors
+- Client-side-validation v0.4 with multiple commitment structure improvements
+
 v0.3.2
 ------
 - Compressed Bech32 encodings with derivation strategy `CompressedStrictEncoding`

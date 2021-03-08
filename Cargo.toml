@@ -1,6 +1,6 @@
 [package]
 name = "lnpbp"
-version = "0.4.0-beta"
+version = "0.4.0"
 license = "MIT"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 description = "LNP/BP Core Library implementing LNPBP specifications & standards"
@@ -38,10 +38,10 @@ crate-type = ["rlib", "staticlib"]
 amplify = { version = "3", features = ["stringly_conversions", "std"] }
 amplify_derive = "2.4.3"
 strict_encoding = { version = "1", features = ["miniscript"] }
-strict_encoding_derive = { version = "1" }
-lightning_encoding = { git = "https://github.com/LNP-BP/lnp-core" }
-client_side_validation = { git = "https://github.com/LNP-BP/rust-lnpbp" }
-descriptor-wallet = { git = "https://github.com/LNP-BP/descriptor-wallet" }
+strict_encoding_derive = "1"
+lightning_encoding = "0.4.0-beta.1"
+client_side_validation = "0.4"
+descriptor-wallet = "0.4"
 # Dependencies on core rust-bitcoin ecosystem projects
 # ----------------------------------------------------
 bitcoin = { version = "~0.26.0", features = ["rand"] }
