@@ -818,7 +818,7 @@ checksum = "7fb9b38af92608140b86b693604b9ffcc5824240a484d1ecd4795bacb2fe88f3"
 [[package]]
 name = "lnp-core"
 version = "0.4.0-alpha.1"
-source = "git+https://github.com/LNP-BP/lnp-core#06e861871851216199f273688d854f2286424520"
+source = "git+https://github.com/LNP-BP/lnp-core#42734c166b37ed9b6ad5b5e902ccf69f8f78a564"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -827,7 +827,7 @@ dependencies = [
  "internet2",
  "lazy_static",
  "lightning_encoding",
- "lnpbp 0.4.0 (git+https://github.com/LNP-BP/rust-lnpbp)",
+ "lnpbp 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
  "serde_with",
  "strict_encoding 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -836,7 +836,6 @@ dependencies = [
 [[package]]
 name = "lnpbp"
 version = "0.4.0"
-source = "git+https://github.com/LNP-BP/rust-lnpbp#4673d7ee5f35841fa1275df63e3f9f8c5797d337"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -860,6 +859,8 @@ dependencies = [
 [[package]]
 name = "lnpbp"
 version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "82895efc2bfbd69b26e60650a22839536ff0cfc2d2301cba76502ed51cf21f83"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -896,7 +897,7 @@ dependencies = [
  "internet2",
  "lightning_encoding",
  "lnp-core",
- "lnpbp 0.4.0 (git+https://github.com/LNP-BP/rust-lnpbp)",
+ "lnpbp 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "miniscript",
  "openssl",
  "rgb-core",
@@ -1351,7 +1352,7 @@ checksum = "b5eb417147ba9860a96cfe72a0b93bf88fee1744b5636ec99ab20c1aa9376581"
 [[package]]
 name = "rgb-core"
 version = "0.4.0-beta"
-source = "git+https://github.com/rgb-org/rgb-core#620379e0cfd68d0c14710f69575289b1a87dcd80"
+source = "git+https://github.com/rgb-org/rgb-core#e3a2774eb3577d2f3808d6f919dccb305491d50e"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1367,7 +1368,7 @@ dependencies = [
  "inflate",
  "lazy_static",
  "lightning_encoding",
- "lnpbp 0.4.0 (git+https://github.com/LNP-BP/rust-lnpbp)",
+ "lnpbp 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "miniscript",
  "num-derive",
  "num-traits",

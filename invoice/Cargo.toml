@@ -31,7 +31,7 @@ strict_encoding_derive = { version = "1" }
 lightning_encoding = "0.4.0-beta.1"
 descriptor-wallet = { version = "0.4", features = ["keygen"] }
 internet2 = { git = "https://github.com/internet2-org/rust-internet2" }
-lnpbp = { git = "https://github.com/LNP-BP/rust-lnpbp" }
+lnpbp = "0.4"
 lnp-core = { git = "https://github.com/LNP-BP/lnp-core" }
 rgb-core = { git = "https://github.com/rgb-org/rgb-core", optional = true }
 # Dependencies on core rust-bitcoin ecosystem projects
