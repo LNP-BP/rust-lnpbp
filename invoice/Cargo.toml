@@ -33,7 +33,7 @@ descriptor-wallet = { version = "0.4", features = ["keygen"] }
 internet2 = { git = "https://github.com/internet2-org/rust-internet2" }
 lnpbp = "0.4"
 lnp-core = { git = "https://github.com/LNP-BP/lnp-core" }
-rgb-core = { git = "https://github.com/rgb-org/rgb-core", optional = true }
+rgb-core = { version = "0.4", optional = true }
 # Dependencies on core rust-bitcoin ecosystem projects
 # ----------------------------------------------------
 bitcoin = { version = "0.26", features = ["rand"] }
