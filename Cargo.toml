@@ -17,6 +17,11 @@ name = "lnpbp"
 path = "src/lib.rs"
 crate-type = ["rlib", "staticlib"]
 
+[[bin]]
+name = "lnpbp"
+path = "src/bin/lnpbp.rs"
+required-features = ["cli"]
+
 # Dependencies
 # ============
 #
@@ -64,12 +69,19 @@ serde_with_macros = { version = "~1.2.0", optional = true } # Fix for the proble
 lazy_static = "~1.4.0"
 deflate = { version = "~0.8.6", optional = true }
 inflate = { version = "~0.4.5", optional = true }
+# Optional features used only by a binary
+clap = { version = "3.0.0-beta.2", optional = true }
+serde_yaml = { version = "0.8", optional = true }
+serde_json = { version = "1", optional = true }
+base64-compat = { version = "1", optional = true } # Used by cli only
+base58 = { version = "0.1", optional = true } # Used by cli only
 
 # Features
 # ========
 [features]
 default = ["zip"]
-all = ["serde", "elgamal", "bulletproofs", "zip"]
+all = ["serde", "elgamal", "bulletproofs", "zip", "cli"]
+cli = ["clap", "serde", "base64-compat", "base58", "serde_yaml", "serde_json", "descriptor-wallet/electrum"]
 serde = ["serde_crate", "serde_with", "serde_with_macros", "amplify/serde",
          "bitcoin/use-serde", "bitcoin_hashes/serde", "miniscript/serde",
          "descriptor-wallet/serde"]
