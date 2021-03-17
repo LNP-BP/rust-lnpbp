@@ -25,6 +25,8 @@ use serde::{
     de::{Error as SerdeError, Unexpected, Visitor},
     Deserializer, Serializer,
 };
+#[cfg(feature = "serde")]
+use serde_with::{hex::Hex, As};
 use std::convert::{Infallible, TryFrom};
 use std::str::FromStr;
 
@@ -71,6 +73,11 @@ pub enum Error {
 
 /// Type for wrapping Vec<u8> data in cases you need to do a convenient
 /// enum variant display derives with `#[display(inner)]`
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate", transparent)
+)]
 #[derive(
     Wrapper,
     Clone,
@@ -100,7 +107,15 @@ pub enum Error {
 // the wrapper creates `From<Vec<u8>>` impl for us, which with rust stdlib
 // implies `TryFrom<Vec<u8>>`, for which we have auto trait derivation
 // `FromBech32Payload`, for which the traits above are automatically derived
-pub struct Blob(Vec<u8>);
+pub struct Blob(
+    #[cfg_attr(feature = "serde", serde(with = "As::<Hex>"))] Vec<u8>,
+);
+
+impl AsRef<[u8]> for Blob {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
+}
 
 impl FromStr for Blob {
     type Err = Error;

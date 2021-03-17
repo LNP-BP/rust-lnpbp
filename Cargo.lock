@@ -28,9 +28,9 @@ dependencies = [
 
 [[package]]
 name = "amplify"
-version = "3.1.1"
+version = "3.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f92856ad516a7ada2b2e5ce047c3dc5ea0c69f9a053823e3feb1c67289ac5ee3"
+checksum = "6cd7d8887f771c295502e7d5c5c7ee130b794f65af92f3176f22a762587b03d3"
 dependencies = [
  "amplify_derive",
  "serde",
@@ -42,9 +42,9 @@ dependencies = [
 
 [[package]]
 name = "amplify_derive"
-version = "2.4.4"
+version = "2.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9cc50fd13f783af1129d1c7bdaa9a54a56cf9bd7697ee3609497bf7968daff3"
+checksum = "8f9edf4e78ede9a2e3ac65cc3a984135878d897cbd7055d6f36e4f2942cf7417"
 dependencies = [
  "proc-macro2 1.0.24",
  "quote 1.0.9",
@@ -839,9 +839,12 @@ version = "0.4.0"
 dependencies = [
  "amplify",
  "amplify_derive",
+ "base58",
+ "base64-compat",
  "bech32 0.7.3",
  "bitcoin",
  "bitcoin_hashes",
+ "clap",
  "client_side_validation 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "deflate",
  "descriptor-wallet",
@@ -850,8 +853,10 @@ dependencies = [
  "lightning_encoding",
  "miniscript",
  "serde",
+ "serde_json",
  "serde_with",
  "serde_with_macros",
+ "serde_yaml",
  "strict_encoding 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "strict_encoding_derive 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -1351,8 +1356,9 @@ checksum = "b5eb417147ba9860a96cfe72a0b93bf88fee1744b5636ec99ab20c1aa9376581"
 
 [[package]]
 name = "rgb-core"
-version = "0.4.0-beta"
-source = "git+https://github.com/rgb-org/rgb-core#e3a2774eb3577d2f3808d6f919dccb305491d50e"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4abf30a6bd99279a794f8e9b2a71db895195726150071f35cdcaa9ae7e7503d2"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -1360,7 +1366,6 @@ dependencies = [
  "bitcoin",
  "bitcoin_hashes",
  "chrono",
- "clap",
  "deflate",
  "descriptor-wallet",
  "ed25519-dalek",
@@ -1374,10 +1379,8 @@ dependencies = [
  "num-traits",
  "regex",
  "serde",
- "serde_json",
  "serde_with",
  "serde_with_macros",
- "serde_yaml",
  "strict_encoding 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
