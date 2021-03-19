@@ -1,7 +1,7 @@
 [package]
-name = "lnpbp_invoice"
-version = "0.4.0-alpha.1"
-license = "Apache-2.0"
+name = "lnpbp-invoice"
+version = "0.1.0"
+license = "MIT"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 description = "LNP/BP universal invoices library implementing LNPBP-38 standard"
 repository = "https://github.com/LNP-BP/rust-lnpbp"
@@ -30,9 +30,9 @@ strict_encoding = { version = "1.0.6", features = ["miniscript"] }
 strict_encoding_derive = { version = "1" }
 lightning_encoding = "0.4.0-beta.1"
 descriptor-wallet = { version = "0.4", features = ["keygen"] }
-internet2 = { git = "https://github.com/internet2-org/rust-internet2" }
+internet2 = "0.3.10"
 lnpbp = "0.4"
-lnp-core = { git = "https://github.com/LNP-BP/lnp-core" }
+lnp-core = "0.3.1"
 rgb-core = { version = "0.4", optional = true }
 # Dependencies on core rust-bitcoin ecosystem projects
 # ----------------------------------------------------

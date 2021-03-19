@@ -125,7 +125,8 @@ pub struct Invoice {
     #[tlv(unknown)]
     #[cfg_attr(feature = "serde", serde(skip))]
     unknown: tlv::Map,
-    // TODO: Add RGB feature vec optional field
+    /* TODO: Add RGB feature vec optional field
+     * TODO: Add Bifrost server list as a TLV vec (empty if not provided) */
 }
 
 impl bech32::Strategy for Invoice {
