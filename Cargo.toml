@@ -10,7 +10,7 @@ keywords = ["bitcoin", "lightning", "lnp-bp", "layer-3", "cryptography"]
 categories = ["cryptography::cryptocurrencies"]
 readme = "README.md"
 edition = "2018"
-exclude = [".github", "contrib", "client_side_validation", "strict_encoding", "invoice"]
+exclude = [".github", "contrib", "client_side_validation", "strict_encoding"]
 
 [lib]
 name = "lnpbp"
@@ -90,6 +90,6 @@ bulletproofs = ["client_side_validation/bulletproofs"]
 zip = ["inflate", "deflate"]
 
 [workspace]
-members = [".", "strict_encoding", "strict_encoding/derive", "client_side_validation", "invoice"]
-default-members = [".", "strict_encoding", "strict_encoding/derive", "client_side_validation", "invoice"]
+members = [".", "strict_encoding", "strict_encoding/derive", "client_side_validation"]
+default-members = [".", "strict_encoding", "strict_encoding/derive", "client_side_validation"]
 exclude = ["dep_test"]
