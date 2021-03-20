@@ -14,8 +14,6 @@
 //! Taking implementation of little-endian integer encoding
 
 use bitcoin::util::uint::{Uint128, Uint256};
-#[cfg(feature = "chrono")]
-use chrono::NaiveDateTime;
 use core::time::Duration;
 use std::io;
 
@@ -173,18 +171,37 @@ impl StrictDecode for Duration {
 }
 
 #[cfg(feature = "chrono")]
-impl StrictEncode for NaiveDateTime {
-    #[inline]
-    fn strict_encode<E: io::Write>(&self, e: E) -> Result<usize, Error> {
-        self.timestamp().strict_encode(e)
-    }
-}
+mod _chrono {
+    use super::*;
+    use chrono::{DateTime, NaiveDateTime, Utc};
 
-#[cfg(feature = "chrono")]
-impl StrictDecode for NaiveDateTime {
-    #[inline]
-    fn strict_decode<D: io::Read>(d: D) -> Result<Self, Error> {
-        Ok(Self::from_timestamp(i64::strict_decode(d)?, 0))
+    impl StrictEncode for NaiveDateTime {
+        #[inline]
+        fn strict_encode<E: io::Write>(&self, e: E) -> Result<usize, Error> {
+            self.timestamp().strict_encode(e)
+        }
+    }
+
+    impl StrictDecode for NaiveDateTime {
+        #[inline]
+        fn strict_decode<D: io::Read>(d: D) -> Result<Self, Error> {
+            Ok(Self::from_timestamp(i64::strict_decode(d)?, 0))
+        }
+    }
+
+    impl StrictEncode for DateTime<Utc> {
+        #[inline]
+        fn strict_encode<E: io::Write>(&self, e: E) -> Result<usize, Error> {
+            self.naive_utc().strict_encode(e)
+        }
+    }
+
+    impl StrictDecode for DateTime<Utc> {
+        #[inline]
+        fn strict_decode<D: io::Read>(d: D) -> Result<Self, Error> {
+            let naive = NaiveDateTime::strict_decode(d)?;
+            Ok(DateTime::from_utc(naive, Utc))
+        }
     }
 }
 
