@@ -60,11 +60,13 @@ impl Midstate {
     }
 }
 
+/// Trait to implement tagged hash objects
 pub trait TaggedHash<'a, T>
 where
     Self: Wrapper<Inner = sha256t::Hash<T>>,
     T: 'a + sha256t::Tag,
 {
+    /// hash a message with this tagged hash
     fn hash(msg: impl AsRef<[u8]>) -> Self
     where
         Self: Sized,
@@ -72,6 +74,7 @@ where
         Self::from_inner(sha256t::Hash::hash(msg.as_ref()))
     }
 
+    /// Create self from a hash
     fn from_hash<X>(hash: X) -> Self
     where
         Self: Sized,
@@ -81,11 +84,14 @@ where
     }
 
     // TODO: Add `from_slice` method
+    // Issue #198
 
+    /// Convert to byte array
     fn as_slice(&'a self) -> &'a [u8; 32] {
         self.as_inner().as_inner()
     }
 
+    /// Create from hex string
     fn from_hex(hex: &str) -> Result<Self, hex::Error>
     where
         Self: Sized,

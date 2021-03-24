@@ -38,15 +38,25 @@ use super::{
 #[display(Debug)]
 #[non_exhaustive]
 pub enum ScriptEncodeMethod {
+    /// P2PK
     PublicKey,
+    /// P2PKH
     PubkeyHash,
+    /// P2SH
     ScriptHash,
+    /// P2WPKH
     WPubkeyHash,
+    /// P2WSH
     WScriptHash,
+    /// P2SH-P2WPKH
     ShWPubkeyHash,
+    /// P2SH-P2WSH
     ShWScriptHash,
+    /// Taproot Script-Pubkey
     Taproot,
+    /// OPRETURN style script pubkey
     OpReturn,
+    /// BARE Script
     Bare,
 }
 
@@ -89,11 +99,16 @@ impl Default for ScriptEncodeData {
     }
 }
 
+/// ScriptPubkey contianer structure that can be used to commit to a message
+/// The commitment process produces `SpkCommitment` structure
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display)]
 #[display(Debug)]
 pub struct SpkContainer {
+    /// Publickey containing the tweak
     pub pubkey: secp256k1::PublicKey,
+    /// ScriptPubkey variant
     pub method: ScriptEncodeMethod,
+    /// Redeemscript to be satisfied by spending Tx
     pub source: ScriptEncodeData,
     /// Single SHA256 hash of the protocol-specific tag
     pub tag: sha256::Hash,
@@ -103,6 +118,7 @@ pub struct SpkContainer {
 }
 
 impl SpkContainer {
+    /// Construct a ScriptPubkey container from data
     pub fn construct(
         protocol_tag: &sha256::Hash,
         pubkey: secp256k1::PublicKey,
@@ -247,7 +263,8 @@ impl Container for SpkContainer {
     }
 }
 
-/// [`PubkeyScript`] containing LNPBP-2 commitment
+/// ScriptPubkey commitment structure produced after embedding commitment to a
+/// SpkContainer
 #[derive(
     Wrapper,
     Clone,

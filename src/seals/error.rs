@@ -13,6 +13,7 @@
 
 use crate::dbc;
 
+/// Commitment verfication related Errors
 #[derive(Clone, PartialEq, Debug, Display, From, Error)]
 #[display(doc_comments)]
 pub enum Error {

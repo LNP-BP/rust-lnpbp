@@ -12,7 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 //! Base commit-verify scheme interface with extension allowing to create
-//! embedded commitments (commit-embed-verify), required for detarministic
+//! embedded commitments (commit-embed-verify), required for deterministic
 //! bitcoin commitments (LNPBP1-3 standards).
 
 /// Trait for commit-verify scheme. A message for the commitment may be any
@@ -117,6 +117,7 @@ where
     }
 }
 
+/// Test helpers for commit verify traits
 pub mod test_helpers {
     use super::*;
     use bitcoin_hashes::hex::FromHex;
@@ -153,6 +154,7 @@ pub mod test_helpers {
         ]
     }
 
+    /// Helper function to commit-verify
     pub fn commit_verify_suite<MSG, CMT>(messages: Vec<MSG>)
     where
         MSG: AsRef<[u8]> + Eq,
@@ -192,6 +194,7 @@ pub mod test_helpers {
         );
     }
 
+    /// Helper function to embed-commit-verify
     pub fn embed_commit_verify_suite<MSG, CMT>(
         messages: Vec<MSG>,
         container: &mut CMT::Container,

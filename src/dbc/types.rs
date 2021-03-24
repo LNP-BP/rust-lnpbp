@@ -16,19 +16,26 @@ use bitcoin::secp256k1;
 
 use super::{Error, ScriptEncodeData};
 
+/// Container structure to be used for creating commitment to a message
 pub trait Container: Sized {
+    /// Supplement data used while commitment
     type Supplement;
+    /// Host structure where committed data will be stored
     type Host;
 
+    /// Reconstruct a container from [Proof], [Supplement] and [Host]
     fn reconstruct(
         proof: &Proof,
         supplement: &Self::Supplement,
         host: &Self::Host,
     ) -> Result<Self, Error>;
 
+    /// Deconstruct a container into [Proof] and [Supplement]
     fn deconstruct(self) -> (Proof, Self::Supplement);
 
+    /// Produce the [Proof] from [Container]
     fn to_proof(&self) -> Proof;
+    /// Produce the [Proof] from [Container] while consuming [Self]
     fn into_proof(self) -> Proof;
 }
 
@@ -41,8 +48,11 @@ pub trait Container: Sized {
     serde(crate = "serde_crate")
 )]
 #[display("proof({pubkey}, {source}")]
+/// The proof of commitment.
 pub struct Proof {
+    /// Public Key containing the tweak
     pub pubkey: secp256k1::PublicKey,
+    /// Lockscript to be satisfied by spending Tx
     pub source: ScriptEncodeData,
 }
 

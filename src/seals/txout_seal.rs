@@ -19,6 +19,7 @@ use client_side_validation::single_use_seals::{Message, SingleUseSeal};
 use super::{Error, Witness};
 use crate::dbc::{Container, TxCommitment, TxContainer, TxSupplement};
 
+/// Define a seal using a TxOut
 pub struct TxoutSeal<'a, RESOLVER>
 where
     RESOLVER: TxResolve,
@@ -31,6 +32,7 @@ impl<'a, RESOLVER> TxoutSeal<'a, RESOLVER>
 where
     RESOLVER: TxResolve,
 {
+    /// Construct a new structure from data
     pub fn new(seal_definition: OutPoint, resolver: &'a RESOLVER) -> Self {
         Self {
             seal_definition,
@@ -121,15 +123,22 @@ where
     }
 
     // TODO: Implement publication-related methods
+    // Issue #199
 }
  */
 
+/// Trait defining transaction resolver
 pub trait TxResolve {
+    /// Error Type
     type Error: std::error::Error;
+
+    /// Create a container from Outpoint
     fn tx_container(
         &self,
         outpoint: OutPoint,
     ) -> Result<TxContainer, Self::Error>;
+
+    /// Return Transaction and Supplement data from Outpoint
     fn tx_and_data(
         &self,
         outpoint: OutPoint,

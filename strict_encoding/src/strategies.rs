@@ -19,14 +19,21 @@ use std::io;
 use super::net;
 use super::{Error, StrictDecode, StrictEncode};
 
-// Defining strategies:
+/// Strict encoding strategies that can be used for easy implementation
+/// of strict encoding procedure for any structure
 
+/// Encode as fixed length hash bytes
 pub struct HashFixedBytes;
+/// Encode as per bitcoin consensus rules
 pub struct BitcoinConsensus;
+/// Encode by the rules of inner structure
 pub struct Wrapped;
+/// Encode as uniform address format
 pub struct UsingUniformAddr;
 
+/// Trait to implement strict encoding strategy for any structure
 pub trait Strategy {
+    /// Strategy to be used by the structure
     type Strategy;
 }
 
@@ -79,6 +86,7 @@ where
     T: bitcoin::hashes::Hash,
 {
     // TODO: Verify byte order for hash encodings
+    // Issue #201
     #[inline]
     fn strict_encode<E: io::Write>(&self, mut e: E) -> Result<usize, Error> {
         e.write_all(&self.as_inner()[..])?;

@@ -33,11 +33,16 @@ use std::str::FromStr;
 use bech32::{FromBase32, ToBase32};
 use bitcoin::hashes::{sha256t, Hash};
 
+/// HRP for bech32 ID values
 pub const HRP_ID: &'static str = "id";
+/// HRP for bech32 Data valaues
 pub const HRP_DATA: &'static str = "data";
+
+/// HRP for bech32 zip values
 #[cfg(feature = "zip")]
 pub const HRP_ZIP: &'static str = "z";
 
+/// Deflation algorithm version byte
 #[cfg(feature = "zip")]
 pub const RAW_DATA_ENCODING_DEFLATE: u8 = 1u8;
 
@@ -125,11 +130,15 @@ impl FromStr for Blob {
     }
 }
 
+/// Trait defining conversion to bech32 payload
 pub trait ToBech32Payload {
+    /// create bech32 byte array
     fn to_bech32_payload(&self) -> Vec<u8>;
 }
 
+/// Trait defining conversion to bech32 payload
 pub trait AsBech32Payload {
+    /// create bech32 byte array
     fn as_bech32_payload(&self) -> &[u8];
 }
 
@@ -142,10 +151,12 @@ where
     }
 }
 
+/// Trait defining conversion from bech32 payload
 pub trait FromBech32Payload
 where
     Self: Sized,
 {
+    /// create structure from bech32 payload
     fn from_bech32_payload(payload: Vec<u8>) -> Result<Self, Error>;
 }
 
@@ -161,30 +172,44 @@ where
 
 // -- Common (non-LNPBP-39) traits
 
+/// Trait defining conversion to bech32 string
 pub trait ToBech32String {
+    /// convert to bech32 string
     fn to_bech32_string(&self) -> String;
 }
 
+/// Trait defining conversion from bech32 string
 pub trait FromBech32Str {
+    /// HRP
     const HRP: &'static str;
 
+    /// convert from bech32 string
     fn from_bech32_str(s: &str) -> Result<Self, Error>
     where
         Self: Sized;
 }
 
+/// Strategy definition for bech32 conversion
 pub mod strategies {
     use super::*;
     use amplify::{Holder, Wrapper};
     use strict_encoding::{StrictDecode, StrictEncode};
 
+    /// Convert by strict encoding
     pub struct UsingStrictEncoding;
+
+    /// Convert as wrapped structure
     pub struct Wrapped;
+
+    /// Convert by compressed strict encoding
     #[cfg(feature = "zip")]
     pub struct CompressedStrictEncoding;
 
+    /// Trait for implementing bech32 encoding strategy
     pub trait Strategy {
+        /// HRP
         const HRP: &'static str;
+        /// Strategy
         type Strategy;
     }
 
@@ -300,7 +325,9 @@ mod sealed {
     impl<T> FromPayload for T where T: FromBech32Payload {}
 }
 
+/// Trait defining conversion to bech32 data string
 pub trait ToBech32DataString: sealed::ToPayload {
+    /// convert to bech32 data string
     fn to_bech32_data_string(&self) -> String {
         ::bech32::encode(HRP_DATA, self.to_bech32_payload().to_base32())
             .expect("HRP is hardcoded and can't fail")
@@ -309,7 +336,9 @@ pub trait ToBech32DataString: sealed::ToPayload {
 
 impl<T> ToBech32DataString for T where T: sealed::ToPayload {}
 
+/// Trait defining conversion to bech32 data string
 pub trait Bech32DataString: sealed::AsPayload {
+    /// convert to bech32 data string
     fn bech32_data_string(&self) -> String {
         ::bech32::encode(HRP_DATA, self.as_bech32_payload().to_base32())
             .expect("HRP is hardcoded and can't fail")
@@ -318,10 +347,12 @@ pub trait Bech32DataString: sealed::AsPayload {
 
 impl<T> Bech32DataString for T where T: sealed::AsPayload {}
 
+/// Trait defining conversion from bech32 data string
 pub trait FromBech32DataStr
 where
     Self: Sized + sealed::FromPayload,
 {
+    /// convert from bech32 data string
     fn from_bech32_data_str(s: &str) -> Result<Self, Error> {
         let (hrp, data) = bech32::decode(&s)?;
         if &hrp != HRP_DATA {
@@ -333,6 +364,7 @@ where
 
 impl<T> FromBech32DataStr for T where T: sealed::FromPayload {}
 
+/// Module defining zip methods
 #[cfg(feature = "zip")]
 pub mod zip {
     use super::*;
@@ -374,7 +406,9 @@ pub mod zip {
         }
     }
 
+    /// Trait defining conversion to bech32 zip string
     pub trait ToBech32ZipString: sealed::ToPayload {
+        /// Convert to bech32 zip string
         fn to_bech32_zip_string(&self) -> String {
             payload_to_bech32_zip_string(HRP_ZIP, &self.to_bech32_payload())
         }
@@ -382,7 +416,9 @@ pub mod zip {
 
     impl<T> ToBech32ZipString for T where T: sealed::ToPayload {}
 
+    /// Trait defining conversion to bech32 zip string
     pub trait Bech32ZipString: sealed::AsPayload {
+        /// Convert from bech32 zip string
         fn bech32_zip_string(&self) -> String {
             payload_to_bech32_zip_string(HRP_ZIP, &self.as_bech32_payload())
         }
@@ -390,7 +426,9 @@ pub mod zip {
 
     impl<T> Bech32ZipString for T where T: sealed::AsPayload {}
 
+    /// Trait defining conversion from becch32 zip string
     pub trait FromBech32ZipStr: sealed::FromPayload {
+        /// Convert from bech32 zip string
         fn from_bech32_zip_str(s: &str) -> Result<Self, Error> {
             Self::from_bech32_payload(bech32_zip_str_to_payload(HRP_ZIP, s)?)
         }
@@ -445,6 +483,7 @@ where
     Self: sealed::HashType<Tag> + Sized,
     Tag: sha256t::Tag,
 {
+    /// Convert from bech32 id string
     fn from_bech32_id_str(s: &str) -> Result<Self, Error>;
 }
 
@@ -474,6 +513,7 @@ where
     }
 }
 
+/// Serialize data using serde serializer
 #[cfg(feature = "serde")]
 pub fn serialize<T, S>(data: &T, serializer: S) -> Result<S::Ok, S::Error>
 where
@@ -483,6 +523,7 @@ where
     serializer.serialize_str(&data.to_bech32_string())
 }
 
+/// Deserialize data using serde deserializer
 #[cfg(feature = "serde")]
 pub fn deserialize<'de, T, D>(deserializer: D) -> Result<T, D::Error>
 where

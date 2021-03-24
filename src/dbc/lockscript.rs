@@ -36,10 +36,14 @@ use wallet::LockScript;
 use super::{Container, Error, KeysetCommitment, Proof, ScriptEncodeData};
 use crate::dbc::KeysetContainer;
 
+/// Lockscript container structure to be used to embed commitment inside a
+/// LockScript The commitment process produces `LockscriptCommitment` structure
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display)]
 #[display(Debug)]
 pub struct LockscriptContainer {
+    /// Lockscript to be satisfied by spending Tx
     pub script: LockScript,
+    /// Public Key containing the tweak
     pub pubkey: secp256k1::PublicKey,
     /// Single SHA256 hash of the protocol-specific tag
     pub tag: sha256::Hash,
@@ -99,8 +103,7 @@ impl Container for LockscriptContainer {
     }
 }
 
-/// [`LockScript`] containing public keys which sum is commit to some message
-/// according to LNPBP-2
+/// Lockscript commitment structure produced after committing the message
 #[derive(
     Wrapper,
     Clone,

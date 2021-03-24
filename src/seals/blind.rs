@@ -91,12 +91,13 @@ impl CommitConceal for OutpointReveal {
 
 impl OutpointReveal {
     #[inline]
+    /// Conceal from a revealed OutPoint
     pub fn outpoint_hash(&self) -> OutpointHash {
         OutpointHash::commit(self)
     }
 }
 
-/// Tag used for [`SchemaId`] hash type
+/// Tag used for OutpointHash type
 pub struct OutpointHashTag;
 
 impl sha256t::Tag for OutpointHashTag {

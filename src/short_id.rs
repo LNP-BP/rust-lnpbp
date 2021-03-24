@@ -17,16 +17,25 @@ use std::{
     fmt::Debug,
 };
 
+/// Short ID derivation errors
 #[derive(Copy, Clone, Debug, Display, PartialEq, Eq)]
 #[display(Debug)]
 pub enum Error {
+    /// Invalid block height
     BlockHeightOutOfRange,
+    /// Invalid input index
     InputIndexOutOfRange,
+    /// Invalid output index
     OutputIndexOutOfRange,
+    /// Invalid checksum
     ChecksumOutOfRange,
+    /// Require Dimension for this operation
     DimensionRequired,
+    /// No Dimension possible for this operation
     NoDimensionIsPossible,
+    /// Upgrade not possible
     UpgradeImpossible,
+    /// Downgrade not possible
     DowngradeImpossible,
 }
 
@@ -88,47 +97,79 @@ impl From<Txid> for TxChecksum {
     }
 }
 
+/// A Short ID descriptor structure for different items in the Blockchain
+/// Not to be confused with transaction output descriptors
 #[derive(Copy, Clone, Debug, Display)]
 #[display(Debug)]
 pub enum Descriptor {
+    /// Describes a block
     OnchainBlock {
+        /// Block height
         block_height: u32,
+        /// Block checksum
         block_checksum: BlockChecksum,
     },
+    /// Describes a transaction
     OnchainTransaction {
+        /// Block height
         block_height: u32,
+        /// Block checksum
         block_checksum: BlockChecksum,
+        /// transaction index
         tx_index: u16,
     },
+    /// Describes a transaction input
     OnchainTxInput {
+        /// Blokc height
         block_height: u32,
+        /// Block checksum
         block_checksum: BlockChecksum,
+        /// Transaction index
         tx_index: u16,
+        /// TxIn index
         input_index: u16,
     },
+    /// Describes a transaction output
     OnchainTxOutput {
+        /// Block height
         block_height: u32,
+        /// Block checksum
         block_checksum: BlockChecksum,
+        /// Transaction index
         tx_index: u16,
+        /// TxOut index
         output_index: u16,
     },
+    /// Describes a off-chain transaction
     OffchainTransaction {
+        /// Transaction checksum
         tx_checksum: TxChecksum,
     },
+
+    /// Describes a off-chain transaction input
     OffchainTxInput {
+        /// Transaction checksum
         tx_checksum: TxChecksum,
+        /// TxIn index
         input_index: u16,
     },
+
+    /// Describes a off-chain transaction output
     OffchainTxOutput {
+        /// Transaction checksum
         tx_checksum: TxChecksum,
+        /// TxOut index
         output_index: u16,
     },
 }
 
+/// Dimensions (Input/Output) for upgrade/downgrade operation of Descriptors
 #[derive(Copy, Clone, Debug, Display, PartialEq, Eq)]
 #[display(Debug)]
 pub enum Dimension {
+    /// Operation towards input
     Input,
+    /// Operation towards output
     Output,
 }
 
@@ -142,6 +183,7 @@ impl Default for Descriptor {
 }
 
 impl Descriptor {
+    /// Check weather a descriptor is valid
     pub fn try_validity(&self) -> Result<(), Error> {
         use Descriptor::*;
         use Error::*;
@@ -177,6 +219,7 @@ impl Descriptor {
         }
     }
 
+    /// Check if its an onchain descriptor
     pub fn is_onchain(&self) -> bool {
         use Descriptor::*;
         match self {
@@ -188,10 +231,12 @@ impl Descriptor {
         }
     }
 
+    /// Check if its an offchain descriptor
     pub fn is_offchain(&self) -> bool {
         !self.is_onchain()
     }
 
+    /// Upgrade Descriptor by given Dimension
     pub fn upgraded(
         &self,
         index: u16,
@@ -261,6 +306,7 @@ impl Descriptor {
         }
     }
 
+    /// Downgrade Descriptor by given Dimension
     pub fn downgraded(self) -> Result<Self, Error> {
         use Descriptor::*;
         use Error::*;
@@ -298,6 +344,8 @@ impl Descriptor {
         }
     }
 
+    /// Extract block height from Descriptor
+    /// Returns `None` if not applicable
     pub fn get_block_height(&self) -> Option<u32> {
         use Descriptor::*;
 
@@ -310,6 +358,8 @@ impl Descriptor {
         }
     }
 
+    /// Extract Block checksum from descriptor
+    /// Returns `None` if not applicable
     pub fn get_block_checksum(&self) -> Option<u8> {
         use Descriptor::*;
 
@@ -322,6 +372,8 @@ impl Descriptor {
         }
     }
 
+    /// Extract transaction checksum from Descriptor
+    /// Returns `None` if not applicable
     pub fn get_tx_checksum(&self) -> Option<u64> {
         use Descriptor::*;
 
@@ -333,6 +385,8 @@ impl Descriptor {
         }
     }
 
+    /// Extract transaction index from descriptor
+    /// Returns `None` if not applicable
     pub fn get_tx_index(&self) -> Option<u16> {
         use Descriptor::*;
 
@@ -344,6 +398,8 @@ impl Descriptor {
         }
     }
 
+    /// Extract Transaction Input index from descriptor
+    /// Returns `None` if not applicable
     pub fn get_input_index(&self) -> Option<u16> {
         use Descriptor::*;
 
@@ -354,6 +410,8 @@ impl Descriptor {
         }
     }
 
+    /// Extract Transaction Output index from Descriptor
+    /// Returns `None` if not applicable
     pub fn get_output_index(&self) -> Option<u16> {
         use Descriptor::*;
 
@@ -364,11 +422,14 @@ impl Descriptor {
         }
     }
 
+    /// Convert Descriptor into ShortId
     pub fn try_into_u64(self) -> Result<u64, Error> {
         ShortId::try_from(self).map(ShortId::into_u64)
     }
 }
 
+/// ShortId for identifying blockchain items as per LNPBP5
+/// https://github.com/LNP-BP/LNPBPs/blob/master/lnpbp-0005.md
 #[derive(
     Copy,
     Clone,
@@ -386,26 +447,39 @@ impl Descriptor {
 pub struct ShortId(u64);
 
 impl ShortId {
+    /// Offchain ID Flag
     pub const FLAG_OFFCHAIN: u64 = 0x8000_0000_0000_0000;
+    /// Mask for Block ID
     pub const MASK_BLOCK: u64 = 0x7FFF_FF00_0000_0000;
+    /// Mask for Block Checksum
     pub const MASK_BLOCKCHECK: u64 = 0x0000_00FF_0000_0000;
+    /// Mask for TxId
     pub const MASK_TXIDX: u64 = 0x0000_0000_FFFF_0000;
+    /// Mask for Tx checksum
     pub const MASK_TXCHECK: u64 = 0x7FFF_FFFF_FFFF_0000;
+    /// Input/Output flag
     pub const FLAG_INOUT: u64 = 0x0000_0000_0000_8000;
+    /// Mask for Input/Output ID
     pub const MASK_INOUT: u64 = 0x0000_0000_0000_7FFF;
 
+    /// Shift for Blokc ID
     pub const SHIFT_BLOCK: u64 = 40;
+    /// Shift for block checksum
     pub const SHIFT_BLOCKCHECK: u64 = 32;
+    /// Shift for TxID
     pub const SHIFT_TXIDX: u64 = 16;
 
+    /// Check if ID is onchain
     pub fn is_onchain(&self) -> bool {
         self.0 & Self::FLAG_OFFCHAIN != Self::FLAG_OFFCHAIN
     }
 
+    /// Check if ID is offchain
     pub fn is_offchain(&self) -> bool {
         self.0 & Self::FLAG_OFFCHAIN == Self::FLAG_OFFCHAIN
     }
 
+    /// Get Descriptor from ID
     pub fn get_descriptor(&self) -> Descriptor {
         #[inline]
         fn iconv<T>(val: u64) -> T
@@ -476,6 +550,7 @@ impl ShortId {
         }
     }
 
+    /// Convert ID to u64
     pub fn into_u64(self) -> u64 {
         self.into()
     }

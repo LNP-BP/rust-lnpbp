@@ -11,6 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+/// Strinct encode a list of items
 #[macro_export]
 macro_rules! strict_encode_list {
     ( $encoder:ident; $($item:expr),+ ) => {
@@ -33,6 +34,7 @@ macro_rules! strict_encode_list {
     }
 }
 
+/// Strict decode a list of items
 #[macro_export]
 macro_rules! strict_decode_self {
     ( $decoder:ident; $($item:ident),+ ) => {
@@ -55,6 +57,7 @@ macro_rules! strict_decode_self {
     };
 }
 
+/// Implement strict encoding for enums
 #[macro_export]
 macro_rules! impl_enum_strict_encoding {
     ($type:ty) => {

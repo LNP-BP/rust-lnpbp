@@ -68,6 +68,7 @@ pub enum P2pNetworkId {
 }
 
 impl P2pNetworkId {
+    /// Convert Magic Number to Network Id
     pub fn from_magic(magic: P2pMagicNumber) -> Self {
         match magic {
             m if m == P2pNetworkId::Mainnet.as_magic() => P2pNetworkId::Mainnet,
@@ -78,6 +79,7 @@ impl P2pNetworkId {
         }
     }
 
+    /// Convert Network Id to Magic Number
     pub fn as_magic(&self) -> P2pMagicNumber {
         match self {
             P2pNetworkId::Mainnet => P2P_MAGIC_MAINNET,
@@ -178,47 +180,50 @@ impl TryFrom<P2pNetworkId> for bitcoin::Network {
 }
 
 hash_newtype!(
-    AssetId,
+    ChainId,
     sha256d::Hash,
     32,
-    doc = "Universal asset identifier for on-chain and off-chain assets; for \
+    doc = "Universal chain identifier for on-chain and off-chain assets; for \
            on-chain assets matches genesis hash of the chain, but displayed in \
            normal, non-reverse order",
     false
 );
 
-impl strict_encoding::Strategy for AssetId {
+impl strict_encoding::Strategy for ChainId {
     type Strategy = strict_encoding::strategies::HashFixedBytes;
 }
 
-impl lightning_encoding::Strategy for AssetId {
+impl lightning_encoding::Strategy for ChainId {
     type Strategy = lightning_encoding::strategies::AsBitcoinHash;
 }
 
-impl From<BlockHash> for AssetId {
+impl From<BlockHash> for ChainId {
     fn from(block_hash: BlockHash) -> Self {
-        AssetId::from_inner(block_hash.into_inner())
+        ChainId::from_inner(block_hash.into_inner())
     }
 }
 
-impl AssetId {
-    pub fn native(chain: &Chain) -> AssetId {
+impl ChainId {
+    /// Calculate ChainId from chain
+    pub fn native(chain: &Chain) -> ChainId {
         chain.chain_params().genesis_hash.into()
     }
 }
 
+/// Trait defining native asset character
 pub trait NativeAsset {
+    /// Check weather asset is native to the chain
     fn is_native(&self, chain: &Chain) -> bool;
 }
 
-impl NativeAsset for AssetId {
+impl NativeAsset for ChainId {
     fn is_native(&self, chain: &Chain) -> bool {
         self.into_inner() == [0u8; 32]
             || *self == chain.chain_params().genesis_hash.into()
     }
 }
 
-impl NativeAsset for Option<AssetId> {
+impl NativeAsset for Option<ChainId> {
     fn is_native(&self, chain: &Chain) -> bool {
         match self {
             Some(asset_id) => asset_id.is_native(chain),
@@ -283,7 +288,7 @@ lazy_static! {
             unit_of_accounting: "Bitcoin".to_string(),
             indivisible_unit: "satoshi".to_string(),
             divisibility: 100_000_000,
-            asset_id: AssetId::from_slice(GENESIS_HASH_MAINNET)
+            asset_id: ChainId::from_slice(GENESIS_HASH_MAINNET)
                 .expect("Bitcoin genesis hash contains invalid binary data"),
             asset_system: AssetSystem::NativeBlockchain,
         },
@@ -311,7 +316,7 @@ lazy_static! {
             unit_of_accounting: "Test Bitcoin".to_string(),
             indivisible_unit: "Test satoshi".to_string(),
             divisibility: 100_000_000,
-            asset_id: AssetId::from_slice(GENESIS_HASH_TESTNET)
+            asset_id: ChainId::from_slice(GENESIS_HASH_TESTNET)
                 .expect("Bitcoin testnet genesis hash contains invalid binary data"),
             asset_system: AssetSystem::NativeBlockchain,
         },
@@ -338,7 +343,7 @@ lazy_static! {
             unit_of_accounting: "Test Bitcoin".to_string(),
             indivisible_unit: "Test satoshi".to_string(),
             divisibility: 100_000_000,
-            asset_id: AssetId::from_slice(GENESIS_HASH_REGTEST)
+            asset_id: ChainId::from_slice(GENESIS_HASH_REGTEST)
                 .expect("Bitcoin regtest genesis hash contains invalid binary data"),
             asset_system: AssetSystem::NativeBlockchain,
         },
@@ -365,7 +370,7 @@ lazy_static! {
             unit_of_accounting: "Signet Bitcoin".to_string(),
             indivisible_unit: "Signet satoshi".to_string(),
             divisibility: 100_000_000,
-            asset_id: AssetId::from_slice(GENESIS_HASH_SIGNET)
+            asset_id: ChainId::from_slice(GENESIS_HASH_SIGNET)
                 .expect("Bitcoin signet genesis hash contains invalid binary data"),
             asset_system: AssetSystem::NativeBlockchain,
         },
@@ -393,7 +398,7 @@ lazy_static! {
             unit_of_accounting: "Liquid Bitcoin".to_string(),
             indivisible_unit: "Liquid satoshi".to_string(),
             divisibility: 100_000_000,
-            asset_id: AssetId::from_slice(GENESIS_HASH_LIQUIDV1)
+            asset_id: ChainId::from_slice(GENESIS_HASH_LIQUIDV1)
                 .expect("Liquid V1 genesis hash contains invalid binary data"),
             asset_system: AssetSystem::NativeBlockchain,
         },
@@ -465,6 +470,7 @@ pub enum AssetLayer {
     Layer2and3 = 2,
 }
 
+/// Type of asset depending upon its native chain
 #[derive(
     Clone,
     Copy,
@@ -525,9 +531,9 @@ pub struct AssetParams {
     /// Identifier of the asset; for native chain assets matches to the
     /// genesis block hash of the chain itself (i.e.
     /// [ChainParams::genesis_hash]), for other assets are specific to a given
-    /// asset system: for confidential assets this is an `AssetId`, for
+    /// asset system: for confidential assets this is an `ChainId`, for
     /// RGB – hash of asset genesis transition, i.e. `ContractId`.
-    pub asset_id: AssetId,
+    pub asset_id: ChainId,
 
     /// [AssetSystem] in which asset is defined
     pub asset_system: AssetSystem,
@@ -776,8 +782,8 @@ impl Chain {
     }
 
     /// Returns native chain asset
-    pub fn native_asset(&self) -> AssetId {
-        AssetId::native(&self)
+    pub fn native_asset(&self) -> ChainId {
+        ChainId::native(&self)
     }
 }
 
@@ -1192,7 +1198,7 @@ mod test {
             unit_of_accounting: "Aaa".to_string(),
             indivisible_unit: "a".to_string(),
             divisibility: 0,
-            asset_id: AssetId::hash(b"asset"),
+            asset_id: ChainId::hash(b"asset"),
             asset_system: AssetSystem::NativeBlockchain,
         };
 

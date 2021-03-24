@@ -20,8 +20,11 @@
     unused_mut,
     unused_imports,
     dead_code,
-    //missing_docs
+    missing_docs
 )]
+
+//! Strict Encoding implementation to be used for encoding all
+//! client side validation structures and data
 
 #[cfg(feature = "derive")]
 #[allow(unused_imports)]
@@ -38,6 +41,7 @@ extern crate amplify_derive;
 #[macro_use]
 mod macros;
 #[macro_use]
+/// Helper functions to create strict encoding tests
 pub mod test_helpers;
 
 mod bitcoin;

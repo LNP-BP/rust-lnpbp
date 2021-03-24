@@ -21,15 +21,20 @@ use std::net::{
 
 use crate::{strategies, Error, Strategy, StrictDecode, StrictEncode};
 
-pub const ADDR_LEN: usize = 33; // Maximum Tor public key size
+/// Maximum Tor public key size
+pub const ADDR_LEN: usize = 33;
+/// Address length for uniform address encoding
 pub const UNIFORM_LEN: usize = ADDR_LEN
     + 1  // Prefix byte for specifying address format (IP, Onion, etc)
     + 2  // Suffix byte for specifying port number
     + 1; // Suffix byte for specifying transport-level protocol (TCP, UDP, ...)
 
+/// Raw 33 byte address
 pub type RawAddr = [u8; ADDR_LEN];
+/// Raw address in uniform encoding
 pub type RawUniformAddr = [u8; UNIFORM_LEN];
 
+/// Address format decoding errors
 #[derive(
     Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display, Error,
 )]
@@ -64,26 +69,33 @@ pub enum DecodeError {
     InsufficientData,
 }
 
+/// An Address format enum for each type of network addresses
 #[derive(Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
 #[repr(u8)]
 #[non_exhaustive]
 pub enum AddrFormat {
+    /// IpV4 address
     #[display("ipv4")]
     IpV4 = 0,
 
+    /// IpV6 address
     #[display("ipv6")]
     IpV6 = 1,
 
+    /// OnionV2 address
     #[display("onion(v2)")]
     OnionV2 = 2,
 
+    /// OnionV3 address
     #[display("onion(v3)")]
     OnionV3 = 3,
 
+    /// Lightning network address
     #[display("lightning")]
     Lightning = 4,
 }
 
+/// Enum describing transportation protocols
 #[derive(Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
 #[repr(u8)]
 #[non_exhaustive]
@@ -106,20 +118,31 @@ pub enum Transport {
     Quic = 4,
 }
 
+/// Unfiorm address encoding structure
 #[derive(Clone, Copy, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
 pub struct UniformAddr {
+    /// Address format
     pub addr_format: AddrFormat,
+    /// Raw address bytes
     pub addr: RawAddr,
+    /// Port
     pub port: Option<u16>,
+    /// Optional transportation protocol
     pub transport: Option<Transport>,
 }
 
+/// Trait defining functionalities of uniform addresses
 pub trait Uniform {
+    /// Extract address format
     fn addr_format(&self) -> AddrFormat;
+    /// Extract raw address bytes
     fn addr(&self) -> RawAddr;
+    /// Extract port. Return `None` if not applicable
     fn port(&self) -> Option<u16>;
+    /// Extract transportation protocol. Return `None` if not applicable
     fn transport(&self) -> Option<Transport>;
 
+    /// Convert into uniform address encoding
     #[inline]
     fn to_uniform_addr(&self) -> UniformAddr {
         UniformAddr {
@@ -130,19 +153,23 @@ pub trait Uniform {
         }
     }
 
+    /// Convert into uniform address raw bytes
     #[inline]
     fn to_raw_uniform(&self) -> RawUniformAddr {
         self.to_uniform_addr().into()
     }
 
+    /// Create from uniform address encoding
     fn from_uniform_addr(addr: UniformAddr) -> Result<Self, DecodeError>
     where
         Self: Sized;
 
+    /// Create ffrom uniform address encoding
     fn from_uniform_addr_lossy(addr: UniformAddr) -> Result<Self, DecodeError>
     where
         Self: Sized;
 
+    /// Create from raw uniform address bytes
     fn from_raw_uniform_addr(
         uniform: RawUniformAddr,
     ) -> Result<Self, DecodeError>
@@ -152,6 +179,7 @@ pub trait Uniform {
         Self::from_uniform_addr(UniformAddr::try_from(uniform)?)
     }
 
+    /// Create from raw uniform address bytes
     fn from_raw_uniform_addr_lossy(
         uniform: RawUniformAddr,
     ) -> Result<Self, DecodeError>

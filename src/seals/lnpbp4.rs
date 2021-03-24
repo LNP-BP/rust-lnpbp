@@ -21,14 +21,19 @@ use wallet::Slice32;
 
 /// Source data for creation of multi-message commitments according to LNPBP-4
 /// procedure
+/// Protocol ID = 32 byte array
 pub type ProtocolId = Slice32;
+/// Commitment type = sha256 hash
 pub type Commitment = sha256d::Hash;
+/// Message Map = Map[ProtocolId, Commitment]
 pub type MessageMap = BTreeMap<ProtocolId, Commitment>;
 
+/// Excessive message data error
 #[derive(Copy, Clone, Error, Debug, Display)]
 #[display(Debug)]
 pub struct TooManyMessagesError;
 
+/// Each commitment item to create a MultiMessage Commitment
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -47,11 +52,14 @@ pub struct TooManyMessagesError;
 )]
 #[display(Debug)]
 pub struct MultimsgCommitmentItem {
+    /// Optional Protocol ID
     pub protocol: Option<ProtocolId>,
+    /// Commitment Data
     pub commitment: Commitment,
 }
 
 impl MultimsgCommitmentItem {
+    /// Construct new item from data
     pub fn new(protocol: Option<ProtocolId>, commitment: Commitment) -> Self {
         Self {
             protocol,
@@ -80,7 +88,9 @@ impl MultimsgCommitmentItem {
 )]
 #[display(Debug)]
 pub struct MultimsgCommitment {
+    /// Array of commited messages
     pub commitments: Vec<MultimsgCommitmentItem>,
+    /// Entropy inside Commitment Items
     pub entropy: Option<u64>,
 }
 

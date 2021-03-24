@@ -122,6 +122,8 @@ pub trait SingleUseSeal {
     /// seal itself; all the data produced by the process must be placed
     /// into the returned Witness type
     fn close(&self, over: &Message) -> Result<Self::Witness, Self::Error>;
+
+    /// Verify the seal against a MSG and Witness data
     fn verify(
         &self,
         msg: &Message,

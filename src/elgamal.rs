@@ -18,6 +18,7 @@ use bitcoin::hashes::{sha256, Hash, HashEngine};
 use bitcoin::secp256k1;
 use wallet::SECP256K1;
 
+/// Elgamal elliptic curve operation errors
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Display, Error, From)]
 #[display(Debug)]
 pub enum Error {
@@ -58,6 +59,7 @@ impl From<secp256k1::Error> for Error {
     }
 }
 
+/// Encrypt a message to a public key using a blinding
 pub fn encrypt(
     message: &[u8],
     mut encryption_key: secp256k1::PublicKey,
@@ -128,6 +130,7 @@ pub fn encrypt(
     Ok(acc.concat())
 }
 
+/// decrypt an encrypted message from a public key using a secret key
 pub fn decrypt(
     mut encrypted: &[u8],
     decryption_key: &mut secp256k1::SecretKey,

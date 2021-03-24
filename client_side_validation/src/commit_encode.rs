@@ -18,8 +18,11 @@ use bitcoin_hashes::{sha256, sha256d, Hash, HashEngine};
 
 use super::commit_verify::{self, CommitVerify};
 
+/// Trait to encode the commitment of a structure
 pub trait CommitEncode {
+    /// Encodethe commitment of structure
     fn commit_encode<E: io::Write>(&self, e: E) -> usize;
+    /// Encode the commitment into Vec<u8>
     fn commit_serialize(&self) -> Vec<u8> {
         let mut vec = Vec::new();
         self.commit_encode(&mut vec);
@@ -27,18 +30,28 @@ pub trait CommitEncode {
     }
 }
 
+/// Trait to define commit encoding strategy for any structure
+/// A structure implementing this trait will be encoded by the specified
+/// strategy
 pub trait CommitEncodeWithStrategy {
+    /// Strategy to be used for commit encoding
     type Strategy;
 }
 
 /// Implemented after concept by Martin Habovštiak <martin.habovstiak@gmail.com>
+/// Defines few strategies that can be implemented for any structure for easy
+/// implementation of commit encoding
 pub mod commit_strategy {
     use super::*;
     use bitcoin_hashes::Hash;
 
-    // Defining strategies:
+    /// Commit encode by strict encoding procedure
     pub struct UsingStrict;
+
+    /// Commit encode by concealing the structure
     pub struct UsingConceal;
+
+    /// Commit encode by hashing the strict encoding of the structure
     pub struct UsingHash<H>(std::marker::PhantomData<H>)
     where
         H: Hash + strict_encoding::StrictEncode;
@@ -179,15 +192,22 @@ pub mod commit_strategy {
     }
 }
 
+/// Trait defining concealing procedure to be used before commit encoding
 pub trait CommitConceal {
+    /// Type defining concealed commitment
     type ConcealedCommitment;
+    /// created concealed commitment of the structure
     fn commit_conceal(&self) -> Self::ConcealedCommitment;
 }
 
+/// Trait defining commitment procedure that can be verified against
+/// a MSG using commit_verify scheme of LNPBP1-3 standard
 pub trait ConsensusCommit: Sized + CommitEncode {
+    /// Commitment type
     type Commitment: commit_verify::CommitVerify<Vec<u8>>;
 
     #[inline]
+    /// Create consensus commitment of a structure
     fn consensus_commit(&self) -> Self::Commitment {
         let mut encoder = io::Cursor::new(vec![]);
         self.commit_encode(&mut encoder);
@@ -195,6 +215,7 @@ pub trait ConsensusCommit: Sized + CommitEncode {
     }
 
     #[inline]
+    /// Perform consensus verify against a commitment
     fn consensus_verify(&self, commitment: &Self::Commitment) -> bool {
         let mut encoder = io::Cursor::new(vec![]);
         self.commit_encode(&mut encoder);
@@ -202,9 +223,11 @@ pub trait ConsensusCommit: Sized + CommitEncode {
     }
 }
 
+/// Trait defining commitment procedure using merkelization
 pub trait ConsensusMerkleCommit:
     ConsensusCommit<Commitment = MerkleNode>
 {
+    /// Tag to be used for each merkle node
     const MERKLE_NODE_TAG: &'static str;
 }
 
@@ -225,6 +248,7 @@ where
     type Commitment = MerkleNode;
 }
 
+/// CommitEncode a list of structures
 #[macro_export]
 macro_rules! commit_encode_list {
     ( $encoder:ident; $($item:expr),+ ) => {
@@ -299,6 +323,8 @@ pub fn merklize(prefix: &str, data: &[MerkleNode], depth: u16) -> MerkleNode {
     MerkleNode::from_engine(engine)
 }
 
+/// Structure defining an array of merkle nodes to be used for
+/// commit encoding using merkelization
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
 pub struct MerkleSource<T>(pub Vec<T>);
 
@@ -353,8 +379,11 @@ where
     }
 }
 
+/// Trait defining conversion to merkle source
 pub trait ToMerkleSource {
+    /// Merkle leaf type
     type Leaf: ConsensusMerkleCommit;
+    /// Convert to merkle source
     fn to_merkle_source(&self) -> MerkleSource<Self::Leaf>;
 }
 

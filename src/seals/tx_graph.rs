@@ -13,29 +13,45 @@
 
 use bitcoin::{OutPoint, Transaction, Txid};
 
+/// Transaction spending status
 pub enum SpendingStatus {
+    /// Status Unknown
     Unknown,
+    /// Status Invalid
     Invalid,
+    /// Status Unspent
     Unspent,
+    /// Status Spent
     Spent(Option<u32>),
 }
 
+/// Trait defining transaction graph related functionalities
 pub trait TxGraph {
+    /// Error type
     type AccessError: std::error::Error;
 
+    /// Fetch spending status of a transaction
     fn spending_status(
         &self,
         outpoint: &OutPoint,
     ) -> Result<SpendingStatus, Self::AccessError>;
+
+    /// Fetch the spending transaction
     fn fetch_spending_tx(
         &self,
         outpoint: &OutPoint,
     ) -> Result<Transaction, Self::AccessError>;
+
+    /// Create a spending transaction
     fn create_spending_tx(
         &self,
         outpoint: &OutPoint,
     ) -> Result<Transaction, Self::AccessError>;
+
+    /// Fetch the transaction with given TxId
     fn fetch_tx(&self, txid: Txid) -> Result<Transaction, Self::AccessError>;
+
+    /// Apply a transaction as spending
     fn apply_tx(
         &self,
         signed_tx: &Transaction,

@@ -11,14 +11,23 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+/// Revealed and Concealed Outpoint definition
 mod blind;
+/// Outpoint related errors
 mod error;
+/// LNPBP1 structures
 pub mod lnpbp1;
+/// LNPBP2 structures
 pub mod lnpbp2;
+/// LNPBP3 structures
 pub mod lnpbp3;
+/// LNPBP4 structures
 pub mod lnpbp4;
+/// Transaction graph trait definition
 mod tx_graph;
+/// Seal definition as TxOut
 mod txout_seal;
+/// TxOut witness structures
 mod txout_witness;
 
 pub use blind::{OutpointHash, OutpointReveal};

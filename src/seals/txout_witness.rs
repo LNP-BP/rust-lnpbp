@@ -13,7 +13,11 @@
 
 use crate::dbc::{Proof, TxCommitment};
 
+/// Witness
 pub struct Witness(pub InnerWitness, pub OuterWitness);
 
+/// Inner Witness
 pub type InnerWitness = TxCommitment;
+
+/// Outer Witness
 pub type OuterWitness = Proof;

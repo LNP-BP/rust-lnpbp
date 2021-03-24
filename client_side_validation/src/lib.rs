@@ -20,7 +20,7 @@
     unused_mut,
     unused_imports,
     dead_code,
-    //missing_docs
+    missing_docs
 )]
 
 //! Primitives module defines core strict interfaces from informational LNPBP

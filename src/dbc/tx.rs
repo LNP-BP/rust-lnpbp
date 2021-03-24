@@ -21,27 +21,37 @@ use super::{
     TxoutCommitment, TxoutContainer,
 };
 
+/// Transaction contianer structure that can be used to commit to a message
+/// The commitment process produces `TxCommitment` structure
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
 #[display(Debug)]
 pub struct TxContainer {
+    /// LNPBP2 Protocol Factor
     pub protocol_factor: u32,
+    /// Transaction fee
     pub fee: u64,
+    /// TxOut Container
     pub txout_container: TxoutContainer,
+    /// Transaction
     pub tx: Transaction,
     /// Tweaking factor stored after [TxContainer::commit_verify] procedure
     pub tweaking_factor: Option<Hmac<sha256::Hash>>,
 }
 
+/// Transaction supplement structure used for constructing container
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
 #[display(Debug)]
 pub struct TxSupplement {
+    /// Protocol specific factor
     pub protocol_factor: u32,
+    /// Transaction fee
     pub fee: u64,
     /// Single SHA256 hash of the protocol-specific tag
     pub tag: sha256::Hash,
 }
 
 impl TxContainer {
+    /// Construct a container from data
     pub fn construct(
         protocol_factor: u32,
         protocol_tag: &sha256::Hash,
@@ -68,6 +78,7 @@ impl TxContainer {
         me
     }
 
+    /// Get the output index containing the commitment
     pub fn vout(&self) -> usize {
         let nouts = self.tx.output.len() as u16;
         let vout = ((self.fee + (self.protocol_factor as u64)) % (nouts as u64))

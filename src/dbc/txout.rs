@@ -22,16 +22,21 @@ use super::{
     SpkCommitment, SpkContainer,
 };
 
+/// Transaction Output contianer structure that can be used to commit to a
+/// message The commitment process produces `TxoutCommitment` structure
 #[derive(Clone, PartialEq, Eq, Debug, Display)]
 #[display(Debug)]
 pub struct TxoutContainer {
+    /// Amount of sats locked
     pub value: u64,
+    /// ScriptPubkey container
     pub script_container: SpkContainer,
     /// Tweaking factor stored after [TxoutContainer::commit_verify] procedure
     pub tweaking_factor: Option<Hmac<sha256::Hash>>,
 }
 
 impl TxoutContainer {
+    /// Contsruct a container from data
     pub fn construct(
         protocol_tag: &sha256::Hash,
         value: u64,

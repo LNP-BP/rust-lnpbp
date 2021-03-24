@@ -12,13 +12,21 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 mod error;
+/// Keyset Container
 pub mod keyset;
+/// Lockscript Container
 pub mod lockscript;
+/// Public Key Container
 pub mod pubkey;
+/// ScriptPubkey Container
 pub mod spk;
+/// Taproot Container
 pub mod taproot;
+/// Transaction Container
 pub mod tx;
+/// TxOut Container
 pub mod txout;
+/// Container and related trait definition
 pub mod types;
 
 pub use error::Error;

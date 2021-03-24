@@ -20,9 +20,11 @@
     unused_mut,
     unused_imports,
     dead_code,
-    //missing_docs
+    missing_docs
 )]
-// TODO: when we will be ready for the release #![deny(missing_docs)]
+
+//! LNPBP core protocol library to be used for all core functionalities
+//! of client-side validation protocols, including RGB
 
 #[macro_use]
 extern crate amplify;
@@ -54,11 +56,15 @@ pub extern crate strict_encoding_derive;
 pub use strict_encoding_derive::{StrictDecode, StrictEncode};
 
 pub mod bech32;
+/// Chain related methods
 pub mod chain;
+/// Deterministic bitcoin commitments
 pub mod dbc;
 #[cfg(feature = "elgamal")]
 pub mod elgamal;
+/// Bitcoin transaction output as single use seals
 pub mod seals;
+/// Short identifier for blockchain objects as per LNPBP5
 pub mod short_id;
 pub mod tagged_hash;
 

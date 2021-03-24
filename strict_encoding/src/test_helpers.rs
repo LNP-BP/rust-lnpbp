@@ -18,6 +18,8 @@ use std::io::{BufWriter, Write};
 use crate::{Error, StrictDecode, StrictEncode};
 
 // TODO: (new) Move into derive macro
+// Issue #196
+/// Test exhaustive strict encoding/decoding for enums
 #[macro_export]
 macro_rules! test_enum_u8_exhaustive {
     ($enum:ident; $( $item:path => $val:expr ),+) => { {
@@ -101,6 +103,7 @@ pub fn print_to_file<T: StrictEncode + StrictDecode>(
     Ok(written)
 }
 
+/// Helper function to make roundtrip encoding/decoding
 pub fn encode_decode<T: StrictEncode + StrictDecode>(
     object: &T,
 ) -> Result<(T, usize), Error> {

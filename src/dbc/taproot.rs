@@ -20,10 +20,14 @@ use super::{
     ScriptEncodeData,
 };
 
+/// Taproot container structure that can be used to commit to a message
+/// The commitment process produces `TaprootCommitment` structure
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display)]
 #[display(Debug)]
 pub struct TaprootContainer {
+    /// Taproot Root Hash
     pub script_root: sha256::Hash,
+    /// Taproot Intermediate Pubkey
     pub intermediate_key: secp256k1::PublicKey,
     /// Single SHA256 hash of the protocol-specific tag
     pub tag: sha256::Hash,
@@ -80,10 +84,14 @@ impl Container for TaprootContainer {
     }
 }
 
+/// Taproot commitment structure produced after embedding commitment into a
+/// `TaprootContainer`
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Display)]
 #[display(Debug)]
 pub struct TaprootCommitment {
+    /// Taproot Root Hash
     pub script_root: sha256::Hash,
+    /// Intermediate Public Key
     pub intermediate_key_commitment: PubkeyCommitment,
 }
 
