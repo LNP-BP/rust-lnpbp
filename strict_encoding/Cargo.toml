@@ -21,7 +21,7 @@ crate-type = ["rlib", "staticlib"]
 amplify = "3"
 amplify_derive = "2.4.3"
 strict_encoding_derive = { version = "1", optional = true }
-bitcoin = "0.26" # TODO: Replace on bitcoin encoding crate with 0.27 release
+bitcoin = "0.26" # TODO #195: Replace on bitcoin encoding crate with 0.27 release
 miniscript = { version = "5", optional = true }
 ed25519-dalek = { version = "1", optional = true }
 grin_secp256k1zkp = { version = "0.7", optional = true }
