@@ -100,17 +100,7 @@ impl OutpointReveal {
 /// Errors happening during parsing string representation of different forms of
 /// single-use-seals
 #[derive(
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Hash,
-    Debug,
-    Display,
-    Error,
-    From,
+    Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Display, Error, From,
 )]
 #[display(doc_comments)]
 pub enum ParseError {
@@ -138,6 +128,10 @@ pub enum ParseError {
     /// blinding secret must be represented by a 64-bit hexadecimal value
     /// starting with `0x` and not with a decimal
     NonHexBlinding,
+
+    /// wrong Bech32 representation of the blinded UTXO seal – {0}
+    #[from]
+    Bech32(crate::bech32::Error),
 }
 
 impl FromStr for OutpointReveal {
@@ -208,10 +202,10 @@ pub struct OutpointHash(
 );
 
 impl FromStr for OutpointHash {
-    type Err = crate::bech32::Error;
+    type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        OutpointHash::from_bech32_str(s)
+        Ok(OutpointHash::from_bech32_str(s)?)
     }
 }
 
