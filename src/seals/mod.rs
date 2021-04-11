@@ -20,7 +20,7 @@ pub mod lnpbp4;
 mod txout_seal;
 mod txout_witness;
 
-pub use blind::{OutpointHash, OutpointReveal};
+pub use blind::{OutpointHash, OutpointReveal, ParseError};
 pub use error::Error;
 pub use txout_seal::{TxResolve, TxoutSeal};
 pub use txout_witness::{InnerWitness, OuterWitness, Witness};
