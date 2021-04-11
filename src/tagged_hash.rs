@@ -83,8 +83,7 @@ where
         Self::from_inner(sha256t::Hash::from_inner(hash.into_inner()))
     }
 
-    // TODO: Add `from_slice` method
-    // Issue #198
+    // TODO #198: Add `from_slice` method
 
     /// Convert to byte array
     fn as_slice(&'a self) -> &'a [u8; 32] {

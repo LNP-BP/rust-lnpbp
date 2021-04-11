@@ -122,8 +122,7 @@ where
         }
     }
 
-    // TODO: Implement publication-related methods
-    // Issue #199
+    // TODO #199: Implement publication-related methods
 }
  */
 

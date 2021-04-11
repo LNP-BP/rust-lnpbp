@@ -23,8 +23,6 @@ pub mod lnpbp2;
 pub mod lnpbp3;
 /// LNPBP4 structures
 pub mod lnpbp4;
-/// Transaction graph trait definition
-mod tx_graph;
 /// Seal definition as TxOut
 mod txout_seal;
 /// TxOut witness structures
@@ -32,6 +30,5 @@ mod txout_witness;
 
 pub use blind::{OutpointHash, OutpointReveal};
 pub use error::Error;
-pub use tx_graph::{SpendingStatus, TxGraph};
 pub use txout_seal::{TxResolve, TxoutSeal};
 pub use txout_witness::{InnerWitness, OuterWitness, Witness};
