@@ -228,7 +228,7 @@ dependencies = [
  "amplify_derive",
  "bitcoin_hashes",
  "grin_secp256k1zkp",
- "strict_encoding 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strict_encoding 1.2.0",
 ]
 
 [[package]]
@@ -241,7 +241,7 @@ dependencies = [
  "amplify_derive",
  "bitcoin_hashes",
  "grin_secp256k1zkp",
- "strict_encoding 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strict_encoding 1.2.0",
 ]
 
 [[package]]
@@ -334,7 +334,7 @@ dependencies = [
  "serde",
  "serde_with",
  "slip132",
- "strict_encoding 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strict_encoding 1.2.0",
 ]
 
 [[package]]
@@ -533,7 +533,7 @@ dependencies = [
  "bitcoin",
  "descriptor-wallet",
  "lightning_encoding_derive",
- "strict_encoding 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strict_encoding 1.2.0",
 ]
 
 [[package]]
@@ -557,7 +557,7 @@ checksum = "7fb9b38af92608140b86b693604b9ffcc5824240a484d1ecd4795bacb2fe88f3"
 
 [[package]]
 name = "lnpbp"
-version = "0.4.0"
+version = "0.5.0-alpha"
 dependencies = [
  "amplify",
  "amplify_derive",
@@ -581,7 +581,7 @@ dependencies = [
  "serde_with",
  "serde_with_macros",
  "serde_yaml",
- "strict_encoding 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strict_encoding 1.2.0",
  "strict_encoding_derive 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -1125,20 +1125,6 @@ checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 [[package]]
 name = "strict_encoding"
 version = "1.2.0"
-dependencies = [
- "amplify",
- "amplify_derive",
- "bitcoin",
- "chrono",
- "ed25519-dalek",
- "grin_secp256k1zkp",
- "miniscript",
- "strict_encoding_derive 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "strict_encoding"
-version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8552fff4110a8689be2beb58dc2d89e24880fa192de2d192eebde88549eada6f"
 dependencies = [
@@ -1151,13 +1137,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "strict_encoding"
+version = "1.2.2"
+dependencies = [
+ "amplify",
+ "amplify_derive",
+ "bitcoin",
+ "chrono",
+ "ed25519-dalek",
+ "grin_secp256k1zkp",
+ "miniscript",
+ "strict_encoding_derive 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "strict_encoding_derive"
 version = "1.0.0"
 dependencies = [
  "amplify",
  "proc-macro2 1.0.24",
  "quote 1.0.9",
- "strict_encoding 1.2.0",
+ "strict_encoding 1.2.2",
  "syn 1.0.64",
 ]
 

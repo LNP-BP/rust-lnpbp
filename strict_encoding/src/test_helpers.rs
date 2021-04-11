@@ -17,7 +17,7 @@ use std::io::{BufWriter, Write};
 
 use crate::{Error, StrictDecode, StrictEncode};
 
-// TODO: (new) Move into derive macro
+// TODO #196: Move into derive macro
 #[macro_export]
 macro_rules! test_enum_u8_exhaustive {
     ($enum:ident; $( $item:path => $val:expr ),+) => { {

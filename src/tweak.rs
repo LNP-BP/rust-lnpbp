@@ -35,7 +35,7 @@ pub enum ParseError {
     /// curve point ({0})
     WrongTweakFormat(String),
 
-    // TODO: (new) Once miniscript will do a better descriptor parse errors,
+    // TODO #190: Once miniscript will do a better descriptor parse errors,
     //       change this
     /// Miniscript returned public key string parsing error:
     /// {0}

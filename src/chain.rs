@@ -269,7 +269,7 @@ lazy_static! {
         p2p_port: 8333,
         rpc_port: 8332,
         ln_height: 504500,
-        // TODO: (new) update with first RGB release
+        // TODO #187: update with first RGB release
         rgb_height: 650000,
         format: ChainFormat::Bitcoin,
         dust_limit: 546,
@@ -297,7 +297,7 @@ lazy_static! {
         p2p_port: 18333,
         rpc_port: 18332,
         ln_height: 1,
-        // TODO: (new) update with first RGB release
+        // TODO #187: update with first RGB release
         rgb_height: 1835500,
         format: ChainFormat::Bitcoin,
         dust_limit: 546,
@@ -371,7 +371,7 @@ lazy_static! {
     /// Liquid V1 chain parameters
     static ref CHAIN_PARAMS_LIQUIDV1: ChainParams = ChainParams {
         name: "liquidv1".to_string(),
-        // TODO: (new) check Liquid network magic number and change this if needed
+        // TODO #188: check Liquid network magic number and change this if needed
         p2p_magic: P2pNetworkId::Mainnet,
         genesis_hash: BlockHash::from_slice(GENESIS_HASH_LIQUIDV1)
             .expect("Liquid V1 genesis hash contains invalid binary data"),
@@ -1168,7 +1168,6 @@ mod test {
         bitcoin::Network::try_from(P2pNetworkId::Other(0xA1A2A3A4)).unwrap();
     }
 
-    // TODO: Test must be rewritten
     #[test]
     fn test_chain_param_enums() {
         test_enum_u8_exhaustive!(ChainFormat;

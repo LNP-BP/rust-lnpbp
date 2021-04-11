@@ -1,6 +1,6 @@
 [package]
 name = "strict_encoding"
-version = "1.2.0"
+version = "1.2.2"
 license = "Apache-2.0"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 description = "Strict encoding: deterministic binary serialization for networking & client-side validation"
@@ -21,7 +21,7 @@ crate-type = ["rlib", "staticlib"]
 amplify = "3"
 amplify_derive = "2.4.3"
 strict_encoding_derive = { version = "1", optional = true }
-bitcoin = "0.26" # TODO: Replace on bitcoin encoding crate with 0.27 release
+bitcoin = "0.26" # TODO #195: Replace on bitcoin encoding crate with 0.27 release
 miniscript = { version = "5", optional = true }
 ed25519-dalek = { version = "1", optional = true }
 grin_secp256k1zkp = { version = "0.7", optional = true }

@@ -17,12 +17,10 @@ pub mod lnpbp1;
 pub mod lnpbp2;
 pub mod lnpbp3;
 pub mod lnpbp4;
-mod tx_graph;
 mod txout_seal;
 mod txout_witness;
 
 pub use blind::{OutpointHash, OutpointReveal};
 pub use error::Error;
-pub use tx_graph::{SpendingStatus, TxGraph};
 pub use txout_seal::{TxResolve, TxoutSeal};
 pub use txout_witness::{InnerWitness, OuterWitness, Witness};

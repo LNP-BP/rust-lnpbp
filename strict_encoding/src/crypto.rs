@@ -59,6 +59,51 @@ impl StrictDecode for ed25519_dalek::Signature {
 }
 
 #[cfg(feature = "grin_secp256k1zkp")]
+impl StrictEncode for secp256k1zkp::Error {
+    #[inline]
+    fn strict_encode<E: io::Write>(&self, e: E) -> Result<usize, Error> {
+        let code: u8 = match self {
+            secp256k1zkp::Error::IncapableContext => 0,
+            secp256k1zkp::Error::IncorrectSignature => 1,
+            secp256k1zkp::Error::InvalidMessage => 2,
+            secp256k1zkp::Error::InvalidPublicKey => 3,
+            secp256k1zkp::Error::InvalidCommit => 4,
+            secp256k1zkp::Error::InvalidSignature => 5,
+            secp256k1zkp::Error::InvalidSecretKey => 6,
+            secp256k1zkp::Error::InvalidRecoveryId => 7,
+            secp256k1zkp::Error::IncorrectCommitSum => 8,
+            secp256k1zkp::Error::InvalidRangeProof => 9,
+            secp256k1zkp::Error::PartialSigFailure => 10,
+        };
+        code.strict_encode(e)
+    }
+}
+
+#[cfg(feature = "grin_secp256k1zkp")]
+impl StrictDecode for secp256k1zkp::Error {
+    #[inline]
+    fn strict_decode<D: io::Read>(d: D) -> Result<Self, Error> {
+        Ok(match u8::strict_decode(d)? {
+            0 => secp256k1zkp::Error::IncapableContext,
+            1 => secp256k1zkp::Error::IncorrectSignature,
+            2 => secp256k1zkp::Error::InvalidMessage,
+            3 => secp256k1zkp::Error::InvalidPublicKey,
+            4 => secp256k1zkp::Error::InvalidCommit,
+            5 => secp256k1zkp::Error::InvalidSignature,
+            6 => secp256k1zkp::Error::InvalidSecretKey,
+            7 => secp256k1zkp::Error::InvalidRecoveryId,
+            8 => secp256k1zkp::Error::IncorrectCommitSum,
+            9 => secp256k1zkp::Error::InvalidRangeProof,
+            10 => secp256k1zkp::Error::PartialSigFailure,
+            unknown => Err(Error::EnumValueNotKnown(
+                s!("secp256k1zkp::Error"),
+                unknown,
+            ))?,
+        })
+    }
+}
+
+#[cfg(feature = "grin_secp256k1zkp")]
 impl StrictEncode for secp256k1zkp::pedersen::Commitment {
     #[inline]
     fn strict_encode<E: io::Write>(&self, mut e: E) -> Result<usize, Error> {

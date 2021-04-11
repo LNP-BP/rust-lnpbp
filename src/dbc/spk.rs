@@ -323,7 +323,7 @@ where
                     msg,
                 )?;
                 container.tweaking_factor = taproot_container.tweaking_factor;
-                // TODO: Finalize taproot commitments once taproot will be
+                // TODO #191: Finalize taproot commitments once taproot will be
                 //       finalized. We don't know yet how to form scripPubkey
                 //       from Taproot data
                 unimplemented!()

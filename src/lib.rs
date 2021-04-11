@@ -22,7 +22,7 @@
     dead_code,
     //missing_docs
 )]
-// TODO: when we will be ready for the release #![deny(missing_docs)]
+// TODO #184: when we will be ready for the release #![deny(missing_docs)]
 
 #[macro_use]
 extern crate amplify;

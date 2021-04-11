@@ -11,10 +11,11 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+use std::str::FromStr;
+
 use bitcoin::hashes::{sha256, sha256d, sha256t, Hash, HashEngine};
 use bitcoin::secp256k1::rand::{thread_rng, RngCore};
 use bitcoin::{OutPoint, Txid};
-use std::str::FromStr;
 
 use crate::bech32::{FromBech32Str, ToBech32String};
 use crate::client_side_validation::{
@@ -44,7 +45,7 @@ use crate::tagged_hash::TaggedHash;
     derive(Serialize, Deserialize),
     serde(crate = "serde_crate")
 )]
-#[display("{txid}:{vout}!{blinding}")]
+#[display("{txid}:{vout}#{blinding:#x}")]
 pub struct OutpointReveal {
     /// Blinding factor preventing rainbow table bruteforce attack based on
     /// the existing blockchain txid set
@@ -96,7 +97,81 @@ impl OutpointReveal {
     }
 }
 
-/// Tag used for [`SchemaId`] hash type
+/// Errors happening during parsing string representation of different forms of
+/// single-use-seals
+#[derive(
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Debug,
+    Display,
+    Error,
+    From,
+)]
+#[display(doc_comments)]
+pub enum ParseError {
+    /// full transaction id is required for the seal specification
+    TxidRequired,
+
+    /// blinding factor must be specified after `#`
+    BlindingRequired,
+
+    /// unable to parse blinding value; it must be a hexadecimal string
+    /// starting with `0x`
+    WrongBlinding,
+
+    /// unable to parse transaction id value; it must be 64-character
+    /// hexacecimal string
+    WrongTxid,
+
+    /// unable to parse transaction vout value; it must be a decimal unsigned
+    /// integer
+    WrongVout,
+
+    /// wrong structure of seal string representation
+    WrongStructure,
+
+    /// blinding secret must be represented by a 64-bit hexadecimal value
+    /// starting with `0x` and not with a decimal
+    NonHexBlinding,
+}
+
+impl FromStr for OutpointReveal {
+    type Err = ParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut split = s.split(&[':', '#'][..]);
+        match (split.next(), split.next(), split.next(), split.next()) {
+            (Some("_"), ..) | (Some(""), ..) => Err(ParseError::TxidRequired),
+            (Some(_), Some(_), None, ..) if s.contains(':') => {
+                Err(ParseError::BlindingRequired)
+            }
+            (Some(_), Some(_), Some(blinding), None)
+                if !blinding.starts_with("0x") =>
+            {
+                Err(ParseError::NonHexBlinding)
+            }
+            (Some(txid), Some(vout), Some(blinding), None) => {
+                Ok(OutpointReveal {
+                    blinding: u64::from_str_radix(
+                        blinding.trim_start_matches("0x"),
+                        16,
+                    )
+                    .map_err(|_| ParseError::WrongBlinding)?,
+                    txid: txid.parse().map_err(|_| ParseError::WrongTxid)?,
+                    vout: vout.parse().map_err(|_| ParseError::WrongVout)?,
+                })
+            }
+            _ => Err(ParseError::WrongStructure),
+        }
+    }
+}
+
+/// Tag used for [`OutpointHash`] hash type
 pub struct OutpointHashTag;
 
 impl sha256t::Tag for OutpointHashTag {
@@ -217,5 +292,82 @@ mod test {
         assert_eq!(outpoint_hash.to_string(), outpoint_hash.to_bech32_string());
         let reconstructed = OutpointHash::from_str(bech32).unwrap();
         assert_eq!(reconstructed, outpoint_hash);
+    }
+
+    #[test]
+    fn outpoint_reveal_str() {
+        let outpoint_reveal = OutpointReveal {
+            blinding: 54683213134637,
+            txid: Txid::from_hex("646ca5c1062619e2a2d60771c9dfd820551fb773e4dc8c4ed67965a8d1fae839").unwrap(),
+            vout: 21,
+        };
+
+        let s = outpoint_reveal.to_string();
+        assert_eq!(&s, "646ca5c1062619e2a2d60771c9dfd820551fb773e4dc8c4ed67965a8d1fae839:21#0x31bbed7e7b2d");
+
+        // round-trip
+        assert_eq!(OutpointReveal::from_str(&s).unwrap(), outpoint_reveal);
+
+        // wrong vout value
+        assert_eq!(OutpointReveal::from_str(
+            "646ca5c1062619e2a2d60771c9dfd820551fb773e4dc8c4ed67965a8d1fae839:0x765#0x78ca95"
+        ), Err(ParseError::WrongVout));
+        assert_eq!(OutpointReveal::from_str(
+            "646ca5c1062619e2a2d60771c9dfd820551fb773e4dc8c4ed67965a8d1fae839:i9#0x78ca95"
+        ), Err(ParseError::WrongVout));
+        assert_eq!(OutpointReveal::from_str(
+            "646ca5c1062619e2a2d60771c9dfd820551fb773e4dc8c4ed67965a8d1fae839:-5#0x78ca95"
+        ), Err(ParseError::WrongVout));
+
+        // wrong blinding secret value
+        assert_eq!(OutpointReveal::from_str(
+            "646ca5c1062619e2a2d60771c9dfd820551fb773e4dc8c4ed67965a8d1fae839:5#0x78cs"
+        ), Err(ParseError::WrongBlinding));
+        assert_eq!(OutpointReveal::from_str(
+            "646ca5c1062619e2a2d60771c9dfd820551fb773e4dc8c4ed67965a8d1fae839:5#78ca95"
+        ), Err(ParseError::NonHexBlinding));
+        assert_eq!(OutpointReveal::from_str(
+            "646ca5c1062619e2a2d60771c9dfd820551fb773e4dc8c4ed67965a8d1fae839:5#857"
+        ), Err(ParseError::NonHexBlinding));
+        assert_eq!(OutpointReveal::from_str(
+            "646ca5c1062619e2a2d60771c9dfd820551fb773e4dc8c4ed67965a8d1fae839:5#-5"
+        ), Err(ParseError::NonHexBlinding));
+
+        // wrong txid value
+        assert_eq!(OutpointReveal::from_str(
+            "646ca5c1062619e2a2d607719dfd820551fb773e4dc8c4ed67965a8d1fae839:5#0x78ca69"
+        ), Err(ParseError::WrongTxid));
+        assert_eq!(
+            OutpointReveal::from_str("rvgbdg:5#0x78ca69"),
+            Err(ParseError::WrongTxid)
+        );
+        assert_eq!(OutpointReveal::from_str(
+            "10@646ca5c1062619e2a2d60771c9dfd820551fb773e4dc8c4ed67965a8d1fae839:5#0x78ca69"
+        ), Err(ParseError::WrongTxid));
+
+        // wrong structure
+        assert_eq!(OutpointReveal::from_str(
+            "646ca5c1062619e2a2d60771c9dfd820551fb773e4dc8c4ed67965a8d1fae839:1"
+        ), Err(ParseError::BlindingRequired));
+        assert_eq!(OutpointReveal::from_str(
+            "646ca5c1062619e2a2d60771c9dfd820551fb773e4dc8c4ed67965a8d1fae839#0x78ca"
+        ), Err(ParseError::WrongStructure));
+        assert_eq!(OutpointReveal::from_str(
+            "646ca5c1062619e2a2d60771c9dfd820551fb773e4dc8c4ed67965a8d1fae839"
+        ), Err(ParseError::WrongStructure));
+        assert_eq!(OutpointReveal::from_str(
+            "646ca5c1062619e2a2d60771c9dfd820551fb773e4dc8c4ed67965a8d1fae839##0x78ca"
+        ), Err(ParseError::WrongVout));
+        assert_eq!(OutpointReveal::from_str(
+            "646ca5c1062619e2a2d60771c9dfd820551fb773e4dc8c4ed67965a8d1fae839:#0x78ca95"
+        ), Err(ParseError::WrongVout));
+        assert_eq!(
+            OutpointReveal::from_str("_:5#0x78ca"),
+            Err(ParseError::TxidRequired)
+        );
+        assert_eq!(
+            OutpointReveal::from_str(":5#0x78ca"),
+            Err(ParseError::TxidRequired)
+        );
     }
 }
