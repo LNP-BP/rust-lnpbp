@@ -17,6 +17,7 @@ use std::{convert::TryFrom, fmt, io, str::FromStr};
 
 use bitcoin::hashes::hex::{self, FromHex, ToHex};
 use bitcoin::hashes::{sha256d, Hash};
+use bitcoin::network::constants::Network;
 use bitcoin::BlockHash;
 use strict_encoding::{
     self, strict_deserialize, strict_serialize, StrictDecode, StrictEncode,
@@ -26,16 +27,6 @@ use strict_encoding::{
 pub type P2pMagicNumber = u32;
 /// Magic number prefixing Pubkey or Prvkey data according to BIP32 spec
 pub type Bip32MagicNumber = u32;
-
-// TODO #186: Move constants to rust-bitcoin
-/// Magic number used in P2P networking protocol by bitcoin mainnet
-pub const P2P_MAGIC_MAINNET: P2pMagicNumber = 0xD9B4BEF9;
-/// Magic number used in P2P networking protocol by bitcoin testnet v3
-pub const P2P_MAGIC_TESTNET: P2pMagicNumber = 0x0709110B;
-/// Magic number used in P2P networking protocol by bitcoin regtests
-pub const P2P_MAGIC_REGTEST: P2pMagicNumber = 0xDAB5BFFA;
-/// Magic number used in P2P networking protocol by bitcoin signet
-pub const P2P_MAGIC_SIGNET: P2pMagicNumber = 0x40CF030A;
 
 /// P2P network magic number: prefix identifying network on which node operates.
 /// This enum defines known magic network numbers, plus adds support to
@@ -80,10 +71,10 @@ impl P2pNetworkId {
 
     pub fn as_magic(&self) -> P2pMagicNumber {
         match self {
-            P2pNetworkId::Mainnet => P2P_MAGIC_MAINNET,
-            P2pNetworkId::Testnet => P2P_MAGIC_TESTNET,
-            P2pNetworkId::Regtest => P2P_MAGIC_REGTEST,
-            P2pNetworkId::Signet => P2P_MAGIC_SIGNET,
+            P2pNetworkId::Mainnet => Network::Bitcoin.magic(),
+            P2pNetworkId::Testnet => Network::Testnet.magic(),
+            P2pNetworkId::Regtest => Network::Regtest.magic(),
+            P2pNetworkId::Signet => Network::Signet.magic(),
             P2pNetworkId::Other(n) => *n,
         }
     }
@@ -163,14 +154,17 @@ impl TryFrom<P2pNetworkId> for bitcoin::Network {
             P2pNetworkId::Testnet => bitcoin::Network::Testnet,
             P2pNetworkId::Regtest => bitcoin::Network::Regtest,
             P2pNetworkId::Signet => bitcoin::Network::Signet,
-            P2pNetworkId::Other(magic) if magic == P2P_MAGIC_MAINNET => {
+            P2pNetworkId::Other(magic) if magic == Network::Bitcoin.magic() => {
                 bitcoin::Network::Bitcoin
             }
-            P2pNetworkId::Other(magic) if magic == P2P_MAGIC_TESTNET => {
+            P2pNetworkId::Other(magic) if magic == Network::Testnet.magic() => {
                 bitcoin::Network::Testnet
             }
-            P2pNetworkId::Other(magic) if magic == P2P_MAGIC_REGTEST => {
+            P2pNetworkId::Other(magic) if magic == Network::Regtest.magic() => {
                 bitcoin::Network::Regtest
+            }
+            P2pNetworkId::Other(magic) if magic == Network::Signet.magic() => {
+                bitcoin::Network::Signet
             }
             _ => Err(ConversionImpossibleError)?,
         })
@@ -458,11 +452,11 @@ pub enum AssetLayer {
     /// Native chain asset(s), which can operate both on the layer of
     /// blockchain and payment/state channels (Bitcoin, sidechain-specific
     /// asset(s), like liquidBTC or confidential assets in Liquid)
-    Layer1and2 = 1,
+    Layer1and2 = 0,
 
     /// Derived assets, which are created and defined above blockchain (like
     /// RGB), but also can be used on top of payment/state channels
-    Layer2and3 = 2,
+    Layer2and3 = 1,
 }
 
 #[derive(
@@ -991,14 +985,36 @@ mod test {
         let signet_bytes = &[0x0Au8, 0x03u8, 0xCFu8, 0x40u8][..];
         let random_bytes = [0xA1u8, 0xA2u8, 0xA3u8, 0xA4u8];
 
-        assert_eq!(P2P_MAGIC_MAINNET.to_le_bytes(), mainnet_bytes);
-        assert_eq!(P2P_MAGIC_TESTNET.to_le_bytes(), testnet_bytes);
-        assert_eq!(P2P_MAGIC_REGTEST.to_le_bytes(), regtest_bytes);
-        assert_eq!(P2P_MAGIC_SIGNET.to_le_bytes(), signet_bytes);
+        assert_eq!(
+            P2pNetworkId::Mainnet.as_magic().to_le_bytes(),
+            mainnet_bytes
+        );
+        assert_eq!(
+            P2pNetworkId::Testnet.as_magic().to_le_bytes(),
+            testnet_bytes
+        );
+        assert_eq!(
+            P2pNetworkId::Regtest.as_magic().to_le_bytes(),
+            regtest_bytes
+        );
+        assert_eq!(P2pNetworkId::Signet.as_magic().to_le_bytes(), signet_bytes);
 
-        assert_eq!(P2P_MAGIC_MAINNET, bitcoin::Network::Bitcoin.magic());
-        assert_eq!(P2P_MAGIC_TESTNET, bitcoin::Network::Testnet.magic());
-        assert_eq!(P2P_MAGIC_REGTEST, bitcoin::Network::Regtest.magic());
+        assert_eq!(
+            P2pNetworkId::Mainnet.as_magic(),
+            bitcoin::Network::Bitcoin.magic()
+        );
+        assert_eq!(
+            P2pNetworkId::Testnet.as_magic(),
+            bitcoin::Network::Testnet.magic()
+        );
+        assert_eq!(
+            P2pNetworkId::Regtest.as_magic(),
+            bitcoin::Network::Regtest.magic()
+        );
+        assert_eq!(
+            P2pNetworkId::Signet.as_magic(),
+            bitcoin::Network::Signet.magic()
+        );
 
         let other = P2pNetworkId::Other(u32::from_le_bytes(random_bytes));
 
@@ -1026,19 +1042,19 @@ mod test {
 
         assert_eq!(
             format!("{:?}", P2pNetworkId::Mainnet),
-            format!("mainnet({:#x?})", P2P_MAGIC_MAINNET)
+            format!("mainnet({:#x?})", P2pNetworkId::Mainnet.as_magic())
         );
         assert_eq!(
             format!("{:?}", P2pNetworkId::Testnet),
-            format!("testnet({:#x?})", P2P_MAGIC_TESTNET)
+            format!("testnet({:#x?})", P2pNetworkId::Testnet.as_magic())
         );
         assert_eq!(
             format!("{:?}", P2pNetworkId::Regtest),
-            format!("regtest({:#x?})", P2P_MAGIC_REGTEST)
+            format!("regtest({:#x?})", P2pNetworkId::Regtest.as_magic())
         );
         assert_eq!(
             format!("{:?}", P2pNetworkId::Signet),
-            format!("signet({:#x?})", P2P_MAGIC_SIGNET)
+            format!("signet({:#x?})", P2pNetworkId::Signet.as_magic())
         );
         assert_eq!(
             format!("{:?}", P2pNetworkId::Other(0x01u32)),
@@ -1049,37 +1065,40 @@ mod test {
     #[test]
     fn test_p2p_magic_number_from() {
         assert_eq!(
-            P2pNetworkId::from(P2P_MAGIC_MAINNET),
+            P2pNetworkId::from(P2pNetworkId::Mainnet.as_magic()),
             P2pNetworkId::Mainnet
         );
         assert_eq!(
-            P2pNetworkId::from(P2P_MAGIC_TESTNET),
+            P2pNetworkId::from(P2pNetworkId::Testnet.as_magic()),
             P2pNetworkId::Testnet
         );
         assert_eq!(
-            P2pNetworkId::from(P2P_MAGIC_REGTEST),
+            P2pNetworkId::from(P2pNetworkId::Regtest.as_magic()),
             P2pNetworkId::Regtest
         );
-        assert_eq!(P2pNetworkId::from(P2P_MAGIC_SIGNET), P2pNetworkId::Signet);
+        assert_eq!(
+            P2pNetworkId::from(P2pNetworkId::Signet.as_magic()),
+            P2pNetworkId::Signet
+        );
         assert_eq!(
             P2pNetworkId::from(0x0102030),
             P2pNetworkId::Other(0x0102030)
         );
 
         assert_eq!(
-            P2P_MAGIC_MAINNET,
+            P2pNetworkId::Mainnet.as_magic(),
             P2pMagicNumber::from(P2pNetworkId::Mainnet)
         );
         assert_eq!(
-            P2P_MAGIC_TESTNET,
+            P2pNetworkId::Testnet.as_magic(),
             P2pMagicNumber::from(P2pNetworkId::Testnet)
         );
         assert_eq!(
-            P2P_MAGIC_REGTEST,
+            P2pNetworkId::Regtest.as_magic(),
             P2pMagicNumber::from(P2pNetworkId::Regtest)
         );
         assert_eq!(
-            P2P_MAGIC_SIGNET,
+            P2pNetworkId::Signet.as_magic(),
             P2pMagicNumber::from(P2pNetworkId::Signet)
         );
         assert_eq!(
@@ -1114,18 +1133,24 @@ mod test {
         );
 
         assert_eq!(
-            bitcoin::Network::try_from(P2pNetworkId::Other(P2P_MAGIC_MAINNET))
-                .unwrap(),
+            bitcoin::Network::try_from(P2pNetworkId::Other(
+                P2pNetworkId::Mainnet.as_magic()
+            ))
+            .unwrap(),
             bitcoin::Network::Bitcoin
         );
         assert_eq!(
-            bitcoin::Network::try_from(P2pNetworkId::Other(P2P_MAGIC_TESTNET))
-                .unwrap(),
+            bitcoin::Network::try_from(P2pNetworkId::Other(
+                P2pNetworkId::Testnet.as_magic()
+            ))
+            .unwrap(),
             bitcoin::Network::Testnet
         );
         assert_eq!(
-            bitcoin::Network::try_from(P2pNetworkId::Other(P2P_MAGIC_REGTEST))
-                .unwrap(),
+            bitcoin::Network::try_from(P2pNetworkId::Other(
+                P2pNetworkId::Regtest.as_magic()
+            ))
+            .unwrap(),
             bitcoin::Network::Regtest
         );
     }
@@ -1136,8 +1161,6 @@ mod test {
         bitcoin::Network::try_from(P2pNetworkId::Other(0xA1A2A3A4)).unwrap();
     }
 
-    // TODO #189: Test must be rewritten
-    /*
     #[test]
     fn test_chain_param_enums() {
         test_enum_u8_exhaustive!(ChainFormat;
@@ -1146,8 +1169,8 @@ mod test {
         );
 
         test_enum_u8_exhaustive!(AssetLayer;
-            AssetLayer::Layer1and2 => 1,
-            AssetLayer::Layer2and3 => 2
+            AssetLayer::Layer1and2 => 0,
+            AssetLayer::Layer2and3 => 1
         );
 
         test_enum_u8_exhaustive!(AssetSystem;
@@ -1156,7 +1179,6 @@ mod test {
             AssetSystem::RgbContract => 2
         );
     }
-     */
 
     #[test]
     fn test_asset_params_eq() {
