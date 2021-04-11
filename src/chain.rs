@@ -412,8 +412,6 @@ lazy_static! {
     Hash,
     StrictEncode,
     StrictDecode,
-    FromPrimitive,
-    ToPrimitive,
 )]
 #[display(Debug)]
 #[cfg_attr(
@@ -443,8 +441,6 @@ pub enum ChainFormat {
     Hash,
     StrictEncode,
     StrictDecode,
-    FromPrimitive,
-    ToPrimitive,
 )]
 #[display(Debug)]
 #[cfg_attr(
@@ -457,11 +453,11 @@ pub enum AssetLayer {
     /// Native chain asset(s), which can operate both on the layer of
     /// blockchain and payment/state channels (Bitcoin, sidechain-specific
     /// asset(s), like liquidBTC or confidential assets in Liquid)
-    Layer1and2 = 0,
+    Layer1and2 = 1,
 
     /// Derived assets, which are created and defined above blockchain (like
     /// RGB), but also can be used on top of payment/state channels
-    Layer2and3 = 1,
+    Layer2and3 = 2,
 }
 
 #[derive(
@@ -476,8 +472,6 @@ pub enum AssetLayer {
     Hash,
     StrictEncode,
     StrictDecode,
-    FromPrimitive,
-    ToPrimitive,
 )]
 #[cfg_attr(
     feature = "serde",
@@ -1176,8 +1170,8 @@ mod test {
         );
 
         test_enum_u8_exhaustive!(AssetLayer;
-            AssetLayer::Layer1and2 => 0,
-            AssetLayer::Layer2and3 => 1
+            AssetLayer::Layer1and2 => 1,
+            AssetLayer::Layer2and3 => 2
         );
 
         test_enum_u8_exhaustive!(AssetSystem;

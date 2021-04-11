@@ -47,11 +47,6 @@ strict_encoding_derive = "1"
 lightning_encoding = "0.4.0-beta.1"
 client_side_validation = "0.4"
 descriptor-wallet = "0.4"
-#    We use these to simplify enum strict encoding, but once the required
-#    functionality will become part of either amplify_derive or lnpbp_derive
-#    crates they should be removed
-num-traits = "~0.2.11"
-num-derive = "~0.3.0"
 # Dependencies on core rust-bitcoin ecosystem projects
 # ----------------------------------------------------
 bitcoin = { version = "~0.26.0", features = ["rand"] }
