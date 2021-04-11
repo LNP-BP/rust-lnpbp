@@ -96,7 +96,7 @@ impl TryCommitVerify<MessageMap> for MultimsgCommitment {
         let ordered = loop {
             let mut ordered =
                 BTreeMap::<usize, (ProtocolId, Commitment)>::new();
-            // TODO: Modify arithmetics in LNPBP-4 spec
+            // TODO #192: Modify arithmetics in LNPBP-4 spec
             //       <https://github.com/LNP-BP/LNPBPs/issues/19>
             if multimsg.into_iter().all(|(protocol, digest)| {
                 let rem = Uint256::from_be_bytes(**protocol)
