@@ -19,7 +19,6 @@ use bitcoin::hashes::hex::{self, FromHex, ToHex};
 use bitcoin::hashes::{sha256d, Hash};
 use bitcoin::network::constants::Network;
 use bitcoin::BlockHash;
-use num_derive::{FromPrimitive, ToPrimitive};
 use strict_encoding::{
     self, strict_deserialize, strict_serialize, StrictDecode, StrictEncode,
 };
@@ -453,11 +452,11 @@ pub enum AssetLayer {
     /// Native chain asset(s), which can operate both on the layer of
     /// blockchain and payment/state channels (Bitcoin, sidechain-specific
     /// asset(s), like liquidBTC or confidential assets in Liquid)
-    Layer1and2 = 1,
+    Layer1and2 = 0,
 
     /// Derived assets, which are created and defined above blockchain (like
     /// RGB), but also can be used on top of payment/state channels
-    Layer2and3 = 2,
+    Layer2and3 = 1,
 }
 
 #[derive(
@@ -1170,8 +1169,8 @@ mod test {
         );
 
         test_enum_u8_exhaustive!(AssetLayer;
-            AssetLayer::Layer1and2 => 1,
-            AssetLayer::Layer2and3 => 2
+            AssetLayer::Layer1and2 => 0,
+            AssetLayer::Layer2and3 => 1
         );
 
         test_enum_u8_exhaustive!(AssetSystem;

@@ -17,19 +17,14 @@ use std::io::{BufWriter, Write};
 
 use crate::{Error, StrictDecode, StrictEncode};
 
-// TODO #196: Move into derive macro
 #[macro_export]
 macro_rules! test_enum_u8_exhaustive {
     ($enum:ident; $( $item:path => $val:expr ),+) => { {
-        use ::num_traits::{FromPrimitive, ToPrimitive};
-
-        $( assert_eq!($item.to_u8().unwrap(), $val); )+
-        $( assert_eq!($enum::from_u8($val).unwrap(), $item); )+
+        $( assert_eq!($item as u8, $val); )+
         let mut set = ::std::collections::HashSet::new();
         $( set.insert($val); )+
-        for x in 0..=core::u8::MAX {
+        for x in 0..=u8::MAX {
             if !set.contains(&x) {
-                assert_eq!($enum::from_u8(x), None);
                 let decoded: Result<$enum, _> = ::strict_encoding::strict_deserialize(&[x]);
                 assert_eq!(decoded.unwrap_err(), ::strict_encoding::Error::EnumValueNotKnown(stringify!($enum).to_string(), x));
             }

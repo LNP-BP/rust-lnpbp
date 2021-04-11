@@ -42,7 +42,7 @@ required-features = ["cli"]
 # -----------------------------------------
 amplify = { version = "3", features = ["stringly_conversions", "std"] }
 amplify_derive = "2.4.3"
-strict_encoding = { version = "1", features = ["miniscript"] }
+strict_encoding = { version = "1.2.3", features = ["miniscript"] }
 strict_encoding_derive = "1"
 lightning_encoding = "0.4.0-beta.1"
 client_side_validation = "0.4"
