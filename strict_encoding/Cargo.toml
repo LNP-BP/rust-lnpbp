@@ -18,8 +18,8 @@ path = "src/lib.rs"
 crate-type = ["rlib", "staticlib"]
 
 [dependencies]
-amplify = "3"
-amplify_derive = "2.4.3"
+amplify = { version = "3.4", features = ["proc_attr"] }
+amplify_derive = "2.7"
 strict_encoding_derive = { version = "1", optional = true }
 bitcoin = "0.26" # TODO #195: Replace on bitcoin encoding crate with 0.27 release
 miniscript = { version = "5", optional = true }
