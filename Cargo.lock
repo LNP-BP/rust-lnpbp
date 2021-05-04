@@ -580,7 +580,7 @@ dependencies = [
  "serde_with_macros",
  "serde_yaml",
  "strict_encoding 1.2.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "strict_encoding_derive 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strict_encoding_derive 1.0.0",
 ]
 
 [[package]]
@@ -1120,7 +1120,7 @@ dependencies = [
  "ed25519-dalek",
  "grin_secp256k1zkp",
  "miniscript",
- "strict_encoding_derive 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "strict_encoding_derive 1.0.0",
 ]
 
 [[package]]
@@ -1134,18 +1134,7 @@ dependencies = [
  "bitcoin",
  "chrono",
  "miniscript",
- "strict_encoding_derive 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "strict_encoding_derive"
-version = "1.0.0"
-dependencies = [
- "amplify",
- "proc-macro2 1.0.26",
- "quote 1.0.9",
- "strict_encoding 1.2.3",
- "syn 1.0.69",
+ "strict_encoding_derive 1.0.0",
 ]
 
 [[package]]
@@ -1157,6 +1146,17 @@ dependencies = [
  "amplify",
  "proc-macro2 1.0.26",
  "quote 1.0.9",
+ "syn 1.0.69",
+]
+
+[[package]]
+name = "strict_encoding_derive"
+version = "1.1.0"
+dependencies = [
+ "amplify",
+ "proc-macro2 1.0.26",
+ "quote 1.0.9",
+ "strict_encoding 1.2.3",
  "syn 1.0.69",
 ]
 
