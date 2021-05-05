@@ -11,7 +11,7 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use proc_macro2::TokenStream as TokenStream2;
+use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{ToTokens, TokenStreamExt};
 use syn::spanned::Spanned;
 use syn::{
@@ -68,10 +68,10 @@ fn encode_struct_impl(
 
     let inner_impl = match data.fields {
         Fields::Named(ref fields) => {
-            encode_fields_impl(&fields.named, global_param)?
+            encode_fields_impl(&fields.named, global_param, false)?
         }
         Fields::Unnamed(ref fields) => {
-            encode_fields_impl(&fields.unnamed, global_param)?
+            encode_fields_impl(&fields.unnamed, global_param, false)?
         }
         Fields::Unit => quote! { Ok(0) },
     };
@@ -113,11 +113,10 @@ fn encode_enum_impl(
         // First, test individual attribute
         let _ = EncodingDerive::try_from(&mut local_param, false, true)?;
         // Second, combine global and local together
-        let encoding = EncodingDerive::try_from(
-            &mut global_param.clone().merged(local_param.clone())?,
-            false,
-            true,
-        )?;
+        let mut combined = global_param.clone().merged(local_param.clone())?;
+        combined.args.remove("repr");
+        combined.args.remove("crate");
+        let encoding = EncodingDerive::try_from(&mut combined, false, true)?;
 
         if encoding.skip {
             continue;
@@ -128,23 +127,28 @@ fn encode_enum_impl(
             .iter()
             .enumerate()
             .map(|(i, f)| {
-                f.ident
-                    .as_ref()
-                    .map(Ident::to_token_stream)
-                    .unwrap_or(Index::from(i).to_token_stream())
+                f.ident.as_ref().map(Ident::to_token_stream).unwrap_or(
+                    Ident::new(&format!("_{}", i), Span::call_site())
+                        .to_token_stream(),
+                )
             })
             .collect::<Vec<_>>();
 
         let (field_impl, bra_captures_ket) = match variant.fields {
             Fields::Named(ref fields) => (
-                encode_fields_impl(&fields.named, local_param)?,
+                encode_fields_impl(&fields.named, local_param, true)?,
                 quote! { { #( #captures ),* } },
             ),
             Fields::Unnamed(ref fields) => (
-                encode_fields_impl(&fields.unnamed, local_param)?,
+                encode_fields_impl(&fields.unnamed, local_param, true)?,
                 quote! { ( #( #captures ),* ) },
             ),
             Fields::Unit => (TokenStream2::new(), TokenStream2::new()),
+        };
+
+        let captures = match captures.len() {
+            0 => quote! {},
+            _ => quote! { let data = ( #( #captures ),* , ); },
         };
 
         let ident = &variant.ident;
@@ -157,7 +161,7 @@ fn encode_enum_impl(
         inner_impl.append_all(quote_spanned! { variant.span() =>
             Self::#ident #bra_captures_ket => {
                 len += (#value as #repr).strict_encode(&mut e)?;
-                let data = ( #( #captures ),* );
+                #captures
                 #field_impl
             }
         });
@@ -183,7 +187,8 @@ fn encode_enum_impl(
 
 fn encode_fields_impl<'a>(
     fields: impl IntoIterator<Item = &'a Field>,
-    global_param: ParametrizedAttr,
+    parent_param: ParametrizedAttr,
+    is_enum: bool,
 ) -> Result<TokenStream2> {
     let mut stream = TokenStream2::new();
 
@@ -191,23 +196,26 @@ fn encode_fields_impl<'a>(
         let mut local_param = ParametrizedAttr::with(ATTR_NAME, &field.attrs)?;
 
         // First, test individual attribute
-        let _ = EncodingDerive::try_from(&mut local_param, false, false)?;
+        let _ = EncodingDerive::try_from(&mut local_param, false, is_enum)?;
         // Second, combine global and local together
-        let encoding = EncodingDerive::try_from(
-            &mut global_param.clone().merged(local_param)?,
-            false,
-            false,
-        )?;
+        let mut combined = parent_param.clone().merged(local_param)?;
+        combined.args.remove("crate");
+        let encoding = EncodingDerive::try_from(&mut combined, false, is_enum)?;
 
         if encoding.skip {
             continue;
         }
 
-        let name = field
-            .ident
-            .as_ref()
-            .map(Ident::to_token_stream)
-            .unwrap_or(Index::from(index).to_token_stream());
+        let index = Index::from(index).to_token_stream();
+        let name = if is_enum {
+            index
+        } else {
+            field
+                .ident
+                .as_ref()
+                .map(Ident::to_token_stream)
+                .unwrap_or(index)
+        };
         stream.append_all(quote_spanned! { field.span() =>
             len += data.#name.strict_encode(&mut e)?;
         })

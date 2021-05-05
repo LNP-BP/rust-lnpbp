@@ -291,10 +291,9 @@ impl StrictDecode for bip32::ChildNumber {
         Ok(match t {
             0 => bip32::ChildNumber::Normal { index },
             1 => bip32::ChildNumber::Hardened { index },
-            x => Err(Error::EnumValueNotKnown(
-                "bip32::ChildNumber".to_string(),
-                x,
-            ))?,
+            x => {
+                Err(Error::EnumValueNotKnown("bip32::ChildNumber", x as usize))?
+            }
         })
     }
 }

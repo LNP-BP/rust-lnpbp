@@ -36,7 +36,7 @@ impl EncodingDerive {
     ) -> Result<EncodingDerive> {
         let mut map = if is_global {
             map! {
-                "crate" => ArgValueReq::with_default("strict_encoding")
+                "crate" => ArgValueReq::with_default(ident!(strict_encoding))
             }
         } else {
             map! {
@@ -45,17 +45,16 @@ impl EncodingDerive {
         };
 
         if is_enum {
+            map.insert("by_order", ArgValueReq::Prohibited);
+            map.insert("by_value", ArgValueReq::Prohibited);
             if is_global {
-                map.insert("by_order", ArgValueReq::Prohibited);
-                map.insert("by_value", ArgValueReq::Prohibited);
                 map.insert("repr", ArgValueReq::with_default(ident!(u8)));
             } else {
                 map.insert(
                     "value",
-                    ArgValueReq::Required {
-                        default: None,
-                        class: ValueClass::Literal(LiteralClass::Int),
-                    },
+                    ArgValueReq::Optional(ValueClass::Literal(
+                        LiteralClass::Int,
+                    )),
                 );
             }
         }
@@ -74,10 +73,13 @@ impl EncodingDerive {
         let repr: Ident = attr
             .args
             .get("repr")
-            .expect("amplify_syn is broken")
-            .clone()
-            .try_into()
-            .expect("amplify_syn is broken");
+            .cloned()
+            .map(|arg| arg.try_into())
+            .transpose()
+            .expect(
+                "amplify_syn is broken: attribute `repr` required to be Ident",
+            )
+            .unwrap_or(ident!(u8));
 
         match repr.to_string().as_str() {
             "u8" | "u16" | "u32" | "u64" | "i8" | "i16" | "i32" | "i64" => {}
@@ -93,14 +95,14 @@ impl EncodingDerive {
             .args
             .get("crate")
             .cloned()
-            .unwrap_or(ArgValue::from(ident!(crate)))
+            .unwrap_or(ArgValue::from(ident!(strict_encoding)))
             .try_into()
-            .expect("amplify_syn is broken");
+            .expect("amplify_syn is broken: requirements for crate arg are not satisfied");
 
         let value = attr
             .args
             .get("value")
-            .map(|a| a.clone().try_into().expect("amplify_syn is broken"));
+            .map(|a| a.clone().try_into().expect("amplify_syn is broken: requirements for value arg are not satisfied"));
 
         let skip = attr.args.get("skip").is_some();
 

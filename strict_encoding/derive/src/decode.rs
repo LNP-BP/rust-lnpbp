@@ -68,10 +68,10 @@ fn decode_struct_impl(
 
     let inner_impl = match data.fields {
         Fields::Named(ref fields) => {
-            decode_fields_impl(&fields.named, global_param)?
+            decode_fields_impl(&fields.named, global_param, false)?
         }
         Fields::Unnamed(ref fields) => {
-            decode_fields_impl(&fields.unnamed, global_param)?
+            decode_fields_impl(&fields.unnamed, global_param, false)?
         }
         Fields::Unit => quote! {},
     };
@@ -110,11 +110,10 @@ fn decode_enum_impl(
         // First, test individual attribute
         let _ = EncodingDerive::try_from(&mut local_param, false, true)?;
         // Second, combine global and local together
-        let encoding = EncodingDerive::try_from(
-            &mut global_param.clone().merged(local_param.clone())?,
-            false,
-            true,
-        )?;
+        let mut combined = global_param.clone().merged(local_param.clone())?;
+        combined.args.remove("repr");
+        combined.args.remove("crate");
+        let encoding = EncodingDerive::try_from(&mut combined, false, true)?;
 
         if encoding.skip {
             continue;
@@ -122,10 +121,10 @@ fn decode_enum_impl(
 
         let field_impl = match variant.fields {
             Fields::Named(ref fields) => {
-                decode_fields_impl(&fields.named, local_param)?
+                decode_fields_impl(&fields.named, local_param, true)?
             }
             Fields::Unnamed(ref fields) => {
-                decode_fields_impl(&fields.unnamed, local_param)?
+                decode_fields_impl(&fields.unnamed, local_param, true)?
             }
             Fields::Unit => TokenStream2::new(),
         };
@@ -147,6 +146,7 @@ fn decode_enum_impl(
     }
 
     let import = encoding.use_crate;
+    let enum_name = stringify!(ident_name);
 
     Ok(quote! {
         #[allow(unused_qualifications)]
@@ -156,6 +156,7 @@ fn decode_enum_impl(
                 use #import::StrictDecode;
                 Ok(match #repr::strict_decode(&mut d)? {
                     #inner_impl
+                    unknown => Err(#import::Error::EnumValueNotKnown(#enum_name, unknown as usize))?
                 })
             }
         }
@@ -164,34 +165,40 @@ fn decode_enum_impl(
 
 fn decode_fields_impl<'a>(
     fields: impl IntoIterator<Item = &'a Field>,
-    global_param: ParametrizedAttr,
+    mut parent_param: ParametrizedAttr,
+    is_enum: bool,
 ) -> Result<TokenStream2> {
     let mut stream = TokenStream2::new();
+
+    parent_param.args.remove("crate");
+    let parent_attr =
+        EncodingDerive::try_from(&mut parent_param.clone(), false, is_enum)?;
+    let import = parent_attr.use_crate;
 
     for (index, field) in fields.into_iter().enumerate() {
         let mut local_param = ParametrizedAttr::with(ATTR_NAME, &field.attrs)?;
 
         // First, test individual attribute
-        let _ = EncodingDerive::try_from(&mut local_param, false, false)?;
+        let _ = EncodingDerive::try_from(&mut local_param, false, is_enum)?;
         // Second, combine global and local together
-        let encoding = EncodingDerive::try_from(
-            &mut global_param.clone().merged(local_param)?,
-            false,
-            false,
-        )?;
-
-        if encoding.skip {
-            continue;
-        }
+        let mut combined = parent_param.clone().merged(local_param)?;
+        let encoding = EncodingDerive::try_from(&mut combined, false, is_enum)?;
 
         let name = field
             .ident
             .as_ref()
             .map(Ident::to_token_stream)
             .unwrap_or(Index::from(index).to_token_stream());
-        stream.append_all(quote_spanned! { field.span() =>
-            #name: StrictDecode::strict_decode(&mut d)?,
-        })
+
+        if encoding.skip {
+            stream.append_all(quote_spanned! { field.span() =>
+                #name: Default::default(),
+            });
+        } else {
+            stream.append_all(quote_spanned! { field.span() =>
+                #name: #import::StrictDecode::strict_decode(&mut d)?,
+            });
+        }
     }
 
     Ok(stream)

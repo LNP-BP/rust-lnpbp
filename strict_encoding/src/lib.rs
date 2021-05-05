@@ -164,13 +164,12 @@ pub enum Error {
     )]
     WrongOptionalEncoding(u8),
 
-    /// Enums are encoded as a `u8`-based values; the provided enum `{0}` has
-    /// underlying primitive type that does not fit into `u8` value
-    EnumValueOverflow(String),
+    /// Enum `{0}` value does not fit into representation bit dimensions
+    EnumValueOverflow(&'static str),
 
     /// An unsupported value `{0}` for enum `{0}` encountered during decode
     /// operation
-    EnumValueNotKnown(String, u8),
+    EnumValueNotKnown(&'static str, usize),
 
     /// The data are correct, however their structure indicate that they were
     /// created with the future software version which has functional absent in

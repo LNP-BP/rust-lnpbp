@@ -6,6 +6,7 @@ use strict_encoding::{StrictDecode, StrictEncode};
 struct Me(u8);
 
 #[derive(StrictEncode, StrictDecode)]
+#[strict_encoding(crate = strict_encoding)]
 struct One {
     a: Vec<u8>,
 }

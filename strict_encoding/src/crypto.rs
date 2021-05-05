@@ -96,8 +96,8 @@ impl StrictDecode for secp256k1zkp::Error {
             9 => secp256k1zkp::Error::InvalidRangeProof,
             10 => secp256k1zkp::Error::PartialSigFailure,
             unknown => Err(Error::EnumValueNotKnown(
-                s!("secp256k1zkp::Error"),
-                unknown,
+                "secp256k1zkp::Error",
+                unknown as usize,
             ))?,
         })
     }
