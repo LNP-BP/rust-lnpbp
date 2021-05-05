@@ -81,7 +81,6 @@ fn encode_struct_impl(
     Ok(quote! {
         #[allow(unused_qualifications)]
         impl #impl_generics #import::StrictEncode for #ident_name #ty_generics #where_clause {
-            #[inline]
             fn strict_encode<E: ::std::io::Write>(&self, mut e: E) -> Result<usize, #import::Error> {
                 use #import::StrictEncode;
                 let mut len = 0;
