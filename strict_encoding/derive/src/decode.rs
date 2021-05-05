@@ -11,12 +11,12 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-use proc_macro2::TokenStream as TokenStream2;
+use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{ToTokens, TokenStreamExt};
 use syn::spanned::Spanned;
 use syn::{
     Data, DataEnum, DataStruct, DeriveInput, Error, Field, Fields, Ident,
-    ImplGenerics, Index, Result, TypeGenerics, WhereClause,
+    ImplGenerics, Index, LitStr, Result, TypeGenerics, WhereClause,
 };
 
 use amplify::proc_attr::ParametrizedAttr;
@@ -146,7 +146,7 @@ fn decode_enum_impl(
     }
 
     let import = encoding.use_crate;
-    let enum_name = stringify!(ident_name);
+    let enum_name = LitStr::new(&ident_name.to_string(), Span::call_site());
 
     Ok(quote! {
         #[allow(unused_qualifications)]

@@ -27,6 +27,7 @@
 #[allow(unused_imports)]
 #[macro_use]
 extern crate strict_encoding_derive as derive;
+#[cfg(feature = "derive")]
 pub use derive::{StrictDecode, StrictEncode};
 
 #[allow(unused_imports)]
