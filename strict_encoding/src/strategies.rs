@@ -52,10 +52,10 @@ where
     }
 }
 
-impl<T> StrictEncode for amplify::Holder<T, Wrapped>
+impl<W> StrictEncode for amplify::Holder<W, Wrapped>
 where
-    T: Wrapper,
-    T::Inner: StrictEncode,
+    W: Wrapper,
+    W::Inner: StrictEncode,
 {
     #[inline]
     fn strict_encode<E: io::Write>(&self, e: E) -> Result<usize, Error> {
@@ -63,44 +63,47 @@ where
     }
 }
 
-impl<T> StrictDecode for amplify::Holder<T, Wrapped>
+impl<W> StrictDecode for amplify::Holder<W, Wrapped>
 where
-    T: Wrapper,
-    T::Inner: StrictDecode,
+    W: Wrapper,
+    W::Inner: StrictDecode,
 {
     #[inline]
     fn strict_decode<D: io::Read>(d: D) -> Result<Self, Error> {
-        Ok(Self::new(T::from_inner(T::Inner::strict_decode(d)?)))
+        Ok(Self::new(W::from_inner(W::Inner::strict_decode(d)?)))
     }
 }
 
-impl<T> StrictEncode for amplify::Holder<T, HashFixedBytes>
+impl<H> StrictEncode for amplify::Holder<H, HashFixedBytes>
 where
-    T: bitcoin::hashes::Hash,
+    H: bitcoin::hashes::Hash,
 {
     // TODO #201: Verify byte order for hash encodings
     #[inline]
     fn strict_encode<E: io::Write>(&self, mut e: E) -> Result<usize, Error> {
         e.write_all(&self.as_inner()[..])?;
-        Ok(T::LEN)
+        Ok(H::LEN)
     }
 }
 
-impl<T> StrictDecode for amplify::Holder<T, HashFixedBytes>
+impl<H> StrictDecode for amplify::Holder<H, HashFixedBytes>
 where
-    T: bitcoin::hashes::Hash,
+    H: bitcoin::hashes::Hash,
 {
     #[inline]
     fn strict_decode<D: io::Read>(mut d: D) -> Result<Self, Error> {
-        let mut buf = vec![0u8; T::LEN];
+        let mut buf = vec![0u8; H::LEN];
         d.read_exact(&mut buf)?;
-        Ok(Self::new(T::from_slice(&buf)?))
+        Ok(Self::new(H::from_slice(&buf).expect(
+            "internal hash data representation length mismatch between \
+            `from_slice` requirements and `LEN` constant balue",
+        )))
     }
 }
 
-impl<T> StrictEncode for amplify::Holder<T, BitcoinConsensus>
+impl<B> StrictEncode for amplify::Holder<B, BitcoinConsensus>
 where
-    T: bitcoin::consensus::Encodable,
+    B: bitcoin::consensus::Encodable,
 {
     #[inline]
     fn strict_encode<E: io::Write>(&self, e: E) -> Result<usize, Error> {
@@ -108,19 +111,19 @@ where
     }
 }
 
-impl<T> StrictDecode for amplify::Holder<T, BitcoinConsensus>
+impl<B> StrictDecode for amplify::Holder<B, BitcoinConsensus>
 where
-    T: bitcoin::consensus::Decodable,
+    B: bitcoin::consensus::Decodable,
 {
     #[inline]
     fn strict_decode<D: io::Read>(d: D) -> Result<Self, Error> {
-        Ok(Self::new(T::consensus_decode(d).map_err(Error::from)?))
+        Ok(Self::new(B::consensus_decode(d).map_err(Error::from)?))
     }
 }
 
-impl<T> StrictEncode for amplify::Holder<T, UsingUniformAddr>
+impl<A> StrictEncode for amplify::Holder<A, UsingUniformAddr>
 where
-    T: net::Uniform,
+    A: net::Uniform,
 {
     #[inline]
     fn strict_encode<E: io::Write>(&self, e: E) -> Result<usize, Error> {
@@ -128,14 +131,14 @@ where
     }
 }
 
-impl<T> StrictDecode for amplify::Holder<T, UsingUniformAddr>
+impl<A> StrictDecode for amplify::Holder<A, UsingUniformAddr>
 where
-    T: net::Uniform,
+    A: net::Uniform,
 {
     #[inline]
     fn strict_decode<D: io::Read>(d: D) -> Result<Self, Error> {
         Ok(Self::new(
-            T::from_raw_uniform_addr(net::RawUniformAddr::strict_decode(d)?)
+            A::from_raw_uniform_addr(net::RawUniformAddr::strict_decode(d)?)
                 .map_err(|err| Error::DataIntegrityError(err.to_string()))?,
         ))
     }

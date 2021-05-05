@@ -118,15 +118,36 @@ pub trait SingleUseSeal {
     /// Closing and verification errors
     type Error: std::error::Error;
 
+    /// Closes seal over a message, producing *witness*
+    ///
     /// NB: Closing of the seal MUST not change the internal state of the
     /// seal itself; all the data produced by the process must be placed
     /// into the returned Witness type
     fn close(&self, over: &Message) -> Result<Self::Witness, Self::Error>;
+
+    /// Verifies that the seal was indeed closed over the message on the
+    /// specific seal medium (see [`SealMedium]`
+    #[cfg(not(feature = "async"))]
     fn verify(
         &self,
         msg: &Message,
         witness: &Self::Witness,
-    ) -> Result<bool, Self::Error>;
+        medium: &impl SealMedium<Self>,
+    ) -> Result<bool, Self::Error>
+    where
+        Self: Sized;
+
+    /// Verifies that the seal was indeed closed over the message on the
+    /// specific seal medium (see [`SealMedium]`
+    #[cfg(feature = "async")]
+    async fn verify(
+        &self,
+        msg: &Message,
+        witness: &Self::Witness,
+        medium: &impl SealMedium<Self>,
+    ) -> Result<bool, Self::Error>
+    where
+        Self: Sized;
 }
 
 /// Trait for proof-of-publication medium on which the seals are defined and
@@ -146,9 +167,10 @@ pub trait SingleUseSeal {
 ///
 /// To read more on proof-of-publication please check
 /// <https://petertodd.org/2014/setting-the-record-proof-of-publication>
-pub trait SealMedium<'a, SEAL>
+#[cfg(not(feature = "async"))]
+pub trait SealMedium<Seal>
 where
-    SEAL: SingleUseSeal,
+    Seal: SingleUseSeal,
 {
     /// Publication id that may be used for referencing publication of
     /// witness data in the medium. By default set `()`, so [SealMedium]
@@ -161,19 +183,19 @@ where
     /// Creates a single-use-seal having type of implementation-specific generic
     /// parameter `SEAL`.
     fn define_seal(
-        &'a self,
-        definition: &SEAL::Definition,
-    ) -> Result<SEAL, Self::Error>;
+        &self,
+        definition: &Seal::Definition,
+    ) -> Result<Seal, Self::Error>;
 
     /// Checks the status for a given seal in proof-of-publication medium
-    fn get_seal_status(&self, seal: &SEAL) -> Result<SealStatus, Self::Error>;
+    fn get_seal_status(&self, seal: &Seal) -> Result<SealStatus, Self::Error>;
 
     /// Publishes witness data to the medium. Function has default
     /// implementation doing nothing and returning
     /// [SealMediumError::PublicationIdNotSupported] error.
     fn publish_witness(
         &mut self,
-        _witness: &SEAL::Witness,
+        _witness: &Seal::Witness,
     ) -> Result<Self::PublicationId, SealMediumError<Self::Error>> {
         Err(SealMediumError::PublicationIdNotSupported)
     }
@@ -184,7 +206,7 @@ where
     /// error.
     fn get_witness_publication_id(
         &self,
-        _witness: &SEAL::Witness,
+        _witness: &Seal::Witness,
     ) -> Result<Option<Self::PublicationId>, SealMediumError<Self::Error>> {
         Err(SealMediumError::PublicationIdNotSupported)
     }
@@ -203,10 +225,10 @@ where
 /// Asynchronous version of the [SealMedium] trait.
 #[cfg(feature = "async")]
 #[async_trait]
-pub trait SealMediumAsync<SEAL>
+pub trait SealMedium<Seal>
 where
-    SEAL: SingleUseSeal + Sync + Send,
-    SEAL::Witness: Sync + Send,
+    Seal: SingleUseSeal + Sync + Send,
+    Seal::Witness: Sync + Send,
     Self::PublicationId: Sync,
 {
     /// Publication id that may be used for referencing publication of
@@ -220,12 +242,12 @@ where
     /// Creates a single-use-seal having type of implementation-specific generic
     /// parameter `SEAL`.
     async fn define_seal<D>(&self, definition: &D)
-        -> Result<SEAL, Self::Error>;
+        -> Result<Seal, Self::Error>;
 
     /// Checks the status for a given seal in proof-of-publication medium
     async fn get_seal_status(
         &self,
-        seal: &SEAL,
+        seal: &Seal,
     ) -> Result<SealStatus, Self::Error>;
 
     /// Publishes witness data to the medium. Function has default
@@ -233,10 +255,10 @@ where
     /// [SealMediumError::PublicationIdNotSupported] error.
     async fn publish_witness(
         &mut self,
-        _witness: &SEAL::Witness,
+        _witness: &Seal::Witness,
     ) -> Result<Self::PublicationId, SealMediumError<Self::Error>>
     where
-        SEAL: 'async_trait,
+        Seal: 'async_trait,
     {
         Err(SealMediumError::PublicationIdNotSupported)
     }
@@ -247,10 +269,10 @@ where
     /// error.
     async fn get_witness_publication_id(
         &self,
-        _witness: &SEAL::Witness,
+        _witness: &Seal::Witness,
     ) -> Result<Option<Self::PublicationId>, SealMediumError<Self::Error>>
     where
-        SEAL: 'async_trait,
+        Seal: 'async_trait,
     {
         Err(SealMediumError::PublicationIdNotSupported)
     }
@@ -263,7 +285,7 @@ where
         _publication_id: &Self::PublicationId,
     ) -> Result<bool, SealMediumError<Self::Error>>
     where
-        SEAL: 'async_trait,
+        Seal: 'async_trait,
     {
         Err(SealMediumError::PublicationIdNotSupported)
     }
