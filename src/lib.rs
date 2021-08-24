@@ -11,25 +11,13 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
-#![recursion_limit = "256"]
 // Coding conventions
-#![deny(
-    non_upper_case_globals,
-    non_camel_case_types,
-    non_snake_case,
-    unused_mut,
-    unused_imports,
-    dead_code,
-    //missing_docs
-)]
+#![recursion_limit = "256"]
+#![deny(dead_code, missing_docs, warnings)]
 // TODO #184: when we will be ready for the release #![deny(missing_docs)]
 
 #[macro_use]
 extern crate amplify;
-#[macro_use]
-extern crate amplify_derive;
-#[macro_use]
-extern crate lazy_static;
 
 #[cfg(feature = "serde")]
 #[macro_use]
@@ -37,8 +25,11 @@ extern crate serde_with;
 #[cfg(feature = "serde")]
 extern crate serde_crate as serde;
 
-#[macro_use]
-extern crate bitcoin_hashes;
+pub extern crate bech32;
+pub extern crate chain;
+#[cfg(feature = "elgamal")]
+pub extern crate elgamal;
+pub mod tagged_hash;
 
 pub extern crate client_side_validation;
 pub use client_side_validation::commit_encode_list;
@@ -52,15 +43,6 @@ pub use strict_encoding::{
 #[macro_use]
 pub extern crate strict_encoding_derive;
 pub use strict_encoding_derive::{StrictDecode, StrictEncode};
-
-pub mod bech32;
-pub mod chain;
-pub mod dbc;
-#[cfg(feature = "elgamal")]
-pub mod elgamal;
-pub mod seals;
-pub mod short_id;
-pub mod tagged_hash;
 
 pub use chain::{Chain, P2pNetworkId};
 pub use seals::TxoutSeal;

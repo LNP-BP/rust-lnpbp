@@ -1,2 +1,0 @@
-# Client-side-validation library
-

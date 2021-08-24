@@ -140,7 +140,7 @@ impl From<bitcoin::Network> for P2pNetworkId {
     }
 }
 
-/// Indicates that [`bitcoin::Network`] does not has a correspondense for a
+/// Indicates that [`bitcoin::Network`] does not has a correspondence for a
 /// given [`P2pNetworkId`] variant
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Display, Error)]
 #[display(Debug)]

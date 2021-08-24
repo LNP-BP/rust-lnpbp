@@ -18,6 +18,11 @@
 //! Bech32 `id1...` representation is provided automatically only for hash types
 //! implementing [`bitcoin::hashes::Hash`] trait
 
+#[macro_use]
+extern crate amplify;
+#[macro_use]
+extern crate strict_encoding;
+
 #[cfg(feature = "zip")]
 use deflate::{write::DeflateEncoder, Compression};
 #[cfg(feature = "serde")]
@@ -31,7 +36,7 @@ use std::convert::{Infallible, TryFrom};
 use std::str::FromStr;
 
 use bech32::{FromBase32, ToBase32};
-use bitcoin::hashes::{sha256t, Hash};
+use bitcoin_hashes::{sha256t, Hash};
 
 pub const HRP_ID: &'static str = "id";
 pub const HRP_DATA: &'static str = "data";
@@ -52,8 +57,7 @@ pub enum Error {
 
     /// Payload data parse error: {0}
     #[from(strict_encoding::Error)]
-    #[from(bitcoin::consensus::encode::Error)]
-    #[from(bitcoin::hashes::Error)]
+    #[from(bitcoin_hashes::Error)]
     #[from(Infallible)]
     WrongData,
 
