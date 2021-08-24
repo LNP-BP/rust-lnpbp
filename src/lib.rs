@@ -23,8 +23,6 @@ pub extern crate lnpbp_chain as chain;
 #[cfg(feature = "elgamal")]
 pub extern crate lnpbp_elgamal as elgamal;
 
-pub extern crate client_side_validation;
-
 #[cfg(test)]
 pub mod test {
     use bitcoin::secp256k1;

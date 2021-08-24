@@ -183,34 +183,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "client_side_validation"
-version = "0.5.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2044fd53b931b18afd9f8c66a0a2ee9f7cf40ef50075e080b475227846277eb1"
-dependencies = [
- "commit_verify",
- "single_use_seals",
- "strict_encoding",
-]
-
-[[package]]
 name = "cloudabi"
 version = "0.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ddfc5b9aa5d4507acaf872de71051dfd0e309860e88966e1051e462a077aac4f"
 dependencies = [
  "bitflags",
-]
-
-[[package]]
-name = "commit_verify"
-version = "0.5.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ffa63a3f7a3b806f1fe46ae2f348890462b779a4edfd0ebefe35d4bd6540d79a"
-dependencies = [
- "amplify",
- "bitcoin_hashes",
- "strict_encoding",
 ]
 
 [[package]]
@@ -363,7 +341,6 @@ dependencies = [
  "base58",
  "base64-compat",
  "clap",
- "client_side_validation",
  "lnpbp_bech32",
  "lnpbp_chain",
  "lnpbp_elgamal",
@@ -697,15 +674,6 @@ dependencies = [
  "indexmap",
  "serde",
  "yaml-rust",
-]
-
-[[package]]
-name = "single_use_seals"
-version = "0.5.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f6076960f6b8146993235927a1901dabd3953e3f4fef83c825e55a6a1b9cf1f2"
-dependencies = [
- "amplify_derive",
 ]
 
 [[package]]
