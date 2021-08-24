@@ -11,6 +11,10 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+// Coding conventions
+#![recursion_limit = "256"]
+#![deny(dead_code, /* missing_docs, */ warnings)]
+
 //! Types that need to have `data1...` and `z1...` bech 32 implementation
 //! according to LNPBP-39 must implement [`ToBech32Payload`] and
 //! [`FromBech32Payload`] traits.

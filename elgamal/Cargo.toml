@@ -1,8 +1,16 @@
 [package]
 name = "lnpbp_elgamal"
 version = "0.5.0-alpha.1"
+license = "MIT"
+authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
+description = "LNPBP-31: "
+repository = "https://github.com/LNP-BP/rust-lnpbp"
+homepage = "https://github.com/LNP-BP/tree/master/elgamal"
+keywords = ["bitcoin", "lnp-bp", "elgamal", "secp256k1"]
+categories = ["cryptography"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+amplify = "3.8.1"
+secp256k1 = { version = "0.20.3", features = ["global-context"] }
+bitcoin_hashes = "0.10.0"

@@ -11,6 +11,21 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+// Coding conventions
+#![recursion_limit = "256"]
+#![deny(dead_code, /* missing_docs, */ warnings)]
+
+#[macro_use]
+extern crate amplify;
+#[macro_use]
+extern crate bitcoin_hashes;
+#[macro_use]
+extern crate strict_encoding;
+#[macro_use]
+extern crate serde_crate as serde;
+#[macro_use]
+extern crate lazy_static;
+
 use std::cmp::Ordering;
 use std::fmt::{Debug, Display};
 use std::{convert::TryFrom, fmt, io, str::FromStr};
@@ -20,7 +35,7 @@ use bitcoin::hashes::{sha256d, Hash};
 use bitcoin::network::constants::Network;
 use bitcoin::BlockHash;
 use strict_encoding::{
-    self, strict_deserialize, strict_serialize, StrictDecode, StrictEncode,
+    strict_deserialize, strict_serialize, StrictDecode, StrictEncode,
 };
 
 /// P2P network magic number: prefix identifying network on which node operates
@@ -183,10 +198,6 @@ hash_newtype!(
 
 impl strict_encoding::Strategy for AssetId {
     type Strategy = strict_encoding::strategies::HashFixedBytes;
-}
-
-impl lightning_encoding::Strategy for AssetId {
-    type Strategy = lightning_encoding::strategies::AsBitcoinHash;
 }
 
 impl From<BlockHash> for AssetId {

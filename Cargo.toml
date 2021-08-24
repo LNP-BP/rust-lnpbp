@@ -26,7 +26,7 @@ required-features = ["cli"]
 amplify = { version = "3", features = ["stringly_conversions", "std"] }
 lnpbp_bech32 = { version = "0.5.0-alpha.1", path = "bech32" }
 lnpbp_chain = { version = "0.5.0-alpha.1", path = "chain" }
-lnpbp_elgamal = { version = "0.5.0-alpha.1", path = "elgamal" }
+lnpbp_elgamal = { version = "0.5.0-alpha.1", path = "elgamal", optional = true }
 client_side_validation = "0.5.3"
 serde_crate = { package = "serde", version = "~1.0.0", features = ["derive"], optional = true }
 serde_with = { version = "~1.5.0", features = ["hex"], optional = true }
@@ -43,9 +43,9 @@ all = ["serde", "elgamal", "zip", "cli"]
 cli = ["clap", "serde", "base64-compat", "base58", "serde_yaml", "serde_json"]
 serde = ["serde_crate", "serde_with", "serde_with_macros", "amplify/serde",
          "lnpbp_bech32/serde", "lnpbp_chain/serde"]
-elgamal = [] # Provides ElGamal encryption module from this library
+elgamal = ["lnpbp_elgamal"] # Provides ElGamal encryption module from this library
 zip = ["lnpbp_bech32/zip"]
 
 [workspace]
 members = [".", "bech32", "chain", "elgamal"]
-default-members = ["."]
+default-members = [".", "bech32", "chain", "elgamal"]

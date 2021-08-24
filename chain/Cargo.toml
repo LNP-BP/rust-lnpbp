@@ -1,13 +1,23 @@
 [package]
 name = "lnpbp_chain"
 version = "0.5.0-alpha.1"
+license = "MIT"
+authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
+description = "LNPBP library defining chain parameters"
+repository = "https://github.com/LNP-BP/rust-lnpbp"
+homepage = "https://github.com/LNP-BP/tree/master/chain"
+keywords = ["bitcoin", "lightning", "lnp-bp", "blockchain", "sidechain"]
+categories = ["cryptography::cryptocurrencies"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+amplify = "3.8.1"
+bitcoin = "0.27.0"
+bitcoin_hashes = "0.10.0"
+strict_encoding = "1.6.1"
 serde_crate = { package = "serde", version = "1.0.0", features = ["derive"], optional = true }
 serde_with = { version = "1.5.0", features = ["hex"], optional = true }
+lazy_static = "1.4.0" # Remove dependency
 
 [features]
 serde = ["serde_crate", "serde_with"]

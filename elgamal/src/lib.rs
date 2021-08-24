@@ -11,13 +11,20 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+// Coding conventions
+#![recursion_limit = "256"]
+#![deny(dead_code, missing_docs, warnings)]
+
 //! ElGamal encryption scheme with SECP256k1 curve.
 //! According to <https://crypto.stackexchange.com/a/45042>
 
-use bitcoin::hashes::{sha256, Hash, HashEngine};
-use bitcoin::secp256k1;
-use wallet::SECP256K1;
+#[macro_use]
+extern crate amplify;
 
+use bitcoin_hashes::{sha256, Hash, HashEngine};
+use secp256k1::SECP256K1;
+
+/// Errors during ElGamal encryption/decryption
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Display, Error, From)]
 #[display(Debug)]
 pub enum Error {
@@ -58,6 +65,8 @@ impl From<secp256k1::Error> for Error {
     }
 }
 
+/// Encrypts provided byte string using specified encryption and blinding
+/// keys according to LNPBP-31 ElGamal schema
 pub fn encrypt(
     message: &[u8],
     mut encryption_key: secp256k1::PublicKey,
@@ -128,6 +137,8 @@ pub fn encrypt(
     Ok(acc.concat())
 }
 
+/// Decrypts provided byte string using specified decryption and unblinding
+/// keys according to LNPBP-31 ElGamal schema
 pub fn decrypt(
     mut encrypted: &[u8],
     decryption_key: &mut secp256k1::SecretKey,
