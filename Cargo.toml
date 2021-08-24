@@ -41,18 +41,10 @@ required-features = ["cli"]
 # Dependencies on other LNP/BP repositories
 # -----------------------------------------
 amplify = { version = "3", features = ["stringly_conversions", "std"] }
-strict_encoding = { version = "1.2.3", features = ["miniscript"] }
-lightning_encoding = "0.4.0-beta.1"
-descriptor-wallet = "0.4"
 # Dependencies on core rust-bitcoin ecosystem projects
 # ----------------------------------------------------
-bitcoin = { version = "~0.26.0", features = ["rand"] }
-bitcoin_hashes = "~0.9.4" # we need macro from here
-bech32 = "~0.7.2"
+bitcoin_hashes = "~0.10.0"
 lnpbp_bech32 = { version = "0.5.0-alpha.1", path = "bech32" }
-# <https://github.com/LNP-BP/LNPBPs/blob/master/lnpbp-0002.md#deterministic-public-key-extraction-from-bitcoin-script>
-# We have to fix version of miniscript as required by LNPBP-2 specification
-miniscript = { version = "5", features = ["compiler"] }
 # Serialization
 # -------------
 # This strange naming is a workaround for cargo inability to define required
@@ -75,10 +67,9 @@ base58 = { version = "0.1", optional = true } # Used by cli only
 [features]
 default = ["zip"]
 all = ["serde", "elgamal", "zip", "cli"]
-cli = ["clap", "serde", "base64-compat", "base58", "serde_yaml", "serde_json", "descriptor-wallet/electrum"]
+cli = ["clap", "serde", "base64-compat", "base58", "serde_yaml", "serde_json"]
 serde = ["serde_crate", "serde_with", "serde_with_macros", "amplify/serde",
          "lnpbp_bech32/serde",
-         "bitcoin/use-serde", "bitcoin_hashes/serde", "miniscript/serde",
-         "descriptor-wallet/serde"]
+         "bitcoin_hashes/serde"]
 elgamal = [] # Provides ElGamal encryption module from this library
 zip = ["lnpbp_bech32/zip"]
