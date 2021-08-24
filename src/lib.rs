@@ -11,44 +11,19 @@
 // along with this software.
 // If not, see <https://opensource.org/licenses/MIT>.
 
+#![doc = include_str!("../README.md")]
+
 // Coding conventions
 #![recursion_limit = "256"]
 #![deny(dead_code, missing_docs, warnings)]
 // TODO #184: when we will be ready for the release #![deny(missing_docs)]
 
-#[macro_use]
-extern crate amplify;
-
-#[cfg(feature = "serde")]
-#[macro_use]
-extern crate serde_with;
-#[cfg(feature = "serde")]
-extern crate serde_crate as serde;
-
-pub extern crate bech32;
-pub extern crate chain;
+pub extern crate lnpbp_bech32 as bech32;
+pub extern crate lnpbp_chain as chain;
 #[cfg(feature = "elgamal")]
-pub extern crate elgamal;
-pub mod tagged_hash;
+pub extern crate lnpbp_elgamal as elgamal;
 
 pub extern crate client_side_validation;
-pub use client_side_validation::commit_encode_list;
-pub use client_side_validation::commit_verify;
-#[macro_use]
-pub extern crate strict_encoding;
-pub use strict_encoding::{
-    impl_enum_strict_encoding, strict_decode_self, strict_encode_list,
-    test_encode, test_enum_u8_exhaustive, test_garbage_exhaustive,
-};
-#[macro_use]
-pub extern crate strict_encoding_derive;
-pub use strict_encoding_derive::{StrictDecode, StrictEncode};
-
-pub use chain::{Chain, P2pNetworkId};
-pub use seals::TxoutSeal;
-pub use seals::{lnpbp1, lnpbp2, lnpbp3, lnpbp4};
-pub use short_id::ShortId;
-pub use tagged_hash::TaggedHash;
 
 #[cfg(test)]
 pub mod test {

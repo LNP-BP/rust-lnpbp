@@ -1,12 +1,17 @@
 [package]
 name = "lnpbp_bech32"
 version = "0.5.0-alpha.1"
+license = "MIT"
+authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
+description = "LNPBP-7 implementation"
+repository = "https://github.com/LNP-BP/rust-lnpbp"
+homepage = "https://github.com/LNP-BP/tree/master/bech32"
+keywords = ["bitcoin", "lightning", "lnp-bp", "lnpbp-7", "bech32"]
+categories = ["cryptography::cryptocurrencies"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
-amplify = "3.7.1"
+amplify = "3.8.1"
 bitcoin_hashes = "0.10.0"
 strict_encoding = "1.6.0"
 bech32 = "0.8.1"

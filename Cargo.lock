@@ -10,9 +10,9 @@ checksum = "aae1277d39aeec15cb388266ecc24b11c80469deae6067e17a1a7aa9e5c1f234"
 
 [[package]]
 name = "amplify"
-version = "3.7.1"
+version = "3.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa9b1af9b1bce6079e2c058fe1d0f0488e4e7370eca5c983b86aa43c11def6b0"
+checksum = "bd9d13205223b1cf865d14b73cdd094eca420aac56953f564bd4082f262d1cea"
 dependencies = [
  "amplify_derive",
  "amplify_num",
@@ -38,9 +38,9 @@ dependencies = [
 
 [[package]]
 name = "amplify_num"
-version = "0.1.2"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2a0b9009be0d79a4d38db02d2c8cc0abb8255ff79e7685940340622cdbd0a2f"
+checksum = "1b6747d933bb75844ac9daa21498f608dcb943f1b46497faa5046c49bb1f626e"
 dependencies = [
  "serde",
 ]
@@ -174,6 +174,28 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "client_side_validation"
+version = "0.5.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2044fd53b931b18afd9f8c66a0a2ee9f7cf40ef50075e080b475227846277eb1"
+dependencies = [
+ "commit_verify",
+ "single_use_seals",
+ "strict_encoding",
+]
+
+[[package]]
+name = "commit_verify"
+version = "0.5.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ffa63a3f7a3b806f1fe46ae2f348890462b779a4edfd0ebefe35d4bd6540d79a"
+dependencies = [
+ "amplify",
+ "bitcoin_hashes",
+ "strict_encoding",
 ]
 
 [[package]]
@@ -314,14 +336,16 @@ checksum = "7fb9b38af92608140b86b693604b9ffcc5824240a484d1ecd4795bacb2fe88f3"
 
 [[package]]
 name = "lnpbp"
-version = "0.5.0-alpha"
+version = "0.5.0-alpha.1"
 dependencies = [
  "amplify",
  "base58",
  "base64-compat",
- "bitcoin_hashes",
  "clap",
+ "client_side_validation",
  "lnpbp_bech32",
+ "lnpbp_chain",
+ "lnpbp_elgamal",
  "serde",
  "serde_json",
  "serde_with",
@@ -342,6 +366,18 @@ dependencies = [
  "serde_with",
  "strict_encoding",
 ]
+
+[[package]]
+name = "lnpbp_chain"
+version = "0.5.0-alpha.1"
+dependencies = [
+ "serde",
+ "serde_with",
+]
+
+[[package]]
+name = "lnpbp_elgamal"
+version = "0.5.0-alpha.1"
 
 [[package]]
 name = "num-integer"
@@ -517,10 +553,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "strict_encoding"
-version = "1.6.0"
+name = "single_use_seals"
+version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab1eb84aab2bd9553460f06d8305968fab8587c8e06e88f567b40441b696fa46"
+checksum = "f6076960f6b8146993235927a1901dabd3953e3f4fef83c825e55a6a1b9cf1f2"
+dependencies = [
+ "amplify_derive",
+]
+
+[[package]]
+name = "strict_encoding"
+version = "1.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5ec448f7e3f5261fe66ab0843d044a8ce05af4a64a833a9d72d96672b01d9e66"
 dependencies = [
  "amplify",
  "bitcoin",

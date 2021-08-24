@@ -34,7 +34,7 @@ use serde::{
 };
 #[cfg(feature = "serde")]
 use serde_with::{hex::Hex, As};
-use std::convert::TryFrom;
+use std::convert::{TryFrom, Infallible};
 use std::str::FromStr;
 
 use bech32::{FromBase32, ToBase32, Variant};
@@ -82,6 +82,12 @@ pub enum Error {
 
     /// error inflating compressed data from payload: {0}
     InflateError(String),
+}
+
+impl From<Infallible> for Error {
+    fn from(_: Infallible) -> Self {
+        unreachable!("infalliable error in lnpbp_bech32 blob")
+    }
 }
 
 /// Type for wrapping Vec<u8> data in cases you need to do a convenient

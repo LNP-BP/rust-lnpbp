@@ -12,7 +12,7 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 #[macro_use]
-extern crate amplify_derive;
+extern crate amplify;
 extern crate serde_crate as serde;
 
 use clap::{AppSettings, Clap};
@@ -22,7 +22,7 @@ use std::io::{self, Read};
 use std::str::FromStr;
 
 use base58::{FromBase58, ToBase58};
-use bitcoin::hashes::hex::{FromHex, ToHex};
+use amplify::hex::{FromHex, ToHex};
 use lnpbp::bech32::Blob;
 
 #[derive(Clap, Clone, Debug)]
