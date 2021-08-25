@@ -813,6 +813,11 @@ impl StrictDecode for Chain {
     }
 }
 
+impl From<&ChainParams> for Chain {
+    #[inline]
+    fn from(params: &ChainParams) -> Self { Chain::from(params.clone()) }
+}
+
 impl From<ChainParams> for Chain {
     fn from(params: ChainParams) -> Self {
         match params {
@@ -1439,13 +1444,13 @@ mod test {
             GENESIS_HASH_LIQUIDV1
         );
         assert_eq!(
-            &Chain::Other(Chain::Mainnet.chain_params()).as_genesis_hash()[..],
+            &Chain::from(Chain::Mainnet.chain_params()).as_genesis_hash()[..],
             GENESIS_HASH_MAINNET
         );
         let mut chain_params = Chain::Mainnet.chain_params();
         chain_params.genesis_hash = random_hash;
         assert_eq!(
-            &Chain::Other(chain_params).as_genesis_hash()[..],
+            &Chain::from(chain_params).as_genesis_hash()[..],
             &random_hash[..]
         );
 
@@ -1587,29 +1592,26 @@ mod test {
         );
 
         assert_eq!(
-            format!("{}", Chain::Other(CHAIN_PARAMS_MAINNET.clone())),
+            format!("{}", Chain::from(&*CHAIN_PARAMS_MAINNET)),
             "bitcoin"
         );
         assert_eq!(
-            format!("{}", Chain::Other(CHAIN_PARAMS_TESTNET.clone())),
+            format!("{}", Chain::from(&*CHAIN_PARAMS_TESTNET)),
             "testnet"
         );
         assert_eq!(
-            format!("{}", Chain::Other(CHAIN_PARAMS_REGTEST.clone())),
+            format!("{}", Chain::from(&*CHAIN_PARAMS_REGTEST)),
             "regtest"
         );
+        assert_eq!(format!("{}", Chain::from(&*CHAIN_PARAMS_SIGNET)), "signet");
         assert_eq!(
-            format!("{}", Chain::Other(CHAIN_PARAMS_SIGNET.clone())),
-            "signet"
-        );
-        assert_eq!(
-            format!("{}", Chain::Other(CHAIN_PARAMS_LIQUIDV1.clone())),
+            format!("{}", Chain::from(&*CHAIN_PARAMS_LIQUIDV1)),
             "liquidv1"
         );
 
         let mut custom_params = CHAIN_PARAMS_MAINNET.clone();
         custom_params.genesis_hash = custom_hash;
-        assert_eq!(format!("{}", Chain::Other(custom_params.clone())), "other:0e1b741ef47d9c526fd4a3a67b421ed924feb5a31deb485eb9a67e19495269a20700626974636f696ef9beb4d904006d61696e020062638d208c20b4b2070010eb090000220200000000000003004254430700426974636f696e07007361746f73686900e1f505000000006fe28c0ab6f1b372c1a6a246ae63f74f931e8365e15a089c68d6190000000000000001");
+        assert_eq!(format!("{}", Chain::from(&custom_params)), "regtest:a2695249197ea6b95e48eb1da3b5fe24d91e427ba6a3d46f529c7df41e741b0e");
 
         assert_eq!(Chain::from_str("bitcoin").unwrap(), Chain::Mainnet);
         assert_eq!(Chain::from_str("testnet").unwrap(), Chain::Testnet3);
@@ -1646,7 +1648,7 @@ mod test {
         );
         assert_eq!(
             Chain::from_str("other:0e1b741ef47d9c526fd4a3a67b421ed924feb5a31deb485eb9a67e19495269a20700626974636f696ef9beb4d904006d61696e020062638d208c20b4b2070010eb090000220200000000000003004254430700426974636f696e07007361746f73686900e1f505000000006fe28c0ab6f1b372c1a6a246ae63f74f931e8365e15a089c68d6190000000000000001").unwrap(),
-            Chain::Other(custom_params)
+            Chain::from(custom_params)
         );
     }
 }
