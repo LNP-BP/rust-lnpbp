@@ -986,7 +986,7 @@ impl FromStr for Chain {
 
 #[cfg(test)]
 mod test {
-    use strict_encoding::test_helpers::test_suite;
+    use strict_encoding::test_helpers::*;
 
     use super::*;
 
@@ -1038,11 +1038,11 @@ mod test {
         let bp_other = P2pNetworkId::strict_decode(&random_bytes[..]).unwrap();
         assert_eq!(bp_other, other);
 
-        test_suite(&bp_mainnet, &mainnet_bytes, 4);
-        test_suite(&bp_testnet, &testnet_bytes, 4);
-        test_suite(&bp_regtest, &regtest_bytes, 4);
-        test_suite(&bp_signet, &signet_bytes, 4);
-        test_suite(&bp_other, &random_bytes, 4);
+        test_encoding_roundtrip(&bp_mainnet, &mainnet_bytes).unwrap();
+        test_encoding_roundtrip(&bp_testnet, &testnet_bytes).unwrap();
+        test_encoding_roundtrip(&bp_regtest, &regtest_bytes).unwrap();
+        test_encoding_roundtrip(&bp_signet, &signet_bytes).unwrap();
+        test_encoding_roundtrip(&bp_other, &random_bytes).unwrap();
     }
 
     #[test]
@@ -1176,21 +1176,24 @@ mod test {
 
     #[test]
     fn test_chain_param_enums() {
-        test_enum_u8_exhaustive!(ChainFormat;
-            ChainFormat::Bitcoin => 0,
-            ChainFormat::Elements => 1
-        );
+        test_encoding_enum_u8_exhaustive!(ChainFormat;
+            ChainFormat::Bitcoin => 0u8,
+            ChainFormat::Elements => 1u8
+        )
+        .unwrap();
 
-        test_enum_u8_exhaustive!(AssetLayer;
-            AssetLayer::Layer1and2 => 0,
-            AssetLayer::Layer2and3 => 1
-        );
+        test_encoding_enum_u8_exhaustive!(AssetLayer;
+            AssetLayer::Layer1and2 => 0u8,
+            AssetLayer::Layer2and3 => 1u8
+        )
+        .unwrap();
 
-        test_enum_u8_exhaustive!(AssetSystem;
-            AssetSystem::NativeBlockchain => 0,
-            AssetSystem::ConfidentialAssets => 1,
-            AssetSystem::RgbContract => 2
-        );
+        test_encoding_enum_u8_exhaustive!(AssetSystem;
+            AssetSystem::NativeBlockchain => 0u8,
+            AssetSystem::ConfidentialAssets => 1u8,
+            AssetSystem::RgbContract => 2u8
+        )
+        .unwrap();
     }
 
     #[test]
@@ -1348,12 +1351,14 @@ mod test {
             0x0, 0x0, 0x0,
         ];
 
-        test_encode!(
-            (DATA_CHAINPARAMS_MAINNET, Chain),
-            (DATA_CHAINPARAMS_TESTNET, Chain),
-            (DATA_CHAINPARAMS_SIGNET, Chain),
-            (DATA_CHAINPARAMS_LIQUID, Chain)
-        );
+        test_encoding_roundtrip(&Chain::Mainnet, DATA_CHAINPARAMS_MAINNET)
+            .unwrap();
+        test_encoding_roundtrip(&Chain::Testnet3, DATA_CHAINPARAMS_TESTNET)
+            .unwrap();
+        test_encoding_roundtrip(&Chain::Signet, DATA_CHAINPARAMS_SIGNET)
+            .unwrap();
+        test_encoding_roundtrip(&Chain::LiquidV1, DATA_CHAINPARAMS_LIQUID)
+            .unwrap();
     }
 
     #[test]
