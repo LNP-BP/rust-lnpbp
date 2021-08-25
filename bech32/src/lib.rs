@@ -44,10 +44,10 @@ use serde::{
 #[cfg(feature = "serde")]
 use serde_with::{hex::Hex, As};
 
-pub const HRP_ID: &'static str = "id";
-pub const HRP_DATA: &'static str = "data";
+pub const HRP_ID: &str = "id";
+pub const HRP_DATA: &str = "data";
 #[cfg(feature = "zip")]
-pub const HRP_ZIP: &'static str = "z";
+pub const HRP_ZIP: &str = "z";
 
 #[cfg(feature = "zip")]
 pub const RAW_DATA_ENCODING_DEFLATE: u8 = 1u8;
@@ -267,7 +267,7 @@ pub mod strategies {
                 .strict_serialize()
                 .expect("in-memory strict encoding failure");
             ::bech32::encode(T::HRP, data.to_base32(), Variant::Bech32m)
-                .unwrap_or(s!("Error: wrong bech32 prefix"))
+                .unwrap_or_else(|_| s!("Error: wrong bech32 prefix"))
         }
     }
 
@@ -355,8 +355,8 @@ where
     Self: Sized + sealed::FromPayload,
 {
     fn from_bech32_data_str(s: &str) -> Result<Self, Error> {
-        let (hrp, data, variant) = bech32::decode(&s)?;
-        if &hrp != HRP_DATA {
+        let (hrp, data, variant) = bech32::decode(s)?;
+        if hrp != HRP_DATA {
             return Err(Error::WrongPrefix);
         }
         if variant != Variant::Bech32m {
@@ -383,7 +383,7 @@ pub mod zip {
         let writer = vec![RAW_DATA_ENCODING_DEFLATE];
         let mut encoder = DeflateEncoder::new(writer, Compression::Best);
         encoder
-            .write(payload)
+            .write_all(payload)
             .expect("in-memory strict encoder failure");
         let data = encoder.finish().expect("zip algorithm failure");
 
@@ -392,8 +392,8 @@ pub mod zip {
     }
 
     fn bech32_zip_str_to_payload(hrp: &str, s: &str) -> Result<Vec<u8>, Error> {
-        let (prefix, data, version) = bech32::decode(&s)?;
-        if &prefix != hrp {
+        let (prefix, data, version) = bech32::decode(s)?;
+        if prefix != hrp {
             return Err(Error::WrongPrefix);
         }
         if version != Variant::Bech32m {
@@ -403,10 +403,10 @@ pub mod zip {
         match *data[..].first().ok_or(Error::NoEncodingPrefix)? {
             RAW_DATA_ENCODING_DEFLATE => {
                 let decoded = inflate::inflate_bytes(&data[1..])
-                    .map_err(|e| Error::InflateError(e))?;
+                    .map_err(Error::InflateError)?;
                 Ok(decoded)
             }
-            unknown_ver => Err(Error::UnknownRawDataEncoding(unknown_ver))?,
+            unknown_ver => Err(Error::UnknownRawDataEncoding(unknown_ver)),
         }
     }
 
@@ -420,7 +420,7 @@ pub mod zip {
 
     pub trait Bech32ZipString: sealed::AsPayload {
         fn bech32_zip_string(&self) -> String {
-            payload_to_bech32_zip_string(HRP_ZIP, &self.as_bech32_payload())
+            payload_to_bech32_zip_string(HRP_ZIP, self.as_bech32_payload())
         }
     }
 
@@ -501,8 +501,8 @@ where
     Tag: sha256t::Tag,
 {
     fn from_bech32_id_str(s: &str) -> Result<T, Error> {
-        let (hrp, id, variant) = ::bech32::decode(&s)?;
-        if &hrp != HRP_ID {
+        let (hrp, id, variant) = ::bech32::decode(s)?;
+        if hrp != HRP_ID {
             return Err(Error::WrongPrefix);
         }
         if variant != Variant::Bech32m {

@@ -29,6 +29,7 @@ extern crate lazy_static;
 use std::cmp::Ordering;
 use std::convert::TryFrom;
 use std::fmt::{Debug, Display};
+use std::hash::Hasher;
 use std::str::FromStr;
 use std::{fmt, io};
 
@@ -103,7 +104,7 @@ impl StrictEncode for P2pNetworkId {
         &self,
         e: E,
     ) -> Result<usize, strict_encoding::Error> {
-        Ok(self.as_magic().strict_encode(e)?)
+        self.as_magic().strict_encode(e)
     }
 }
 
@@ -179,7 +180,7 @@ impl TryFrom<P2pNetworkId> for bitcoin::Network {
             P2pNetworkId::Other(magic) if magic == Network::Signet.magic() => {
                 bitcoin::Network::Signet
             }
-            _ => Err(ConversionImpossibleError)?,
+            _ => return Err(ConversionImpossibleError),
         })
     }
 }
@@ -502,7 +503,7 @@ pub enum AssetSystem {
 
 /// Parameters for a given asset, which are shared between different types of
 /// Layer 1, 2 and 3 assets.
-#[derive(Clone, PartialOrd, Ord, Debug, Display, Hash)]
+#[derive(Clone, PartialOrd, Ord, Debug, Display)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -547,6 +548,13 @@ impl PartialEq for AssetParams {
 
 impl Eq for AssetParams {}
 
+impl std::hash::Hash for AssetParams {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        state.write(&self.asset_id);
+        state.finish();
+    }
+}
+
 impl StrictEncode for AssetParams {
     #[inline]
     fn strict_encode<E: io::Write>(
@@ -582,16 +590,7 @@ impl StrictDecode for AssetParams {
 
 /// Full set of parameters which uniquely define given blockchain,
 /// corresponding P2P network and RPC interface of fully validating nodes
-#[derive(
-    Clone,
-    PartialOrd,
-    Ord,
-    Debug,
-    Display,
-    Hash,
-    StrictEncode,
-    StrictDecode
-)]
+#[derive(Clone, PartialOrd, Ord, Debug, Display, StrictEncode, StrictDecode)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -660,9 +659,16 @@ impl PartialEq for ChainParams {
 
 impl Eq for ChainParams {}
 
+impl std::hash::Hash for ChainParams {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        state.write(&self.genesis_hash);
+        state.finish();
+    }
+}
+
 /// A set of recommended standard networks. Differs from bitcoin::Network in
 /// ability to support non-standard and non-predefined networks
-#[derive(Clone, Debug, Hash)]
+#[derive(Clone, Debug)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
@@ -700,7 +706,7 @@ pub enum Chain {
     /// All other networks/chains, providing full information on chain
     /// parameters
     #[cfg_attr(feature = "serde", serde(rename = "custom"))]
-    Other(ChainParams),
+    Other(Box<ChainParams>),
 }
 
 impl Default for Chain {
@@ -727,6 +733,12 @@ impl Ord for Chain {
     }
 }
 
+impl std::hash::Hash for Chain {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.chain_params().hash(state);
+    }
+}
+
 impl Chain {
     /// Returns chain parameters [ChainParams] for a given chain id
     pub fn chain_params(&self) -> ChainParams {
@@ -745,7 +757,7 @@ impl Chain {
                 signet
             }
             Chain::LiquidV1 => CHAIN_PARAMS_LIQUIDV1.clone(),
-            Chain::Other(params) => params.clone(),
+            Chain::Other(params) => params.as_ref().clone(),
         }
     }
 
@@ -784,7 +796,7 @@ impl Chain {
     }
 
     /// Returns native chain asset
-    pub fn native_asset(&self) -> AssetId { AssetId::native(&self) }
+    pub fn native_asset(&self) -> AssetId { AssetId::native(self) }
 }
 
 impl StrictEncode for Chain {
@@ -793,7 +805,7 @@ impl StrictEncode for Chain {
         &self,
         e: E,
     ) -> Result<usize, strict_encoding::Error> {
-        Ok(self.chain_params().strict_encode(e)?)
+        self.chain_params().strict_encode(e)
     }
 }
 
@@ -819,7 +831,7 @@ impl From<ChainParams> for Chain {
             p if p == Chain::SignetCustom(p.genesis_hash).chain_params() => {
                 Chain::SignetCustom(p.genesis_hash)
             }
-            p => Chain::Other(p),
+            p => Chain::Other(Box::new(p)),
         }
     }
 }
@@ -856,7 +868,7 @@ impl TryFrom<&Chain> for bitcoin::Network {
             {
                 bitcoin::Network::Regtest
             }
-            _ => Err(ConversionImpossibleError)?,
+            _ => return Err(ConversionImpossibleError),
         })
     }
 }
@@ -902,7 +914,11 @@ impl Display for Chain {
                 write!(f, "liquidv1")
             }
             Chain::Other(params) => {
-                write!(f, "other:{}", strict_serialize(params)?.to_hex())
+                write!(
+                    f,
+                    "other:{}",
+                    strict_serialize(params.as_ref())?.to_hex()
+                )
             }
         }
     }
@@ -973,10 +989,10 @@ impl FromStr for Chain {
                     "signet" => {
                         Ok(Chain::SignetCustom(BlockHash::from_hex(data)?))
                     }
-                    "other" => Ok(Chain::Other(strict_deserialize(
+                    "other" => Ok(Chain::Other(Box::new(strict_deserialize(
                         &Vec::from_hex(data)
                             .map_err(|_| ParseError::ChainParamsEncoding)?,
-                    )?)),
+                    )?))),
                     _ => Err(ParseError::WrongNetworkName),
                 }
             }

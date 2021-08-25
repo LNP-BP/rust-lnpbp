@@ -17,8 +17,9 @@ jobs:
       matrix:
         feature:
           - elgamal
-          - bulletproofs
+          - zip
           - serde
+          - cli
     steps:
       - uses: actions/checkout@v2
       - name: Install rust stable

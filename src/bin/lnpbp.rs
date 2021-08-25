@@ -113,7 +113,7 @@ impl FromStr for Format {
             "hex" => Format::Hexadecimal,
             "raw" | "bin" | "binary" => Format::Raw,
             "rust" => Format::Rust,
-            other => Err(format!("Unknown format: {}", other))?,
+            other => return Err(format!("Unknown format: {}", other)),
         })
     }
 }
@@ -125,7 +125,7 @@ where
 {
     let data = data
         .map(|d| d.as_bytes().to_vec())
-        .ok_or(String::default())
+        .ok_or_else(String::default)
         .or_else(|_| -> Result<Vec<u8>, String> {
             let mut buf = Vec::new();
             io::stdin()
@@ -156,7 +156,7 @@ where
             T::from(Vec::<u8>::from_hex(s).map_err(|err| err.to_string())?)
         }
         Format::Raw => T::from(data),
-        _ => Err(format!("Can't read data from {} format", format))?,
+        _ => return Err(format!("Can't read data from {} format", format)),
     })
 }
 

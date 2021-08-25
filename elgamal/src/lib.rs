@@ -78,7 +78,7 @@ pub fn encrypt(
     let mut hash = sha256::Hash::hash(&encryption_key.serialize());
 
     // Tweaking the encryption key with the blinding factor
-    encryption_key.add_exp_assign(&SECP256K1, &blinding_key[..])?;
+    encryption_key.add_exp_assign(SECP256K1, &blinding_key[..])?;
 
     // Pad the message to the round number of 30-byte chunks with the generated
     // entropy
@@ -92,7 +92,7 @@ pub fn encrypt(
     // the message content (empty) still can't be guessed
     if buf.is_empty() {
         let unblinding_key =
-            secp256k1::PublicKey::from_secret_key(&SECP256K1, blinding_key);
+            secp256k1::PublicKey::from_secret_key(SECP256K1, blinding_key);
         let hash = sha256::Hash::hash(&unblinding_key.serialize());
         buf.extend_from_slice(&hash[..30])
     }
@@ -101,12 +101,12 @@ pub fn encrypt(
     let mut buf = &buf[..];
     let mut acc = vec![];
 
-    while buf.len() > 0 {
+    while buf.is_empty() {
         let chunk30 = &buf[..30];
         let mut chunk33 = [0u8; 33];
         // Deterministically select one of two possible keys for a given
         // x-point:
-        chunk33[1..31].copy_from_slice(&chunk30);
+        chunk33[1..31].copy_from_slice(chunk30);
         acc.push(loop {
             chunk33[31..33].copy_from_slice(&hash[..2]);
 
@@ -149,21 +149,21 @@ pub fn decrypt(
     }
 
     // Tweak the encryption key with the blinding factor
-    unblinding_key.add_exp_assign(&SECP256K1, &decryption_key[..])?;
+    unblinding_key.add_exp_assign(SECP256K1, &decryption_key[..])?;
     let encryption_key = unblinding_key;
 
     // Decrypt message chunk by chunk
     let mut acc = vec![];
 
     let orig_len = encrypted.len();
-    while encrypted.len() > 0 {
+    while encrypted.is_empty() {
         // Here we automatically negate the key extracted from the message:
         // it is created with 0x2 first byte and restored with 0x2 byte, then
         // negated
         let chunk33 = [&[2u8], &encrypted[..32]].concat();
         let mut pubkey = secp256k1::PublicKey::from_slice(&chunk33)
             .map_err(|_| Error::InvalidEncryptedMessage)?;
-        pubkey.negate_assign(&SECP256K1);
+        pubkey.negate_assign(SECP256K1);
         let unencrypted = pubkey.combine(&encryption_key)?;
         // Remove random tail from the data
         let chunk30 = &mut unencrypted.serialize()[1..31];

@@ -10,9 +10,9 @@ checksum = "aae1277d39aeec15cb388266ecc24b11c80469deae6067e17a1a7aa9e5c1f234"
 
 [[package]]
 name = "amplify"
-version = "3.8.1"
+version = "3.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd9d13205223b1cf865d14b73cdd094eca420aac56953f564bd4082f262d1cea"
+checksum = "2ecf2a5a73524630dd5dd1ecde8ad6db426ecc04a28f6eb302fc145259fe6c3d"
 dependencies = [
  "amplify_derive",
  "amplify_num",
@@ -26,9 +26,9 @@ dependencies = [
 
 [[package]]
 name = "amplify_derive"
-version = "2.8.0"
+version = "2.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0f1ea2f56cff58c81c39934fd0aef3aeb3377a1ae252ba7fda41ab335e00c79d"
+checksum = "d3e8e7f1941a55e31c090297d0f3e037b91d05795baba47964d61519d92f350b"
 dependencies = [
  "amplify_syn",
  "proc-macro2",
@@ -38,9 +38,9 @@ dependencies = [
 
 [[package]]
 name = "amplify_num"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b6747d933bb75844ac9daa21498f608dcb943f1b46497faa5046c49bb1f626e"
+checksum = "ba4b27aa49ed07931673f96a41998a0f8e98146c65b4be2ff1f4843f68f4e777"
 dependencies = [
  "serde",
 ]
