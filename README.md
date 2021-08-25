@@ -168,5 +168,5 @@ be declined.
 
 ### Licensing
 
-See [LICENCE](LICENSE) file.
+See [LICENCE](./LICENSE) file.
 

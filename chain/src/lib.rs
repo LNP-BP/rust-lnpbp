@@ -13,7 +13,15 @@
 
 // Coding conventions
 #![recursion_limit = "256"]
-#![deny(dead_code, /* missing_docs, */ warnings)]
+#![deny(dead_code, missing_docs, warnings)]
+
+//! LNPBP library defining chain parameters.
+//!
+//! Chains are bitcoin-enabled or aware blockchains, which include:
+//! - Bitcoin Mainnet
+//! - Different bitcoin testnets and signets
+//! - Bitcoin sidechains
+//! - Independent bitcoin-aware chains able to work with client-side-validation
 
 #[macro_use]
 extern crate amplify;
@@ -21,6 +29,7 @@ extern crate amplify;
 extern crate bitcoin_hashes;
 #[macro_use]
 extern crate strict_encoding;
+#[cfg(feature = "serde")]
 #[macro_use]
 extern crate serde_crate as serde;
 #[macro_use]
@@ -77,6 +86,8 @@ pub enum P2pNetworkId {
 }
 
 impl P2pNetworkId {
+    /// Constructs [`P2pNetworkId`] from a given network magic number defined
+    /// by [`P2pMagicNumber`]
     pub fn from_magic(magic: P2pMagicNumber) -> Self {
         match magic {
             m if m == P2pNetworkId::Mainnet.as_magic() => P2pNetworkId::Mainnet,
@@ -87,6 +98,8 @@ impl P2pNetworkId {
         }
     }
 
+    /// Returns representation in form of network magic number
+    /// [`P2pMagicNumber`]
     pub fn as_magic(&self) -> P2pMagicNumber {
         match self {
             P2pNetworkId::Mainnet => Network::Bitcoin.magic(),
@@ -206,11 +219,13 @@ impl From<BlockHash> for AssetId {
 }
 
 impl AssetId {
+    /// Returns [`AssetId`] for the native chain asset
     pub fn native(chain: &Chain) -> AssetId {
         chain.chain_params().genesis_hash.into()
     }
 }
 
+#[doc(hidden)]
 pub trait NativeAsset {
     fn is_native(&self, chain: &Chain) -> bool;
 }
@@ -438,19 +453,8 @@ pub enum ChainFormat {
 }
 
 /// Layers on which a given asset can operate
-#[derive(
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Debug,
-    Display,
-    Hash,
-    StrictEncode,
-    StrictDecode
-)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Display, Hash)]
+#[derive(StrictEncode, StrictDecode)]
 #[display(Debug)]
 #[cfg_attr(
     feature = "serde",
@@ -469,19 +473,10 @@ pub enum AssetLayer {
     Layer2and3 = 1,
 }
 
-#[derive(
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Debug,
-    Display,
-    Hash,
-    StrictEncode,
-    StrictDecode
-)]
+/// Technology that is used for asset creation on top of a given bitcoin
+/// blockchain
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Display, Hash)]
+#[derive(StrictEncode, StrictDecode)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),

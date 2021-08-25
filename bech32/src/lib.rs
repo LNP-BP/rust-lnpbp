@@ -13,19 +13,20 @@
 
 // Coding conventions
 #![recursion_limit = "256"]
-#![deny(dead_code, /* missing_docs, */ warnings)]
+#![deny(dead_code, missing_docs, warnings)]
 
 //! Types that need to have `data1...` and `z1...` bech 32 implementation
 //! according to LNPBP-39 must implement [`ToBech32Payload`] and
 //! [`FromBech32Payload`] traits.
 //!
 //! Bech32 `id1...` representation is provided automatically only for hash types
-//! implementing [`bitcoin::hashes::Hash`] trait
+//! implementing [`bitcoin_hashes::Hash`] trait
 
 #[macro_use]
 extern crate amplify;
 #[macro_use]
 extern crate strict_encoding;
+#[cfg(feature = "serde")]
 #[macro_use]
 extern crate serde_crate as serde;
 
@@ -44,11 +45,18 @@ use serde::{
 #[cfg(feature = "serde")]
 use serde_with::{hex::Hex, As};
 
+/// Bech32 HRP used in generic identifiers
 pub const HRP_ID: &str = "id";
+
+/// Bech32 HRP used for representation of arbitrary data blobs in their raw
+/// (uncompressed) form
 pub const HRP_DATA: &str = "data";
+
 #[cfg(feature = "zip")]
+/// Bech32 HRP used for representation of zip-compressed blobs
 pub const HRP_ZIP: &str = "z";
 
+/// Constant specifying default compression algorithm ("deflate")
 #[cfg(feature = "zip")]
 pub const RAW_DATA_ENCODING_DEFLATE: u8 = 1u8;
 
@@ -146,11 +154,17 @@ impl FromStr for Blob {
     }
 }
 
+/// Convertor trait for extracting data from a given type which will be part of
+/// Bech32 payload
 pub trait ToBech32Payload {
+    /// Must return a vector with Bech32 payload data
     fn to_bech32_payload(&self) -> Vec<u8>;
 }
 
+/// Extracts data representation from a given type which will be part of Bech32
+/// payload
 pub trait AsBech32Payload {
+    /// Must return a reference to a slice representing Bech32 payload data
     fn as_bech32_payload(&self) -> &[u8];
 }
 
@@ -161,10 +175,12 @@ where
     fn as_bech32_payload(&self) -> &[u8] { self.as_ref() }
 }
 
+/// Convertor which constructs a given type from Bech32 payload data
 pub trait FromBech32Payload
 where
     Self: Sized,
 {
+    /// Construct type from Bech32 payload data
     fn from_bech32_payload(payload: Vec<u8>) -> Result<Self, Error>;
 }
 
@@ -180,31 +196,55 @@ where
 
 // -- Common (non-LNPBP-39) traits
 
+/// Creates Bech32 string with appropriate type data representation.
+/// Depending on the specific type, this may be `id`-string, `data`-string,
+/// `z`-string or other type of HRP.
 pub trait ToBech32String {
+    /// Creates Bech32 string with appropriate type data representation
     fn to_bech32_string(&self) -> String;
 }
 
+/// Constructs type from the provided Bech32 string, or fails with
+/// [`enum@Error`]
 pub trait FromBech32Str {
+    /// Specifies which HRP is used by Bech32 string representing this data type
     const HRP: &'static str;
 
+    /// Constructs type from the provided Bech32 string, or fails with
+    /// [`enum@Error`]
     fn from_bech32_str(s: &str) -> Result<Self, Error>
     where
         Self: Sized;
 }
 
+/// Strategies for automatic implementation of the Bech32 traits
 pub mod strategies {
     use amplify::{Holder, Wrapper};
     use strict_encoding::{StrictDecode, StrictEncode};
 
     use super::*;
 
+    /// Strategy for Bech32 representation as uncompressed data (starting from
+    /// `data1...` HRP). The data are takken by using [`StrictEncode`]
+    /// implementation defined for the type.
     pub struct UsingStrictEncoding;
+
+    /// Strategy for Bech32 representation of the newtypes wrapping other types.
+    /// The strategy simply inherits Bech32 representation from the inner type.
     pub struct Wrapped;
+
     #[cfg(feature = "zip")]
+    /// Strategy for Bech32 representation as compressed data (starting from
+    /// `z1...` HRP). The data are takken by using [`StrictEncode`]
+    /// implementation defined for the type.
     pub struct CompressedStrictEncoding;
 
+    /// Helper trait for implementing specific strategy for Bech32 construction
     pub trait Strategy {
+        /// Bech32 HRP prefix used by a type
         const HRP: &'static str;
+        /// Specific strategy used for automatic implementation of all
+        /// Bech32-related traits.
         type Strategy;
     }
 
@@ -324,7 +364,9 @@ mod sealed {
     impl<T> FromPayload for T where T: FromBech32Payload {}
 }
 
+/// Trait for creating `data1...` Bech32 representation of a given type
 pub trait ToBech32DataString: sealed::ToPayload {
+    /// Returns `data1...` Bech32 representation of a given type
     fn to_bech32_data_string(&self) -> String {
         ::bech32::encode(
             HRP_DATA,
@@ -337,7 +379,9 @@ pub trait ToBech32DataString: sealed::ToPayload {
 
 impl<T> ToBech32DataString for T where T: sealed::ToPayload {}
 
+/// Trait for creating `data1...` Bech32 representation of a given type
 pub trait Bech32DataString: sealed::AsPayload {
+    /// Returns `data1...` Bech32 representation of a given type
     fn bech32_data_string(&self) -> String {
         ::bech32::encode(
             HRP_DATA,
@@ -350,10 +394,12 @@ pub trait Bech32DataString: sealed::AsPayload {
 
 impl<T> Bech32DataString for T where T: sealed::AsPayload {}
 
+/// Trait for reconstruction type data from `data1...` Bech32 string
 pub trait FromBech32DataStr
 where
     Self: Sized + sealed::FromPayload,
 {
+    /// Reconstructs type data from `data1...` Bech32 string
     fn from_bech32_data_str(s: &str) -> Result<Self, Error> {
         let (hrp, data, variant) = bech32::decode(s)?;
         if hrp != HRP_DATA {
@@ -368,6 +414,7 @@ where
 
 impl<T> FromBech32DataStr for T where T: sealed::FromPayload {}
 
+#[doc(hidden)]
 #[cfg(feature = "zip")]
 pub mod zip {
     use amplify::Holder;
@@ -410,7 +457,11 @@ pub mod zip {
         }
     }
 
+    /// Trait for creating `z1...` (compressed binary data blob) Bech32
+    /// representation of a given type
     pub trait ToBech32ZipString: sealed::ToPayload {
+        /// Returns `z1...` (compressed binary data blob) Bech32 representation
+        /// of a given type
         fn to_bech32_zip_string(&self) -> String {
             payload_to_bech32_zip_string(HRP_ZIP, &self.to_bech32_payload())
         }
@@ -418,7 +469,11 @@ pub mod zip {
 
     impl<T> ToBech32ZipString for T where T: sealed::ToPayload {}
 
+    /// Trait for creating `z1...` (compressed binary data blob) Bech32
+    /// representation of a given type
     pub trait Bech32ZipString: sealed::AsPayload {
+        /// Returns `z1...` (compressed binary data blob) Bech32 representation
+        /// of a given type
         fn bech32_zip_string(&self) -> String {
             payload_to_bech32_zip_string(HRP_ZIP, self.as_bech32_payload())
         }
@@ -426,7 +481,11 @@ pub mod zip {
 
     impl<T> Bech32ZipString for T where T: sealed::AsPayload {}
 
+    /// Trait for reconstruction type data from `z1...` (compressed binary data
+    /// blob) Bech32 string
     pub trait FromBech32ZipStr: sealed::FromPayload {
+        /// Reconstructs type data from `z1...` (compressed binary data blob)
+        /// Bech32 string
         fn from_bech32_zip_str(s: &str) -> Result<Self, Error> {
             Self::from_bech32_payload(bech32_zip_str_to_payload(HRP_ZIP, s)?)
         }
@@ -481,6 +540,8 @@ where
     Self: sealed::HashType<Tag> + Sized,
     Tag: sha256t::Tag,
 {
+    /// Reconstructs the identifier type from the provided Bech32 `id1...`
+    /// string
     fn from_bech32_id_str(s: &str) -> Result<Self, Error>;
 }
 
@@ -513,6 +574,8 @@ where
     }
 }
 
+/// Helper method for serde serialization of types supporting Bech32
+/// representation
 #[cfg(feature = "serde")]
 pub fn serialize<T, S>(data: &T, serializer: S) -> Result<S::Ok, S::Error>
 where
@@ -522,6 +585,8 @@ where
     serializer.serialize_str(&data.to_bech32_string())
 }
 
+/// Helper method for serde deserialization of types supporting Bech32
+/// representation
 #[cfg(feature = "serde")]
 pub fn deserialize<'de, T, D>(deserializer: D) -> Result<T, D::Error>
 where
