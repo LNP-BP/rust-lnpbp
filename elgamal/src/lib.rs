@@ -189,8 +189,9 @@ pub fn decrypt(
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use secp256k1::rand::{thread_rng, Rng, RngCore};
+
+    use super::*;
 
     fn run_test_text(msg1: &str) {
         let source = msg1.as_bytes();

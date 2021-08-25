@@ -15,15 +15,15 @@
 extern crate amplify;
 extern crate serde_crate as serde;
 
-use clap::{AppSettings, Clap};
-use serde::Serialize;
 use std::fmt::{Debug, Display};
 use std::io::{self, Read};
 use std::str::FromStr;
 
-use base58::{FromBase58, ToBase58};
 use amplify::hex::{FromHex, ToHex};
+use base58::{FromBase58, ToBase58};
+use clap::{AppSettings, Clap};
 use lnpbp::bech32::Blob;
+use serde::Serialize;
 
 #[derive(Clap, Clone, Debug)]
 #[clap(
@@ -59,7 +59,7 @@ pub enum Command {
 }
 
 #[derive(
-    Clap, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display,
+    Clap, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display
 )]
 pub enum Format {
     /// Format according to the rust debug rules

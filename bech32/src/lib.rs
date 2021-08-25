@@ -29,6 +29,11 @@ extern crate strict_encoding;
 #[macro_use]
 extern crate serde_crate as serde;
 
+use std::convert::{Infallible, TryFrom};
+use std::str::FromStr;
+
+use bech32::{FromBase32, ToBase32, Variant};
+use bitcoin_hashes::{sha256t, Hash};
 #[cfg(feature = "zip")]
 use deflate::{write::DeflateEncoder, Compression};
 #[cfg(feature = "serde")]
@@ -38,11 +43,6 @@ use serde::{
 };
 #[cfg(feature = "serde")]
 use serde_with::{hex::Hex, As};
-use std::convert::{TryFrom, Infallible};
-use std::str::FromStr;
-
-use bech32::{FromBase32, ToBase32, Variant};
-use bitcoin_hashes::{sha256t, Hash};
 
 pub const HRP_ID: &'static str = "id";
 pub const HRP_DATA: &'static str = "data";
@@ -114,7 +114,7 @@ impl From<Infallible> for Error {
     Display,
     From,
     StrictEncode,
-    StrictDecode,
+    StrictDecode
 )]
 #[wrap(
     Index,
@@ -135,9 +135,7 @@ pub struct Blob(
 );
 
 impl AsRef<[u8]> for Blob {
-    fn as_ref(&self) -> &[u8] {
-        &self.0
-    }
+    fn as_ref(&self) -> &[u8] { &self.0 }
 }
 
 impl FromStr for Blob {
@@ -160,9 +158,7 @@ impl<T> AsBech32Payload for T
 where
     T: AsRef<[u8]>,
 {
-    fn as_bech32_payload(&self) -> &[u8] {
-        self.as_ref()
-    }
+    fn as_bech32_payload(&self) -> &[u8] { self.as_ref() }
 }
 
 pub trait FromBech32Payload
@@ -197,9 +193,10 @@ pub trait FromBech32Str {
 }
 
 pub mod strategies {
-    use super::*;
     use amplify::{Holder, Wrapper};
     use strict_encoding::{StrictDecode, StrictEncode};
+
+    use super::*;
 
     pub struct UsingStrictEncoding;
     pub struct Wrapped;
@@ -303,8 +300,9 @@ pub use strategies::Strategy;
 /// others from outside of this crate. For details see
 /// <https://rust-lang.github.io/api-guidelines/future-proofing.html#sealed-traits-protect-against-downstream-implementations-c-sealed>
 mod sealed {
-    use super::*;
     use amplify::Wrapper;
+
+    use super::*;
 
     pub trait HashType<Tag>: Wrapper<Inner = sha256t::Hash<Tag>>
     where
@@ -372,9 +370,10 @@ impl<T> FromBech32DataStr for T where T: sealed::FromPayload {}
 
 #[cfg(feature = "zip")]
 pub mod zip {
-    use super::*;
     use amplify::Holder;
     use strict_encoding::{StrictDecode, StrictEncode};
+
+    use super::*;
 
     fn payload_to_bech32_zip_string(hrp: &str, payload: &[u8]) -> String {
         use std::io::Write;
