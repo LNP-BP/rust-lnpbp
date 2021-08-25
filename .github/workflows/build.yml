@@ -68,7 +68,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        toolchain: [ nightly, beta, stable, 1.47.0 ]
+        toolchain: [ nightly, beta, stable ]
     steps:
       - uses: actions/checkout@v2
       - name: Install rust ${{ matrix.toolchain }}
@@ -81,6 +81,24 @@ jobs:
         with:
           command: check
           args: --workspace --all-targets --all-features
+  toolchains-old:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain: [ 1.47.0 ]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install rust ${{ matrix.toolchain }}
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          override: true
+      - name: All features
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --workspace --all-targets --features all_msrv47
   dependency:
     runs-on: ubuntu-latest
     steps:

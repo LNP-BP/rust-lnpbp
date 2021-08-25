@@ -15,8 +15,11 @@
 #![recursion_limit = "256"]
 #![deny(dead_code, missing_docs, warnings)]
 
+//! Library implementing LNPBP-14 standard: Bech32 encoding for
+//! client-side-validated data.
+//!
 //! Types that need to have `data1...` and `z1...` bech 32 implementation
-//! according to LNPBP-39 must implement [`ToBech32Payload`] and
+//! according to LNPBP-14 must implement [`ToBech32Payload`] and
 //! [`FromBech32Payload`] traits.
 //!
 //! Bech32 `id1...` representation is provided automatically only for hash types

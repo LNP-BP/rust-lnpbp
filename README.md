@@ -1,4 +1,4 @@
-# LNP/BP Core Library
+# LNP/BP Library
 
 ![Build](https://github.com/LNP-BP/rust-lnpbp/workflows/Build/badge.svg)
 ![Tests](https://github.com/LNP-BP/rust-lnpbp/workflows/Tests/badge.svg)
@@ -10,51 +10,57 @@
 [![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-This is LNP/BP Core Library: a rust library implementing LNP/BP specifications 
-<https://github.com/LNP-BP/LNPBPs>. It can be used to simplify development of
-layer 2 & 3 solutions on top of Lightning Network and Bitcoin blockchain. 
+The repository represents a set of libraries implementing LNP/BP specifications 
+<https://github.com/LNP-BP/LNPBPs> not fitting into a scope of other existing 
+LNP/BP core libraries (client-side-validation, BP, LNP, RGB, invoicing). It can 
+be used to simplify development of layer 2 & 3 solutions on top of Lightning 
+Network and Bitcoin blockchain.
 
-The current list of the projects based on the library include:
-* [RGB](https://github.com/rgb-org/rgb-core): Confidential & scalable smart 
-  contracts for Bitcoin & Lightning
-* [Generalized Lightning Network](https://www.youtube.com/watch?v=YmmNsWS5wiM) 
-  and it's reference implementation named 
-  [LNP node](https://github.com/LNP-BP/lnp-node) enabling:
-* [LNP](https://github.com/LNP-BP/FAQ/blob/master/Presentation%20slides/LNP%20Networking%20%26%20RGB%20Integration_final.pdf): 
-  Networking protocol for privacy-keeping and censorship-resistant applications,
-  operating in both P2P and RPC modes (currently used as a part of Lightning 
-  network, but our effort is to make it more generic and usable even outside of 
-  LN). All services, developed by LNP/BP Standards Association (see points
-  below) are made with LNP.
+Currently, the repository contains the following crates:
+- `lnpbp_bech32`: library implementing LNPBP-14 standard of Bech32 encoding for
+  client-side-validated data.
+- `lnpbp_chain`: library providing chain parameters for bitcoin-related 
+  blockchains;
+- `lnpbp_elgamal`: library implementing LNPBP-31 standard for ElGamal encryption 
+  using Secp256k1 curve;
+- LNPBP umbrella crate containing all aforementioned libraries.
+
+Other libraries, implementing LNP/BP specifications, not included in this crate:
+- Client-side-validation foundation libraries
+  ([`client_side_validation`](https://github.com/LNP-BP/client_side_validation))
+- Bitcoin protocol core library 
+  ([`bp-core`](https://github.com/LNP-BP/bp-core))
+- Lightning network protocol core library
+  ([`lnp-core`](https://github.com/LNP-BP/lnp-core))
+- RGB core library implementing confidential & scalable smart contracts for 
+  Bitcoin & Lightning ([`rgb-core`](https://github.com/rgb-org/rgb-core))
+- [Universal invoicing library](https://github.com/LNP-BP/invoices)
+
+The current list of the projects based on these libraries include:
+* [RGB Node](https://github.com/rgb-org/rgb-node)
+* [LNP Node](https://github.com/LNP-BP/lnp-node) enabling:
   - RGB extensions
   - DLC extensions
   - [Lightspeed payments](https://github.com/LNP-BP/LNPBPs/issues/24)
   - Multi-peer channels
   - Faster lightning experiments (quicker adoption of eltoo, Taproot etc)
-* [BP node](https://github.com/LNP-BP/bp-node): Indexing service for bitcoin 
+* [BP Node](https://github.com/LNP-BP/bp-node): Indexing service for bitcoin 
   blockchain; more efficient & universal Electrum server replacement. In 
   perspective - validating Bitcoin network node (using libbitcoinconsus)
 
-Potentially, with LNP/BP Core library you can simplify the development of
+Potentially, with LNP/BP libraries you can simplify the development of
 * Discreet log contracts
 * Implement experimental lightning features
 * Do complex multi-threaded or elastic/dockerized client-service microservice 
   architectures
 
-To learn more about the technologies enabled by the library please check:
-* [RGB Technology Internals](https://github.com/LNP-BP/FAQ/blob/master/Presentation%20slides/)
-* [Networking with LNP](https://github.com/LNP-BP/FAQ/blob/master/Presentation%20slides/LNP%20Networking%20%26%20RGB%20Integration_final.pdf)
-* [LNP/BP Nodes Initiative](https://github.com/LNP-BP/FAQ/blob/master/Presentation%20slides/LNP-BP%20Nodes%20Initiative.pdf)
-
-The development of the library projects is supported by LNP/BP Standards 
-Association.
+The development of the libraries is supported by LNP/BP Standards Association.
 
 ## Install
 
 ### Clone and compile library
 
-Minimum supported rust compiler version (MSRV): 1.47 (caused by array size
-limitation to 32 bytes only in `strict_encoding` crate).
+Minimum supported rust compiler version (MSRV): 1.47.0 (if command-line tool is not used) and 1.54.0 (otherwise).
 
 ```shell script
 git clone https://github.com/lnp-bp/rust-lnpbp
