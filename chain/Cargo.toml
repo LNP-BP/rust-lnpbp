@@ -20,4 +20,4 @@ serde_with = { version = "1.5.0", features = ["hex"], optional = true }
 lazy_static = "1.4.0" # Remove dependency
 
 [features]
-serde = ["serde_crate", "serde_with"]
+serde = ["serde_crate", "serde_with", "bitcoin_hashes/serde", "bitcoin/serde"]

@@ -1,4 +1,4 @@
-// LNP/BP Core Library implementing LNPBP specifications & standards
+// LNP/BP lLibraries implementing LNPBP specifications & standards
 // Written in 2021 by
 //     Dr. Maxim Orlovsky <orlovsky@pandoracore.com>
 //
