@@ -37,7 +37,6 @@
 // Coding conventions
 #![recursion_limit = "256"]
 #![deny(dead_code, missing_docs, warnings)]
-// TODO #184: when we will be ready for the release #![deny(missing_docs)]
 
 pub extern crate lnpbp_bech32 as bech32;
 pub extern crate lnpbp_chain as chain;
