@@ -1,6 +1,6 @@
 [package]
 name = "lnpbp_chain"
-version = "0.5.0-beta.1"
+version = "0.5.0-beta.2"
 license = "MIT"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 description = "LNPBP library defining chain parameters"
@@ -15,8 +15,8 @@ amplify = "3.8.1"
 bitcoin = "0.27.0"
 bitcoin_hashes = "0.10.0"
 strict_encoding = "1.6.1"
-serde_crate = { package = "serde", version = "1.0.0", features = ["derive"], optional = true }
-serde_with = { version = "1.5.0", features = ["hex"], optional = true }
+serde_crate = { package = "serde", version = "1", features = ["derive"], optional = true }
+serde_with = { version = "1.8", features = ["hex"], optional = true }
 lazy_static = "1.4.0" # Remove dependency
 
 [features]
