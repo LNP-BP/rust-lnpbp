@@ -24,8 +24,8 @@ required-features = ["cli"]
 
 [dependencies]
 amplify = { version = "3", features = ["stringly_conversions", "std"] }
-lnpbp_bech32 = { version = "0.5.0-beta.1", path = "bech32" }
-lnpbp_chain = { version = "0.5.0-beta.1", path = "chain" }
+lnpbp_bech32 = { version = "0.5.0-beta.2", path = "bech32" }
+lnpbp_chain = { version = "0.5.0-beta.2", path = "chain" }
 lnpbp_elgamal = { version = "0.5.0-beta.1", path = "elgamal", optional = true }
 serde_crate = { package = "serde", version = "1", features = ["derive"], optional = true }
 serde_with = { version = "1.8", features = ["hex"], optional = true }
