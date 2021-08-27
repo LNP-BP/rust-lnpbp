@@ -336,7 +336,7 @@ checksum = "7fb9b38af92608140b86b693604b9ffcc5824240a484d1ecd4795bacb2fe88f3"
 
 [[package]]
 name = "lnpbp"
-version = "0.5.0-beta.2"
+version = "0.5.0-beta.3"
 dependencies = [
  "amplify",
  "base58",
@@ -367,7 +367,7 @@ dependencies = [
 
 [[package]]
 name = "lnpbp_chain"
-version = "0.5.0-beta.2"
+version = "0.5.0-beta.3"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -595,6 +595,7 @@ checksum = "97d03ceae636d0fed5bae6a7f4f664354c5f4fcedf6eef053fef17e49f837d0a"
 dependencies = [
  "rand",
  "secp256k1-sys",
+ "serde",
 ]
 
 [[package]]
