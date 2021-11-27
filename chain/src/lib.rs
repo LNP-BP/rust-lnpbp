@@ -1002,6 +1002,7 @@ impl FromStr for Chain {
 
 #[cfg(test)]
 mod test {
+    #![allow(deprecated)] // TODO: Refactor with strict_encoding_test crate
     use strict_encoding::test_helpers::*;
 
     use super::*;

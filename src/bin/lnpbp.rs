@@ -12,6 +12,8 @@
 // If not, see <https://opensource.org/licenses/MIT>.
 
 #[macro_use]
+extern crate clap;
+#[macro_use]
 extern crate amplify;
 extern crate serde_crate as serde;
 
@@ -21,18 +23,17 @@ use std::str::FromStr;
 
 use amplify::hex::{FromHex, ToHex};
 use base58::{FromBase58, ToBase58};
-use clap::{AppSettings, Clap};
+use clap::Parser;
 use lnpbp::bech32::Blob;
 use serde::Serialize;
 
-#[derive(Clap, Clone, Debug)]
+#[derive(Parser, Clone, Debug)]
 #[clap(
     name = "lnpbp",
     bin_name = "lnpbp",
     author,
     version,
-    about = "Command-line tool for working with LNP/BP stack",
-    setting = AppSettings::ColoredHelp,
+    about = "Command-line tool for working with LNP/BP stack"
 )]
 pub struct Opts {
     /// Command to execute
@@ -40,8 +41,7 @@ pub struct Opts {
     pub command: Command,
 }
 
-#[derive(Clap, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-#[clap(setting = AppSettings::ColoredHelp)]
+#[derive(Subcommand, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Command {
     /// Commands for working with consignments
     Convert {
@@ -59,7 +59,7 @@ pub enum Command {
 }
 
 #[derive(
-    Clap, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display
+    ArgEnum, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display
 )]
 pub enum Format {
     /// Format according to the rust debug rules
