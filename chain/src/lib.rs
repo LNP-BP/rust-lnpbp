@@ -212,6 +212,10 @@ impl strict_encoding::Strategy for AssetId {
     type Strategy = strict_encoding::strategies::HashFixedBytes;
 }
 
+impl lightning_encoding::Strategy for AssetId {
+    type Strategy = lightning_encoding::strategies::AsBitcoinHash;
+}
+
 impl From<BlockHash> for AssetId {
     fn from(block_hash: BlockHash) -> Self {
         AssetId::from_inner(block_hash.into_inner())

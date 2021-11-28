@@ -15,6 +15,7 @@ amplify = "3.9.1"
 bitcoin_hashes = "0.10.0" # We need macro from here
 bitcoin = { version = "0.28", git = "https://github.com/LNP-BP/rust-bitcoin", branch = "taproot/all" }
 strict_encoding = { version = "1.8.0", git = "https://github.com/LNP-BP/client_side_validation", branch = "develop" }
+lightning_encoding = { version = "0.6.0", git = "https://github.com/LNP-BP/lnp-core", branch = "v0.6" }
 serde_crate = { package = "serde", version = "1", features = ["derive"], optional = true }
 serde_with = { version = "1.8", features = ["hex"], optional = true }
 lazy_static = "1.4.0" # TODO: #213 Remove dependency

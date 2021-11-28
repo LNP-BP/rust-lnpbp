@@ -254,6 +254,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "encoding_derive_helpers"
+version = "1.7.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df85c511a2f01954d1fad7d7d20eeae1af35157fbaec35261c91fab53d76bb58"
+dependencies = [
+ "amplify",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -339,6 +351,33 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8521a1b57e76b1ec69af7599e75e38e7b7fad6610f037db8c79b127201b5d119"
 
 [[package]]
+name = "lightning_encoding"
+version = "0.6.0"
+source = "git+https://github.com/LNP-BP/lnp-core?branch=v0.6#8d61df6f109428da1dd7cd7fc86d50659bcf89ce"
+dependencies = [
+ "amplify",
+ "bitcoin",
+ "bitcoin_hashes",
+ "chrono",
+ "lightning_encoding_derive",
+ "secp256k1",
+ "strict_encoding",
+]
+
+[[package]]
+name = "lightning_encoding_derive"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3cc5449b552f69a6cf6f1c580c0444018f9b592edf0119cf66cc3fc3caf62744"
+dependencies = [
+ "amplify_syn",
+ "encoding_derive_helpers 1.7.5",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "linked-hash-map"
 version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -383,6 +422,7 @@ dependencies = [
  "bitcoin",
  "bitcoin_hashes",
  "lazy_static",
+ "lightning_encoding",
  "serde",
  "serde_with",
  "strict_encoding",
@@ -721,7 +761,7 @@ version = "1.7.4"
 source = "git+https://github.com/LNP-BP/client_side_validation?branch=develop#6dc838ae4074878d270d73d719eb251221c81e24"
 dependencies = [
  "amplify_syn",
- "encoding_derive_helpers",
+ "encoding_derive_helpers 1.7.4",
  "proc-macro2",
  "syn",
 ]
