@@ -17,7 +17,7 @@ bitcoin_hashes = "0.10.0"
 strict_encoding = "1.7.4"
 serde_crate = { package = "serde", version = "1", features = ["derive"], optional = true }
 serde_with = { version = "1.8", features = ["hex"], optional = true }
-lazy_static = "1.4.0" # Remove dependency
+lazy_static = "1.4.0" # TODO: #213 Remove dependency
 
 [features]
 serde = ["serde_crate", "serde_with", "bitcoin_hashes/serde", "bitcoin/use-serde"]

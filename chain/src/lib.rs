@@ -293,7 +293,7 @@ lazy_static! {
         p2p_port: 8333,
         rpc_port: 8332,
         ln_height: 504500,
-        // TODO #187: update with first RGB release
+        // TODO #217: update with first RGB release
         rgb_height: 650000,
         format: ChainFormat::Bitcoin,
         dust_limit: 546,
@@ -321,7 +321,7 @@ lazy_static! {
         p2p_port: 18333,
         rpc_port: 18332,
         ln_height: 1,
-        // TODO #187: update with first RGB release
+        // TODO #217: update with first RGB release
         rgb_height: 1835500,
         format: ChainFormat::Bitcoin,
         dust_limit: 546,
@@ -395,7 +395,7 @@ lazy_static! {
     /// Liquid V1 chain parameters
     static ref CHAIN_PARAMS_LIQUIDV1: ChainParams = ChainParams {
         name: "liquidv1".to_string(),
-        // TODO #188: check Liquid network magic number and change this if needed
+        // TODO #216: check Liquid network magic number and change this if needed
         p2p_magic: P2pNetworkId::Mainnet,
         genesis_hash: BlockHash::from_slice(GENESIS_HASH_LIQUIDV1)
             .expect("Liquid V1 genesis hash contains invalid binary data"),
@@ -1002,7 +1002,7 @@ impl FromStr for Chain {
 
 #[cfg(test)]
 mod test {
-    #![allow(deprecated)] // TODO: Refactor with strict_encoding_test crate
+    #![allow(deprecated)] // TODO: #210 Refactor with strict_encoding_test crate
     use strict_encoding::test_helpers::*;
 
     use super::*;
