@@ -102,9 +102,8 @@ checksum = "cf9ff0bbfd639f15c74af777d81383cf53efb7c93613f6cab67c6c11e05bbf8b"
 
 [[package]]
 name = "bitcoin"
-version = "0.27.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a41df6ad9642c5c15ae312dd3d074de38fd3eb7cc87ad4ce10f90292a83fe4d"
+version = "0.28.0"
+source = "git+https://github.com/LNP-BP/rust-bitcoin?branch=taproot/all#ffad87681934371f9ab6492953f7ccf30cbcda75"
 dependencies = [
  "bech32",
  "bitcoin_hashes",
@@ -246,8 +245,7 @@ checksum = "56899898ce76aaf4a0f24d914c97ea6ed976d42fec6ad33fcbb0a1103e07b2b0"
 [[package]]
 name = "encoding_derive_helpers"
 version = "1.7.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8af9b20816ac9126945a6ecc1e248c4a1edfeada329839cdca9c96581174bebb"
+source = "git+https://github.com/LNP-BP/client_side_validation?branch=develop#6dc838ae4074878d270d73d719eb251221c81e24"
 dependencies = [
  "amplify",
  "proc-macro2",
@@ -348,7 +346,7 @@ checksum = "7fb9b38af92608140b86b693604b9ffcc5824240a484d1ecd4795bacb2fe88f3"
 
 [[package]]
 name = "lnpbp"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "amplify",
  "base58",
@@ -365,7 +363,7 @@ dependencies = [
 
 [[package]]
 name = "lnpbp_bech32"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "amplify",
  "bech32",
@@ -379,7 +377,7 @@ dependencies = [
 
 [[package]]
 name = "lnpbp_chain"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -392,7 +390,7 @@ dependencies = [
 
 [[package]]
 name = "lnpbp_elgamal"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "amplify",
  "bitcoin_hashes",
@@ -707,9 +705,8 @@ dependencies = [
 
 [[package]]
 name = "strict_encoding"
-version = "1.7.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "441080358b7382cf0b4766e4253a77e1ee7ad17139a4f0b950993074acfb63dc"
+version = "1.8.0"
+source = "git+https://github.com/LNP-BP/client_side_validation?branch=develop#6dc838ae4074878d270d73d719eb251221c81e24"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -721,8 +718,7 @@ dependencies = [
 [[package]]
 name = "strict_encoding_derive"
 version = "1.7.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4cf87ccd517175354f494683b69b7703664cf49e6b82e78ff53e42bea0c17401"
+source = "git+https://github.com/LNP-BP/client_side_validation?branch=develop#6dc838ae4074878d270d73d719eb251221c81e24"
 dependencies = [
  "amplify_syn",
  "encoding_derive_helpers",
