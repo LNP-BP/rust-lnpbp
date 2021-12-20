@@ -29,6 +29,8 @@
 extern crate amplify;
 #[macro_use]
 extern crate strict_encoding;
+#[macro_use]
+extern crate lightning_encoding;
 #[cfg(feature = "serde")]
 #[macro_use]
 extern crate serde_crate as serde;
@@ -113,20 +115,11 @@ impl From<Infallible> for Error {
     serde(crate = "serde_crate", transparent)
 )]
 #[derive(
-    Wrapper,
-    Clone,
-    Ord,
-    PartialOrd,
-    Eq,
-    PartialEq,
-    Hash,
-    Default,
-    Debug,
-    Display,
-    From,
-    StrictEncode,
-    StrictDecode
+    Wrapper, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Default, Debug,
+    Display, From
 )]
+#[derive(StrictEncode, StrictDecode)]
+#[derive(LightningEncode, LightningDecode)]
 #[wrap(
     Index,
     IndexMut,
