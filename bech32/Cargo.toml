@@ -1,6 +1,6 @@
 [package]
 name = "lnpbp_bech32"
-version = "0.5.1"
+version = "0.5.2"
 license = "MIT"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 description = "LNPBP-14 implementation"
@@ -14,7 +14,6 @@ edition = "2018"
 amplify = "3.8.1"
 bitcoin_hashes = "0.10.0"
 strict_encoding = "1.7.4"
-lightning_encoding = "0.5.7"
 bech32 = "0.8.1"
 deflate = { version = "0.8.6", optional = true }
 inflate = { version = "0.4.5", optional = true }
