@@ -365,7 +365,7 @@ dependencies = [
 
 [[package]]
 name = "lnpbp_bech32"
-version = "0.5.3"
+version = "0.5.4"
 dependencies = [
  "amplify",
  "bech32",

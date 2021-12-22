@@ -143,7 +143,7 @@ impl AsRef<[u8]> for Blob {
 
 impl Debug for Blob {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.serialize_newtype_struct("Blob", &self.0.to_hex())
+        write!(f, "Blob({})", self.0.to_hex())
     }
 }
 
