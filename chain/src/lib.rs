@@ -32,8 +32,6 @@ extern crate strict_encoding;
 #[cfg(feature = "serde")]
 #[macro_use]
 extern crate serde_crate as serde;
-#[macro_use]
-extern crate lazy_static;
 
 use std::cmp::Ordering;
 use std::convert::TryFrom;
@@ -46,6 +44,7 @@ use bitcoin::hashes::hex::{self, FromHex, ToHex};
 use bitcoin::hashes::{sha256d, Hash};
 use bitcoin::network::constants::Network;
 use bitcoin::BlockHash;
+use once_cell::sync::Lazy;
 use strict_encoding::{
     strict_deserialize, strict_serialize, StrictDecode, StrictEncode,
 };
@@ -281,9 +280,9 @@ pub const GENESIS_HASH_LIQUIDV1: &[u8] = &[
     0x37, 0x92, 0x96, 0x88, 0x8a, 0x20, 0x60, 0x03,
 ];
 
-lazy_static! {
-    /// Bitcoin mainnet chain parameters
-    static ref CHAIN_PARAMS_MAINNET: ChainParams = ChainParams {
+/// Bitcoin mainnet chain parameters
+static CHAIN_PARAMS_MAINNET: Lazy<ChainParams> = Lazy::new(|| {
+    ChainParams {
         name: "bitcoin".to_string(),
         p2p_magic: P2pNetworkId::Mainnet,
         genesis_hash: BlockHash::from_slice(GENESIS_HASH_MAINNET)
@@ -308,10 +307,12 @@ lazy_static! {
         },
         is_testnet: false,
         is_pow: true,
-    };
+    }
+});
 
-    /// Bitcoin testnet chain parameters
-    static ref CHAIN_PARAMS_TESTNET: ChainParams = ChainParams {
+/// Bitcoin testnet chain parameters
+static CHAIN_PARAMS_TESTNET: Lazy<ChainParams> = Lazy::new(|| {
+    ChainParams {
         name: "testnet".to_string(),
         p2p_magic: P2pNetworkId::Testnet,
         genesis_hash: BlockHash::from_slice(GENESIS_HASH_TESTNET)
@@ -336,10 +337,12 @@ lazy_static! {
         },
         is_testnet: true,
         is_pow: true,
-    };
+    }
+});
 
-    /// Bitcoin regtest chain parameters
-    static ref CHAIN_PARAMS_REGTEST: ChainParams = ChainParams {
+/// Bitcoin regtest chain parameters
+static CHAIN_PARAMS_REGTEST: Lazy<ChainParams> = Lazy::new(|| {
+    ChainParams {
         name: "regtest".to_string(),
         p2p_magic: P2pNetworkId::Regtest,
         genesis_hash: BlockHash::from_slice(GENESIS_HASH_REGTEST)
@@ -363,10 +366,12 @@ lazy_static! {
         },
         is_testnet: true,
         is_pow: false,
-    };
+    }
+});
 
-    /// Bitcoin signet chain parameters
-    static ref CHAIN_PARAMS_SIGNET: ChainParams = ChainParams {
+/// Bitcoin signet chain parameters
+static CHAIN_PARAMS_SIGNET: Lazy<ChainParams> = Lazy::new(|| {
+    ChainParams {
         name: "signet".to_string(),
         p2p_magic: P2pNetworkId::Signet,
         genesis_hash: BlockHash::from_slice(GENESIS_HASH_SIGNET)
@@ -390,10 +395,12 @@ lazy_static! {
         },
         is_testnet: true,
         is_pow: false,
-    };
+    }
+});
 
-    /// Liquid V1 chain parameters
-    static ref CHAIN_PARAMS_LIQUIDV1: ChainParams = ChainParams {
+/// Liquid V1 chain parameters
+static CHAIN_PARAMS_LIQUIDV1: Lazy<ChainParams> = Lazy::new(|| {
+    ChainParams {
         name: "liquidv1".to_string(),
         // TODO #216: check Liquid network magic number and change this if needed
         p2p_magic: P2pNetworkId::Mainnet,
@@ -418,8 +425,8 @@ lazy_static! {
         },
         is_testnet: false,
         is_pow: false,
-    };
-}
+    }
+});
 
 /// Enum identifying format for transaction & block structure in a given chain.
 /// Right now only two structures are supported: Bitcoin format and
