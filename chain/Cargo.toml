@@ -14,7 +14,8 @@ edition = "2018"
 amplify = "3.9.1"
 bitcoin = "0.27.1"
 bitcoin_hashes = "0.10.0"
-strict_encoding = "1.7.4"
+strict_encoding = "1.7.9"
+strict_encoding_test = "1.7.6"
 serde_crate = { package = "serde", version = "1", features = ["derive"], optional = true }
 serde_with = { version = "1.8", features = ["hex"], optional = true }
 lazy_static = "1.4.0" # TODO: #213 Remove dependency
