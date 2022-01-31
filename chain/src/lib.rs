@@ -30,8 +30,6 @@ extern crate bitcoin_hashes;
 #[cfg(feature = "serde")]
 #[macro_use]
 extern crate serde_crate as serde;
-#[macro_use]
-extern crate lazy_static;
 
 use std::cmp::Ordering;
 use std::convert::TryFrom;
@@ -44,6 +42,7 @@ use bitcoin::hashes::hex::{self, FromHex, ToHex};
 use bitcoin::hashes::{sha256d, Hash};
 use bitcoin::network::constants::Network;
 use bitcoin::BlockHash;
+use once_cell::sync::Lazy;
 use strict_encoding::{
     strict_decode_self, strict_deserialize, strict_encode_list,
     strict_serialize, StrictDecode, StrictEncode,
@@ -280,9 +279,9 @@ pub const GENESIS_HASH_LIQUIDV1: &[u8] = &[
     0x37, 0x92, 0x96, 0x88, 0x8a, 0x20, 0x60, 0x03,
 ];
 
-lazy_static! {
-    /// Bitcoin mainnet chain parameters
-    static ref CHAIN_PARAMS_MAINNET: ChainParams = ChainParams {
+/// Bitcoin mainnet chain parameters
+static CHAIN_PARAMS_MAINNET: Lazy<ChainParams> = Lazy::new(|| {
+    ChainParams {
         name: "bitcoin".to_string(),
         p2p_magic: P2pNetworkId::Mainnet,
         genesis_hash: BlockHash::from_slice(GENESIS_HASH_MAINNET)
@@ -307,14 +306,17 @@ lazy_static! {
         },
         is_testnet: false,
         is_pow: true,
-    };
+    }
+});
 
-    /// Bitcoin testnet chain parameters
-    static ref CHAIN_PARAMS_TESTNET: ChainParams = ChainParams {
+/// Bitcoin testnet chain parameters
+static CHAIN_PARAMS_TESTNET: Lazy<ChainParams> = Lazy::new(|| {
+    ChainParams {
         name: "testnet".to_string(),
         p2p_magic: P2pNetworkId::Testnet,
-        genesis_hash: BlockHash::from_slice(GENESIS_HASH_TESTNET)
-            .expect("Bitcoin testnet genesis hash contains invalid binary data"),
+        genesis_hash: BlockHash::from_slice(GENESIS_HASH_TESTNET).expect(
+            "Bitcoin testnet genesis hash contains invalid binary data",
+        ),
         bip70_name: "test".to_string(),
         bip173_prefix: "tb".to_string(),
         p2p_port: 18333,
@@ -329,72 +331,77 @@ lazy_static! {
             unit_of_accounting: "Test Bitcoin".to_string(),
             indivisible_unit: "Test satoshi".to_string(),
             divisibility: 100_000_000,
-            asset_id: AssetId::from_slice(GENESIS_HASH_TESTNET)
-                .expect("Bitcoin testnet genesis hash contains invalid binary data"),
+            asset_id: AssetId::from_slice(GENESIS_HASH_TESTNET).expect(
+                "Bitcoin testnet genesis hash contains invalid binary data",
+            ),
             asset_system: AssetSystem::NativeBlockchain,
         },
         is_testnet: true,
         is_pow: true,
-    };
+    }
+});
 
-    /// Bitcoin regtest chain parameters
-    static ref CHAIN_PARAMS_REGTEST: ChainParams = ChainParams {
-        name: "regtest".to_string(),
-        p2p_magic: P2pNetworkId::Regtest,
-        genesis_hash: BlockHash::from_slice(GENESIS_HASH_REGTEST)
-            .expect("Bitcoin regtest genesis hash contains invalid binary data"),
-        bip70_name: "regtest".to_string(),
-        bip173_prefix: "tb".to_string(),
-        p2p_port: 28333,
-        rpc_port: 28332,
-        ln_height: 1,
-        rgb_height: 1,
-        format: ChainFormat::Bitcoin,
-        dust_limit: 546,
-        native_asset: AssetParams {
-            ticker: "tBTC".to_string(),
-            unit_of_accounting: "Test Bitcoin".to_string(),
-            indivisible_unit: "Test satoshi".to_string(),
-            divisibility: 100_000_000,
-            asset_id: AssetId::from_slice(GENESIS_HASH_REGTEST)
-                .expect("Bitcoin regtest genesis hash contains invalid binary data"),
-            asset_system: AssetSystem::NativeBlockchain,
-        },
-        is_testnet: true,
-        is_pow: false,
-    };
+/// Bitcoin regtest chain parameters
+static CHAIN_PARAMS_REGTEST: Lazy<ChainParams> = Lazy::new(|| ChainParams {
+    name: "regtest".to_string(),
+    p2p_magic: P2pNetworkId::Regtest,
+    genesis_hash: BlockHash::from_slice(GENESIS_HASH_REGTEST)
+        .expect("Bitcoin regtest genesis hash contains invalid binary data"),
+    bip70_name: "regtest".to_string(),
+    bip173_prefix: "tb".to_string(),
+    p2p_port: 28333,
+    rpc_port: 28332,
+    ln_height: 1,
+    rgb_height: 1,
+    format: ChainFormat::Bitcoin,
+    dust_limit: 546,
+    native_asset: AssetParams {
+        ticker: "tBTC".to_string(),
+        unit_of_accounting: "Test Bitcoin".to_string(),
+        indivisible_unit: "Test satoshi".to_string(),
+        divisibility: 100_000_000,
+        asset_id: AssetId::from_slice(GENESIS_HASH_REGTEST).expect(
+            "Bitcoin regtest genesis hash contains invalid binary data",
+        ),
+        asset_system: AssetSystem::NativeBlockchain,
+    },
+    is_testnet: true,
+    is_pow: false,
+});
 
-    /// Bitcoin signet chain parameters
-    static ref CHAIN_PARAMS_SIGNET: ChainParams = ChainParams {
-        name: "signet".to_string(),
-        p2p_magic: P2pNetworkId::Signet,
-        genesis_hash: BlockHash::from_slice(GENESIS_HASH_SIGNET)
+/// Bitcoin signet chain parameters
+static CHAIN_PARAMS_SIGNET: Lazy<ChainParams> = Lazy::new(|| ChainParams {
+    name: "signet".to_string(),
+    p2p_magic: P2pNetworkId::Signet,
+    genesis_hash: BlockHash::from_slice(GENESIS_HASH_SIGNET)
+        .expect("Bitcoin signet genesis hash contains invalid binary data"),
+    bip70_name: "signet".to_string(),
+    bip173_prefix: "tb".to_string(),
+    p2p_port: 38333,
+    rpc_port: 38332,
+    ln_height: 1,
+    rgb_height: 1,
+    format: ChainFormat::Bitcoin,
+    dust_limit: 546,
+    native_asset: AssetParams {
+        ticker: "sBTC".to_string(),
+        unit_of_accounting: "Signet Bitcoin".to_string(),
+        indivisible_unit: "Signet satoshi".to_string(),
+        divisibility: 100_000_000,
+        asset_id: AssetId::from_slice(GENESIS_HASH_SIGNET)
             .expect("Bitcoin signet genesis hash contains invalid binary data"),
-        bip70_name: "signet".to_string(),
-        bip173_prefix: "tb".to_string(),
-        p2p_port: 38333,
-        rpc_port: 38332,
-        ln_height: 1,
-        rgb_height: 1,
-        format: ChainFormat::Bitcoin,
-        dust_limit: 546,
-        native_asset: AssetParams {
-            ticker: "sBTC".to_string(),
-            unit_of_accounting: "Signet Bitcoin".to_string(),
-            indivisible_unit: "Signet satoshi".to_string(),
-            divisibility: 100_000_000,
-            asset_id: AssetId::from_slice(GENESIS_HASH_SIGNET)
-                .expect("Bitcoin signet genesis hash contains invalid binary data"),
-            asset_system: AssetSystem::NativeBlockchain,
-        },
-        is_testnet: true,
-        is_pow: false,
-    };
+        asset_system: AssetSystem::NativeBlockchain,
+    },
+    is_testnet: true,
+    is_pow: false,
+});
 
-    /// Liquid V1 chain parameters
-    static ref CHAIN_PARAMS_LIQUIDV1: ChainParams = ChainParams {
+/// Liquid V1 chain parameters
+static CHAIN_PARAMS_LIQUIDV1: Lazy<ChainParams> = Lazy::new(|| {
+    ChainParams {
         name: "liquidv1".to_string(),
-        // TODO #216: check Liquid network magic number and change this if needed
+        // TODO #216: check Liquid network magic number and change this if
+        // needed
         p2p_magic: P2pNetworkId::Mainnet,
         genesis_hash: BlockHash::from_slice(GENESIS_HASH_LIQUIDV1)
             .expect("Liquid V1 genesis hash contains invalid binary data"),
@@ -417,8 +424,8 @@ lazy_static! {
         },
         is_testnet: false,
         is_pow: false,
-    };
-}
+    }
+});
 
 /// Enum identifying format for transaction & block structure in a given chain.
 /// Right now only two structures are supported: Bitcoin format and
