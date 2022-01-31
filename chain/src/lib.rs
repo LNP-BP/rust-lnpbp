@@ -27,8 +27,6 @@
 extern crate amplify;
 #[macro_use]
 extern crate bitcoin_hashes;
-#[macro_use]
-extern crate strict_encoding;
 #[cfg(feature = "serde")]
 #[macro_use]
 extern crate serde_crate as serde;
@@ -46,7 +44,8 @@ use bitcoin::network::constants::Network;
 use bitcoin::BlockHash;
 use once_cell::sync::Lazy;
 use strict_encoding::{
-    strict_deserialize, strict_serialize, StrictDecode, StrictEncode,
+    strict_decode_self, strict_deserialize, strict_encode_list,
+    strict_serialize, StrictDecode, StrictEncode,
 };
 
 /// P2P network magic number: prefix identifying network on which node operates
@@ -1009,8 +1008,10 @@ impl FromStr for Chain {
 
 #[cfg(test)]
 mod test {
-    #![allow(deprecated)] // TODO: #210 Refactor with strict_encoding_test crate
-    use strict_encoding::test_helpers::*;
+    use strict_encoding_test::{
+        test_encoding_enum, test_encoding_enum_by_values,
+        test_encoding_enum_u8_exhaustive, test_encoding_roundtrip,
+    };
 
     use super::*;
 
