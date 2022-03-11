@@ -34,8 +34,10 @@ extern crate strict_encoding;
 extern crate serde_crate as serde;
 
 use std::convert::{Infallible, TryFrom};
+use std::fmt::{self, Debug, Formatter};
 use std::str::FromStr;
 
+use amplify::hex::ToHex;
 use bech32::{FromBase32, ToBase32, Variant};
 use bitcoin_hashes::{sha256t, Hash};
 #[cfg(feature = "zip")]
@@ -113,20 +115,10 @@ impl From<Infallible> for Error {
     serde(crate = "serde_crate", transparent)
 )]
 #[derive(
-    Wrapper,
-    Clone,
-    Ord,
-    PartialOrd,
-    Eq,
-    PartialEq,
-    Hash,
-    Default,
-    Debug,
-    Display,
-    From,
-    StrictEncode,
-    StrictDecode
+    Wrapper, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Default, Display,
+    From
 )]
+#[derive(StrictEncode, StrictDecode)]
 #[wrap(
     Index,
     IndexMut,
@@ -147,6 +139,12 @@ pub struct Blob(
 
 impl AsRef<[u8]> for Blob {
     fn as_ref(&self) -> &[u8] { &self.0 }
+}
+
+impl Debug for Blob {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "Blob({})", self.0.to_hex())
+    }
 }
 
 impl FromStr for Blob {
