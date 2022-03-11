@@ -245,9 +245,9 @@ checksum = "56899898ce76aaf4a0f24d914c97ea6ed976d42fec6ad33fcbb0a1103e07b2b0"
 
 [[package]]
 name = "encoding_derive_helpers"
-version = "1.7.4"
+version = "1.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8af9b20816ac9126945a6ecc1e248c4a1edfeada329839cdca9c96581174bebb"
+checksum = "dc4ba8a88067b85c8714922db6e5f2af47b894d63b771dbb0c4d31d6607e9057"
 dependencies = [
  "amplify",
  "proc-macro2",
@@ -384,10 +384,11 @@ dependencies = [
  "amplify",
  "bitcoin",
  "bitcoin_hashes",
- "lazy_static",
+ "once_cell",
  "serde",
  "serde_with",
  "strict_encoding",
+ "strict_encoding_test",
 ]
 
 [[package]]
@@ -423,6 +424,12 @@ checksum = "9a64b1ec5cda2586e284722486d802acf1f7dbdc623e2bfc57e65ca1cd099290"
 dependencies = [
  "autocfg 1.0.1",
 ]
+
+[[package]]
+name = "once_cell"
+version = "1.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da32515d9f6e6e489d7bc9d84c71b060db7247dc035bbe44eac88cf87486d8d5"
 
 [[package]]
 name = "os_str_bytes"
@@ -707,9 +714,9 @@ dependencies = [
 
 [[package]]
 name = "strict_encoding"
-version = "1.7.4"
+version = "1.7.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "441080358b7382cf0b4766e4253a77e1ee7ad17139a4f0b950993074acfb63dc"
+checksum = "009561bba71cc16cdc0ef40c108cb701a782f7a10aefb28c1a72beae27b721d1"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -720,14 +727,24 @@ dependencies = [
 
 [[package]]
 name = "strict_encoding_derive"
-version = "1.7.4"
+version = "1.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4cf87ccd517175354f494683b69b7703664cf49e6b82e78ff53e42bea0c17401"
+checksum = "3bc7b868cb00c8861784b7f463c984c4b2ad20d1f23cec5997ad9cb41e559239"
 dependencies = [
  "amplify_syn",
  "encoding_derive_helpers",
  "proc-macro2",
  "syn",
+]
+
+[[package]]
+name = "strict_encoding_test"
+version = "1.7.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d7bd0bdf8da419af27970c9e16e99e23ec67b5c8b6896db950c93a6ba1827b2a"
+dependencies = [
+ "amplify",
+ "strict_encoding",
 ]
 
 [[package]]
