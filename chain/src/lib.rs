@@ -741,6 +741,16 @@ impl std::hash::Hash for Chain {
 }
 
 impl Chain {
+    /// Enumerates all known standard bitcoin (BP) chains
+    pub fn all_standard() -> &'static [Chain] {
+        &[
+            Chain::Mainnet,
+            Chain::Testnet3,
+            Chain::Signet,
+            Chain::LiquidV1,
+        ]
+    }
+
     /// Returns chain parameters [ChainParams] for a given chain id
     pub fn chain_params(&self) -> ChainParams {
         match self {
