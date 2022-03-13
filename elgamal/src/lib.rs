@@ -133,7 +133,7 @@ pub fn encrypt<C: Signing + Verification>(
     }
 
     // Destroy blinding factor
-    *blinding_key = secp256k1::key::ONE_KEY;
+    *blinding_key = secp256k1::ONE_KEY;
 
     Ok(acc.concat())
 }
@@ -184,7 +184,7 @@ pub fn decrypt<C: Verification>(
     }
 
     // Destroy decryption key
-    *decryption_key = secp256k1::key::ONE_KEY;
+    *decryption_key = secp256k1::ONE_KEY;
 
     Ok(acc.concat())
 }
@@ -221,7 +221,7 @@ mod test {
         let encryption_key =
             secp256k1::PublicKey::from_secret_key(&SECP256K1, &decryption_key);
         // Checking that we have a random key
-        assert_ne!(decryption_key[..], secp256k1::key::ONE_KEY[..]);
+        assert_ne!(decryption_key[..], secp256k1::ONE_KEY[..]);
 
         thread_rng().fill_bytes(&mut entropy);
         let mut blinding_key =
@@ -230,7 +230,7 @@ mod test {
         let unblinding_key =
             secp256k1::PublicKey::from_secret_key(&SECP256K1, &blinding_key);
         // Checking that we have a random key
-        assert_ne!(blinding_key[..], secp256k1::key::ONE_KEY[..]);
+        assert_ne!(blinding_key[..], secp256k1::ONE_KEY[..]);
         assert_ne!(blinding_key[..], decryption_key[..]);
 
         let mut uk = unblinding_key.clone();
@@ -247,7 +247,7 @@ mod test {
             // Checking that we have wiped out our blinding key
             assert_ne!(source[..], encrypted[..len]);
         }
-        assert_eq!(blinding_key[..], secp256k1::key::ONE_KEY[..]);
+        assert_eq!(blinding_key[..], secp256k1::ONE_KEY[..]);
         let no_chunks = if len == 0 { 1 } else { (len - 1) / 30 + 1 };
         assert_eq!(encrypted.len(), no_chunks * 32);
 
@@ -260,7 +260,7 @@ mod test {
         .unwrap();
         let result = &decrypted[..];
         // Checking that we have wiped out our decryption key
-        assert_eq!(decryption_key[..], secp256k1::key::ONE_KEY[..]);
+        assert_eq!(decryption_key[..], secp256k1::ONE_KEY[..]);
         assert_eq!(decrypted.len(), no_chunks * 30);
         assert_eq!(result[..len], source[..]);
 
@@ -347,7 +347,7 @@ mod test {
         let encryption_key =
             secp256k1::PublicKey::from_secret_key(&SECP256K1, &decryption_key);
 
-        let mut blinding_key = secp256k1::key::ONE_KEY;
+        let mut blinding_key = secp256k1::ONE_KEY;
         encrypt(
             &SECP256K1,
             &decryption_key[1..],
