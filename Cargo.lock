@@ -846,9 +846,9 @@ dependencies = [
 
 [[package]]
 name = "slip132"
-version = "0.6.0-beta.1"
+version = "0.6.0-beta.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0035bf63d816cf2e3f3e6fe789f1745cb52a9440bf9007dc1d58eb2db4bf2eec"
+checksum = "4a867e6dc1840ef682d9f44f74383d8b636b25f0b5fce04f4d3fbcc4024a86bd"
 dependencies = [
  "amplify",
  "bitcoin",
