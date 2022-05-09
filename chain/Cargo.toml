@@ -1,21 +1,21 @@
 [package]
 name = "lnpbp_chain"
-version = "0.6.0"
+version = "0.7.0"
 license = "MIT"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 description = "LNPBP library defining chain parameters"
 repository = "https://github.com/LNP-BP/rust-lnpbp"
-homepage = "https://github.com/LNP-BP/tree/master/chain"
+homepage = "https://github.com/LNP-BP/rust-lnpbp/tree/master/chain"
 keywords = ["bitcoin", "lightning", "lnp-bp", "blockchain", "sidechain"]
 categories = ["cryptography::cryptocurrencies"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 amplify = "3.12.0"
 bitcoin_hashes = "0.10.0" # We need macro from here
-bitcoin = "0.28.0"
+bitcoin = "0.28.1"
 strict_encoding = "1.8.0"
-lightning_encoding = { version = "0.6.0" }
+lightning_encoding = { version = "0.7.0" }
 serde_crate = { package = "serde", version = "1", features = ["derive"], optional = true }
 serde_with = { version = "1.8", features = ["hex"], optional = true }
 once_cell = "1.10.0"

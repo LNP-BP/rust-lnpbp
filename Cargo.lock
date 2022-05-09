@@ -127,9 +127,9 @@ dependencies = [
 
 [[package]]
 name = "bitcoin_hd"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ad5f1811a3748b46aaff1357d8f8de1dbb2a5490ec5caa18a03d93cc5d09494"
+checksum = "557293b70a325df3a3c40103a74fa2a4baa3542bffc9a32a735704b5145815a7"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -139,9 +139,9 @@ dependencies = [
 
 [[package]]
 name = "bitcoin_onchain"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d46f633e63b999bef50e48b9d6fe368ed143675abeba7a4bc3b8783268c678b"
+checksum = "7e9453484e54cffe3f9f0075b0ee862950621185475aecae8b2eef97ad4ff9d2"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -153,12 +153,14 @@ dependencies = [
 
 [[package]]
 name = "bitcoin_scripts"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11d9e5f5efc8eb151ae3a396ba7f8f04a9fb2f04cfdfefec0c85fbc2ba3e84ae"
+checksum = "d8ef0ceaddc4fc71a8c6c923201abbf269f36ae7d7e50ee2d93fd4c32537e113"
 dependencies = [
  "amplify",
  "bitcoin",
+ "secp256k1",
+ "stability",
  "strict_encoding",
 ]
 
@@ -233,17 +235,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "commit_verify"
-version = "0.6.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f19dab5bb16dddb63bbef810768a69c3a50d2c8e9e35921cf817344faeeca70"
-dependencies = [
- "amplify",
- "bitcoin_hashes",
- "strict_encoding",
-]
-
-[[package]]
 name = "darling"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -289,9 +280,9 @@ dependencies = [
 
 [[package]]
 name = "descriptor-wallet"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cae39ccc51fa599447008b64c911d251ded6a263745a3cc4901d469eddec478f"
+checksum = "c7f3be0f0755d8219ebc71fc0a41e015c2e61bf3397fe22dd95afe4ebf9b566e"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -299,7 +290,6 @@ dependencies = [
  "bitcoin_onchain",
  "bitcoin_scripts",
  "chrono",
- "commit_verify",
  "psbt",
  "slip132",
  "strict_encoding",
@@ -307,14 +297,15 @@ dependencies = [
 
 [[package]]
 name = "descriptors"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b45112868d29bc7b254b322c24d25bc973ce9501d54ddc7c4eda30b7178f22f7"
+checksum = "36afa2baa98f5205560c4e194c0f943546682b943bc96adbec54ed7e1bbf5cab"
 dependencies = [
  "amplify",
  "bitcoin",
  "bitcoin_hd",
  "bitcoin_scripts",
+ "chrono",
  "strict_encoding",
 ]
 
@@ -414,9 +405,9 @@ checksum = "1bf2e165bb3457c8e098ea76f3e3bc9db55f87aa90d52d0e6be741470916aaa4"
 
 [[package]]
 name = "lightning_encoding"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a489f4be14faca65ad97e2b8c0da82570e238677ac6559ea98f5184de6beb818"
+checksum = "180e28e65c38653d39c262d1e08d0a7e76ee4259b57e8f0996427fcc8a9684f1"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -428,9 +419,9 @@ dependencies = [
 
 [[package]]
 name = "lightning_encoding_derive"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05fac890fa2a4bb30b8f5bf397885f1999f6c56d2bc6c6f3bbd4381731facc7a"
+checksum = "53e395b72fdbd9e1c829ab2e1840769cfe59df75c80f3c7c89f450c3b200d10a"
 dependencies = [
  "amplify_syn",
  "encoding_derive_helpers",
@@ -447,7 +438,7 @@ checksum = "7fb9b38af92608140b86b693604b9ffcc5824240a484d1ecd4795bacb2fe88f3"
 
 [[package]]
 name = "lnpbp"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "amplify",
  "base58",
@@ -464,7 +455,7 @@ dependencies = [
 
 [[package]]
 name = "lnpbp_bech32"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "amplify",
  "bech32",
@@ -478,7 +469,7 @@ dependencies = [
 
 [[package]]
 name = "lnpbp_chain"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -493,7 +484,7 @@ dependencies = [
 
 [[package]]
 name = "lnpbp_elgamal"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "amplify",
  "bitcoin_hashes",
@@ -581,9 +572,9 @@ dependencies = [
 
 [[package]]
 name = "psbt"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1683c1d2fff0e58186b0ca954b947632e6b74d40b65fac2afeacf259093cb72"
+checksum = "2e983970b390169b0e5c2781de5ae24fd9e20362c3c3ef5d4153fddd6895f977"
 dependencies = [
  "amplify",
  "bitcoin",
@@ -591,6 +582,7 @@ dependencies = [
  "bitcoin_onchain",
  "bitcoin_scripts",
  "descriptors",
+ "strict_encoding",
 ]
 
 [[package]]
@@ -828,13 +820,23 @@ dependencies = [
 
 [[package]]
 name = "slip132"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f49f1d87d2b1724892e022adce088a95348002d379d17c7acaf2a3c352bfde8"
+checksum = "086f81f7be78373eb07e9879fa77e49d52416bde18778f675698c5c7da6b296c"
 dependencies = [
  "amplify",
  "bitcoin",
  "strict_encoding",
+]
+
+[[package]]
+name = "stability"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ebd1b177894da2a2d9120208c3386066af06a488255caabc5de8ddca22dbc3ce"
+dependencies = [
+ "quote",
+ "syn",
 ]
 
 [[package]]

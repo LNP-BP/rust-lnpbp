@@ -1,6 +1,14 @@
 Change Log
 ==========
 
+v0.7.0
+------
+- Migrating on Rust edition 2021
+
+v0.6.0
+------
+- Upgrade to dependencies with full Taproot support
+
 v0.5.0
 ------
 - Refactoring of the library into utilitary one with all BP-specific modules

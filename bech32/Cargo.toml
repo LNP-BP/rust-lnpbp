@@ -1,14 +1,14 @@
 [package]
 name = "lnpbp_bech32"
-version = "0.6.0"
+version = "0.7.0"
 license = "MIT"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 description = "LNPBP-14 implementation"
 repository = "https://github.com/LNP-BP/rust-lnpbp"
-homepage = "https://github.com/LNP-BP/tree/master/bech32"
-keywords = ["bitcoin", "lightning", "lnp-bp", "lnpbp-7", "bech32"]
+homepage = "https://github.com/LNP-BP/rust-lnpbp/tree/master/bech32"
+keywords = ["bitcoin", "lightning", "lnp-bp", "lnpbp-14", "bech32"]
 categories = ["cryptography::cryptocurrencies"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 amplify = "3.12.0"
