@@ -352,7 +352,7 @@ static CHAIN_PARAMS_REGTEST: Lazy<ChainParams> = Lazy::new(|| ChainParams {
     genesis_hash: BlockHash::from_slice(GENESIS_HASH_REGTEST)
         .expect("Bitcoin regtest genesis hash contains invalid binary data"),
     bip70_name: "regtest".to_string(),
-    bip173_prefix: "tb".to_string(),
+    bip173_prefix: "bcrt".to_string(),
     p2p_port: 28333,
     rpc_port: 28332,
     ln_height: 1,
