@@ -206,12 +206,14 @@ hash_newtype!(
     false
 );
 
-impl strict_encoding::Strategy for AssetId {
-    type Strategy = strict_encoding::strategies::HashFixedBytes;
+impl Default for AssetId {
+    fn default() -> Self {
+        AssetId::from_inner([0u8; 32])
+    }
 }
 
-impl lightning_encoding::Strategy for AssetId {
-    type Strategy = lightning_encoding::strategies::AsBitcoinHash;
+impl strict_encoding::Strategy for AssetId {
+    type Strategy = strict_encoding::strategies::HashFixedBytes;
 }
 
 impl From<BlockHash> for AssetId {

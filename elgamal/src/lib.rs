@@ -22,7 +22,7 @@
 extern crate amplify;
 
 use bitcoin_hashes::{sha256, Hash, HashEngine};
-use secp256k1::{Secp256k1, Signing, Verification};
+use secp256k1::{Scalar, Secp256k1, Signing, Verification};
 
 /// Errors during ElGamal encryption/decryption
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Display, Error, From)]
@@ -79,7 +79,8 @@ pub fn encrypt<C: Signing + Verification>(
     let mut hash = sha256::Hash::hash(&encryption_key.serialize());
 
     // Tweaking the encryption key with the blinding factor
-    encryption_key.add_exp_assign(context, &blinding_key[..])?;
+    let tweak = Scalar::from_be_bytes(blinding_key.secret_bytes()).expect("negligible probability");
+    encryption_key = encryption_key.add_exp_tweak(context, &tweak)?;
 
     // Pad the message to the round number of 30-byte chunks with the generated
     // entropy
@@ -151,7 +152,8 @@ pub fn decrypt<C: Verification>(
     }
 
     // Tweak the encryption key with the blinding factor
-    unblinding_key.add_exp_assign(context, &decryption_key[..])?;
+    let tweak = Scalar::from_be_bytes(decryption_key.secret_bytes()).expect("negligible probability");
+    unblinding_key = unblinding_key.add_exp_tweak(context, &tweak)?;
     let encryption_key = unblinding_key;
 
     // Decrypt message chunk by chunk
@@ -165,7 +167,7 @@ pub fn decrypt<C: Verification>(
         let chunk33 = [&[2u8], &encrypted[..32]].concat();
         let mut pubkey = secp256k1::PublicKey::from_slice(&chunk33)
             .map_err(|_| Error::InvalidEncryptedMessage)?;
-        pubkey.negate_assign(context);
+        pubkey = pubkey.negate(context);
         let unencrypted = pubkey.combine(&encryption_key)?;
         // Remove random tail from the data
         let chunk30 = &mut unencrypted.serialize()[1..31];
@@ -233,11 +235,13 @@ mod test {
         assert_ne!(blinding_key[..], secp256k1::ONE_KEY[..]);
         assert_ne!(blinding_key[..], decryption_key[..]);
 
-        let mut uk = unblinding_key.clone();
-        let mut ek = encryption_key.clone();
+        let uk = unblinding_key.clone();
+        let ek = encryption_key.clone();
+        let tweak1 = Scalar::from_be_bytes(blinding_key.secret_bytes()).unwrap();
+        let tweak2 = Scalar::from_be_bytes(decryption_key.secret_bytes()).unwrap();
         assert_eq!(
-            ek.add_exp_assign(&SECP256K1, &blinding_key[..]),
-            uk.add_exp_assign(&SECP256K1, &decryption_key[..])
+            ek.add_exp_tweak(&SECP256K1, &tweak1).unwrap(),
+            uk.add_exp_tweak(&SECP256K1, &tweak2).unwrap()
         );
 
         let encrypted =
@@ -315,7 +319,7 @@ mod test {
 
     #[test]
     fn test_exhaustive_small_lengths() {
-        for byte in 0..core::u8::MAX {
+        for byte in 0..u8::MAX {
             for len in 1..66 {
                 run_test_bin(&vec![byte; len as usize]);
             }
@@ -325,7 +329,7 @@ mod test {
     #[test]
     fn test_text_rand() {
         for _ in 1..10 {
-            let len = thread_rng().gen_range(2, core::u16::MAX);
+            let len = thread_rng().gen_range(2..=u16::MAX);
             let mut entropy = vec![0u8; len as usize];
             thread_rng().fill_bytes(&mut entropy);
             run_test_bin(&entropy);
@@ -369,7 +373,7 @@ mod test {
             secp256k1::PublicKey::from_secret_key(&SECP256K1, &decryption_key);
 
         let mut blinding_key = decryption_key.clone();
-        blinding_key.negate_assign();
+        blinding_key = blinding_key.negate();
         assert_eq!(
             encrypt(&SECP256K1, b"message", encryption_key, &mut blinding_key)
                 .unwrap_err(),

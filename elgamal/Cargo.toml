@@ -1,6 +1,6 @@
 [package]
 name = "lnpbp_elgamal"
-version = "0.8.0"
+version = "0.9.0"
 license = "MIT"
 authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
 description = "LNPBP-31: ElGamal symmetric encryptiion library with Secp256k1 curve"
@@ -11,9 +11,9 @@ categories = ["cryptography"]
 edition = "2021"
 
 [dependencies]
-amplify = "3.12.1"
-secp256k1 = "0.22.1"
-bitcoin_hashes = "0.10.0"
+amplify = "3.13.0"
+secp256k1 = "0.24.1"
+bitcoin_hashes = "0.11.0"
 
 [dev-dependencies]
-secp256k1 = { version = "0.22.1", features = ["rand-std", "global-context"] }
+secp256k1 = { version = "0.24.1", features = ["rand-std", "global-context"] }
