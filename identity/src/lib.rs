@@ -22,7 +22,7 @@ use std::string::FromUtf8Error;
 use amplify::hex::ToHex;
 use bech32::{FromBase32, ToBase32};
 use bitcoin_hashes::{sha256, sha256d};
-use secp256k1::{Message, SECP256K1};
+use secp256k1::{rand, Message, SECP256K1};
 use strict_encoding::{StrictDecode, StrictEncode};
 
 #[derive(Clone, Eq, PartialEq, Debug, Display, Error)]
@@ -147,6 +147,63 @@ impl FromStr for EcAlgo {
     }
 }
 
+#[derive(Clone, Eq, PartialEq, Hash)]
+pub struct IdentitySigner {
+    pub cert: IdentityCert,
+    prvkey: Box<[u8]>,
+}
+
+impl StrictEncode for IdentitySigner {
+    fn strict_encode<E: Write>(
+        &self,
+        mut e: E,
+    ) -> Result<usize, strict_encoding::Error> {
+        let len = self.cert.strict_encode(&mut e)?;
+        e.write_all(&self.prvkey)?;
+        Ok(len + self.cert.algo.prv_len())
+    }
+}
+
+impl StrictDecode for IdentitySigner {
+    fn strict_decode<D: Read>(
+        mut d: D,
+    ) -> Result<Self, strict_encoding::Error> {
+        let cert = IdentityCert::strict_decode(&mut d)?;
+
+        let mut prvkey = vec![0u8; cert.algo.prv_len()];
+        d.read_exact(&mut prvkey)?;
+
+        secp256k1::SecretKey::from_slice(&prvkey).map_err(secp_to_sten_err)?;
+
+        Ok(Self {
+            cert,
+            prvkey: Box::from(prvkey),
+        })
+    }
+}
+
+impl IdentitySigner {
+    pub fn new_bip340() -> Self {
+        let pair = secp256k1::KeyPair::new(&SECP256K1, &mut rand::thread_rng());
+        let cert = IdentityCert::from(pair);
+        Self {
+            cert,
+            prvkey: Box::from(pair.secret_key().secret_bytes()),
+        }
+    }
+
+    pub fn sign(&self, msg: impl AsRef<[u8]>) -> SigCert {
+        match self.cert.algo {
+            EcAlgo::Bip340 => {
+                let sk = secp256k1::SecretKey::from_slice(&self.prvkey)
+                    .expect("invalid private key");
+                SigCert::bip340_sha256d(sk, msg)
+            }
+            EcAlgo::Ed25519 => todo!("Ed25519 signatures"),
+        }
+    }
+}
+
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct IdentityCert {
     algo: EcAlgo,
@@ -198,6 +255,11 @@ impl StrictDecode for IdentityCert {
         let mut sig = vec![0u8; algo.sig_len()];
         d.read_exact(&mut pubkey)?;
         d.read_exact(&mut sig)?;
+
+        secp256k1::XOnlyPublicKey::from_slice(&pubkey)
+            .map_err(secp_to_sten_err)?;
+        secp256k1::schnorr::Signature::from_slice(&sig)
+            .map_err(secp_to_sten_err)?;
 
         Ok(Self {
             algo,
@@ -325,6 +387,9 @@ impl StrictDecode for SigCert {
         let mut sig = vec![0u8; curve.sig_len()];
         d.read_exact(&mut sig)?;
 
+        secp256k1::schnorr::Signature::from_slice(&sig)
+            .map_err(secp_to_sten_err)?;
+
         Ok(Self {
             hash,
             curve,
@@ -393,13 +458,20 @@ fn bin_fmt(v: &[u8]) -> String {
         .replace('\n', "\n      ")
 }
 
+fn secp_to_sten_err(err: secp256k1::Error) -> strict_encoding::Error {
+    strict_encoding::Error::DataIntegrityError(format!(
+        "broken elliptic curve data. Details: {}",
+        err
+    ))
+}
+
 #[cfg(test)]
 mod test {
     use std::str::FromStr;
 
     use secp256k1::SECP256K1;
 
-    use crate::{IdentityCert, SigCert};
+    use crate::{IdentityCert, IdentitySigner, SigCert};
 
     fn cert() -> IdentityCert {
         IdentityCert::from_str("crt1q9umuen7l8wthtz45p3ftn58pvrs9xlumvkuu2xet8egzkcklqte3fc3pu8qq6p0qx48fjttj7ecfcemry5r7yqlnfna6qhf4s46r2aw68wqc9spn4a465x54zy03gleun58fcz3tpxhqcg5nv4ssgyeysxq8t50zt_venice_vega_balloon").unwrap()
@@ -440,12 +512,8 @@ sig   a711 0f0e 0068 2f01 aa74 c96b 97b3 84e3 3b19 283f 101f 9a67 dd02 e9ac 2ba1
 
     #[test]
     fn sig_create() {
-        let pair = secp256k1::KeyPair::from_seckey_slice(
-            &SECP256K1,
-            &secp256k1::ONE_KEY[..],
-        )
-        .unwrap();
-        SigCert::bip340_sha256d(pair.secret_key(), "");
+        let _ = IdentitySigner::new_bip340();
+        // SigCert::bip340_sha256d(pair.secret_key(), "");
     }
 
     #[test]
