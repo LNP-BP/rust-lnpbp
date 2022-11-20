@@ -155,7 +155,7 @@ pub struct IdentityCert {
 }
 
 impl IdentityCert {
-    pub fn fingerprint(&self) -> String {
+    pub fn nym(&self) -> String {
         let mut mnemonic = Vec::with_capacity(64);
         let mut crc32data = Vec::with_capacity(self.algo.cert_len() as usize);
         crc32data.push(self.algo.encode());
@@ -167,6 +167,12 @@ impl IdentityCert {
         String::from_utf8(mnemonic)
             .expect("mnemonic library error")
             .replace('-', "_")
+    }
+
+    pub fn fingerprint(&self) -> String {
+        let mut s = format!("{:#}", self);
+        let _ = s.split_off(6);
+        s
     }
 }
 
@@ -203,8 +209,9 @@ impl StrictDecode for IdentityCert {
 
 impl Debug for IdentityCert {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        writeln!(f, "nym   {}", self.nym())?;
         writeln!(f, "fgp   {}", self.fingerprint())?;
-        writeln!(f, "alg   {}", self.algo)?;
+        writeln!(f, "crv   {}", self.algo)?;
         writeln!(f, "idk   {}", bin_fmt(&self.pubkey))?;
         writeln!(f, "sig   {}", bin_fmt(&self.sig))?;
 
@@ -227,7 +234,7 @@ impl Display for IdentityCert {
             f.write_str(&s)?;
         }
         f.write_str("_")?;
-        f.write_str(&self.fingerprint())
+        f.write_str(&self.nym())
     }
 }
 
@@ -250,8 +257,8 @@ impl FromStr for IdentityCert {
 
         let cert = Self::strict_deserialize(data)?;
 
-        let nym = cert.fingerprint();
-        if !mnem.is_empty() && cert.fingerprint() != mnem {
+        let nym = cert.nym();
+        if !mnem.is_empty() && cert.nym() != mnem {
             return Err(CertError::InvalidMnemonic(nym));
         }
 
@@ -328,7 +335,7 @@ impl StrictDecode for SigCert {
 
 impl Debug for SigCert {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        writeln!(f, "alg   {}", self.hash)?;
+        writeln!(f, "dig   {}", self.hash)?;
         writeln!(f, "crv   {}", self.curve)?;
         writeln!(f, "sig   {}", bin_fmt(&self.sig))?;
 
@@ -375,7 +382,7 @@ fn bin_fmt(v: &[u8]) -> String {
         .flat_map(|(i, c)| {
             match i {
                 0 => None,
-                i if i % 16 == 0 => Some('\n'),
+                i if i % (4 * 16) == 0 => Some('\n'),
                 i if i % 4 == 0 => Some(' '),
                 _ => None,
             }
@@ -383,40 +390,74 @@ fn bin_fmt(v: &[u8]) -> String {
             .chain(std::iter::once(c))
         })
         .collect::<String>()
+        .replace('\n', "\n      ")
 }
 
 #[cfg(test)]
 mod test {
-    use crate::{IdentityCert, SigCert};
+    use std::str::FromStr;
+
     use secp256k1::SECP256K1;
 
+    use crate::{IdentityCert, SigCert};
+
+    fn cert() -> IdentityCert {
+        IdentityCert::from_str("crt1q9umuen7l8wthtz45p3ftn58pvrs9xlumvkuu2xet8egzkcklqte3fc3pu8qq6p0qx48fjttj7ecfcemry5r7yqlnfna6qhf4s46r2aw68wqc9spn4a465x54zy03gleun58fcz3tpxhqcg5nv4ssgyeysxq8t50zt_venice_vega_balloon").unwrap()
+    }
+
+    fn sig() -> SigCert {
+        SigCert::from_str("sig1qgqm0d5l8sjas4v2vk3tzqc5m2ltpkv208uf2chyh3fqmhwq3rdnu3ve0gkytrl7wl68075zxxukq9ff6gmd38w7hmtdas089jefkf2rsyasksse").unwrap()
+    }
+
     #[test]
-    fn cert_creation() {
+    fn cert_create() {
         let pair = secp256k1::KeyPair::from_seckey_slice(
             &SECP256K1,
             &secp256k1::ONE_KEY[..],
         )
         .unwrap();
-        let _cert = IdentityCert::from(pair);
-        /*
-        assert_eq!(format!("{}", cert), "crt1qyghn0nx0muaewav2ksx99wwsu9swq5mlndjmn3gm9vl9q2mzmup0xrdgswg9ate53t5hvppkl2xjem0y2sg5r738s7jqdlk4jd49v72c4t0f7e3a2yup6xhldv4c35hf5ncvas3r8ulwf4xx3ynqy3vwsc37avgyrl_game_accent_candle");
-        assert_eq!(format!("{:#}", cert), "8wdwat_game_accent_candle");
+        let _ = IdentityCert::from(pair);
+    }
+
+    #[test]
+    fn cert_display() {
+        let cert = cert();
+
+        assert_eq!(cert.nym(), "venice_vega_balloon");
+        assert_eq!(cert.fingerprint(), "8t50zt");
+
+        assert_eq!(format!("{}", cert), "crt1q9umuen7l8wthtz45p3ftn58pvrs9xlumvkuu2xet8egzkcklqte3fc3pu8qq6p0qx48fjttj7ecfcemry5r7yqlnfna6qhf4s46r2aw68wqc9spn4a465x54zy03gleun58fcz3tpxhqcg5nv4ssgyeysxq8t50zt_venice_vega_balloon");
+        assert_eq!(format!("{:#}", cert), "8t50zt_venice_vega_balloon");
         assert_eq!(format!("{:?}", cert), "\
-        fgp   gsjc3l_game_accent_candle
-        alg   secp256k1-bip340-xonly
-        idk   79be 667e f9dc bbac 55a0 6295 ce87 0b07 029b fcdb 2dce 28d9 59f2 815b 16f8 1798
-        sig   e4b4 1a37 317e 1de6 bd00 ec17 fcb6 940a cda0 5a21 586c 3134 b793 c0c2 d89f 8e09 2efc c7af 9829 78a0 9f19 8040 e680 66e2 859c 4a8e 8036 2d4e e659 5333 388e 6949
-        ");
-         */
+nym   venice_vega_balloon
+fgp   8t50zt
+crv   bip340
+idk   79be 667e f9dc bbac 55a0 6295 ce87 0b07 029b fcdb 2dce 28d9 59f2 815b 16f8 1798
+sig   a711 0f0e 0068 2f01 aa74 c96b 97b3 84e3 3b19 283f 101f 9a67 dd02 e9ac 2ba1 abae
+      d1dc 0c16 019d 7b5d 50d4 a888 f8a3 f9e4 e874 e051 584d 7061 149b 2b08 2099 240c
+");
+    }
+
+    #[test]
+    fn sig_create() {
+        let pair = secp256k1::KeyPair::from_seckey_slice(
+            &SECP256K1,
+            &secp256k1::ONE_KEY[..],
+        )
+        .unwrap();
+        SigCert::bip340_sha256d(pair.secret_key(), "");
     }
 
     #[test]
     fn sig_display() {
-        let pair = secp256k1::KeyPair::from_seckey_slice(
-            &SECP256K1,
-            &secp256k1::ONE_KEY[..],
-        )
-        .unwrap();
-        let _sig = SigCert::bip340_sha256d(pair.secret_key(), "");
+        let sig = sig();
+        assert_eq!(format!("{}", sig), "sig1qgqm0d5l8sjas4v2vk3tzqc5m2ltpkv208uf2chyh3fqmhwq3rdnu3ve0gkytrl7wl68075zxxukq9ff6gmd38w7hmtdas089jefkf2rsyasksse");
+        assert_eq!(format!("{:#}", sig), "sig1qgqm0d5l8sjas4v2vk3tzqc5m2ltpkv208uf2chyh3fqmhwq3rdnu3ve0gkytrl7wl68075zxxukq9ff6gmd38w7hmtdas089jefkf2rsyasksse");
+        assert_eq!(format!("{:?}", sig), "\
+dig   sha256d
+crv   bip340
+sig   b7b6 9f3c 25d8 558a 65a2 b103 14da beb0 d98a 79f8 9562 e4bc 520d ddc0 88db 3e45
+      997a 2c45 8ffe 77f4 77fa 8231 b960 1529 d236 d89d debe d6de c1e7 2cb2 9b25 4381
+");
     }
 }
