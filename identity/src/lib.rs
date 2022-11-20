@@ -15,7 +15,7 @@
 extern crate amplify;
 
 use std::fmt::{self, Debug, Display, Formatter};
-use std::io::Write;
+use std::io::{Read, Write};
 use std::str::FromStr;
 use std::string::FromUtf8Error;
 
@@ -23,7 +23,7 @@ use amplify::hex::ToHex;
 use bech32::{FromBase32, ToBase32};
 use bitcoin_hashes::{sha256, sha256d};
 use secp256k1::{Message, SECP256K1};
-use strict_encoding::{Error, StrictEncode};
+use strict_encoding::{StrictDecode, StrictEncode};
 
 #[derive(Clone, Eq, PartialEq, Debug, Display, Error)]
 #[display("unknown algorithm {0}")]
@@ -45,6 +45,7 @@ pub enum CertError {
     InvalidMnemonic(String),
 
     #[display("provided certificate contains incomplete data")]
+    #[from(strict_encoding::Error)]
     IncompleteData,
 
     #[display("certificate uses unknown cryptographic algorithm; try to update the tool version")]
@@ -56,6 +57,9 @@ pub enum CertError {
 }
 
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
+#[derive(StrictEncode, StrictDecode)]
+#[strict_encoding(by_value, repr = u8)]
+#[repr(u8)]
 pub enum HashAlgo {
     #[display("sha256d")]
     Sha256d = 2,
@@ -66,17 +70,6 @@ impl HashAlgo {
         match self {
             Self::Sha256d => 32,
         }
-    }
-
-    pub fn encode(self) -> u8 {
-        self as u8
-    }
-
-    pub fn decode(code: u8) -> Option<Self> {
-        Some(match code {
-            x if x == Self::Sha256d as u8 => Self::Sha256d,
-            _ => return None,
-        })
     }
 }
 
@@ -92,17 +85,20 @@ impl FromStr for HashAlgo {
 }
 
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
+#[derive(StrictEncode, StrictDecode)]
+#[strict_encoding(by_value, repr = u8)]
+#[repr(u8)]
 pub enum EcAlgo {
     #[display("bip340")]
-    Bip340,
+    Bip340 = 1,
 
     #[display("ed25519")]
-    Ed25519,
+    Ed25519 = 2,
 }
 
 impl EcAlgo {
     pub fn cert_len(self) -> usize {
-        self.pub_len() + self.sig_len()
+        1 + self.pub_len() + self.sig_len()
     }
 
     pub fn prv_len(self) -> usize {
@@ -126,19 +122,16 @@ impl EcAlgo {
         }
     }
 
-    pub fn decode(code: [u8; 2]) -> Option<Self> {
+    pub fn decode(code: u8) -> Option<Self> {
         Some(match code {
-            x if x == Self::Bip340.encode() => Self::Bip340,
-            x if x == Self::Ed25519.encode() => Self::Ed25519,
+            x if x == Self::Bip340 as u8 => Self::Bip340,
+            x if x == Self::Ed25519 as u8 => Self::Ed25519,
             _ => return None,
         })
     }
 
-    pub fn encode(self) -> [u8; 2] {
-        match self {
-            Self::Bip340 => [1, 1],
-            Self::Ed25519 => [2, 1],
-        }
+    pub fn encode(self) -> u8 {
+        self as u8
     }
 }
 
@@ -165,7 +158,7 @@ impl IdentityCert {
     pub fn fingerprint(&self) -> String {
         let mut mnemonic = Vec::with_capacity(64);
         let mut crc32data = Vec::with_capacity(self.algo.cert_len() as usize);
-        crc32data.extend(self.algo.encode());
+        crc32data.push(self.algo.encode());
         crc32data.extend(&*self.pubkey);
         let crc32 = crc32fast::hash(&crc32data);
         mnemonic::encode(crc32.to_be_bytes(), &mut mnemonic)
@@ -178,11 +171,33 @@ impl IdentityCert {
 }
 
 impl StrictEncode for IdentityCert {
-    fn strict_encode<E: Write>(&self, mut e: E) -> Result<usize, Error> {
-        e.write_all(&self.algo.encode())?;
+    fn strict_encode<E: Write>(
+        &self,
+        mut e: E,
+    ) -> Result<usize, strict_encoding::Error> {
+        self.algo.strict_encode(&mut e)?;
         e.write_all(&self.pubkey)?;
         e.write_all(&self.sig)?;
         Ok(self.algo.cert_len() as usize)
+    }
+}
+
+impl StrictDecode for IdentityCert {
+    fn strict_decode<D: Read>(
+        mut d: D,
+    ) -> Result<Self, strict_encoding::Error> {
+        let algo = EcAlgo::strict_decode(&mut d)?;
+
+        let mut pubkey = vec![0u8; algo.pub_len()];
+        let mut sig = vec![0u8; algo.sig_len()];
+        d.read_exact(&mut pubkey)?;
+        d.read_exact(&mut sig)?;
+
+        Ok(Self {
+            algo,
+            pubkey: Box::from(pubkey),
+            sig: Box::from(sig),
+        })
     }
 }
 
@@ -233,22 +248,7 @@ impl FromStr for IdentityCert {
 
         let data = Vec::<u8>::from_base32(&encoded)?;
 
-        if data.len() <= 2 {
-            return Err(CertError::IncompleteData);
-        }
-
-        let algo =
-            EcAlgo::decode([data[0], data[1]]).ok_or(CertError::UnknownAlgo)?;
-        if data.len() != algo.cert_len() {
-            return Err(CertError::IncompleteData);
-        }
-        let pubkey = &data[2..algo.pub_len()];
-        let sig = &data[algo.cert_len() - algo.sig_len()..];
-        let cert = Self {
-            algo,
-            pubkey: Box::from(pubkey),
-            sig: Box::from(sig),
-        };
+        let cert = Self::strict_deserialize(data)?;
 
         let nym = cert.fingerprint();
         if !mnem.is_empty() && cert.fingerprint() != mnem {
@@ -297,11 +297,32 @@ impl SigCert {
 }
 
 impl StrictEncode for SigCert {
-    fn strict_encode<E: Write>(&self, mut e: E) -> Result<usize, Error> {
-        e.write_all(&[self.hash.encode()])?;
-        e.write_all(&self.curve.encode())?;
+    fn strict_encode<E: Write>(
+        &self,
+        mut e: E,
+    ) -> Result<usize, strict_encoding::Error> {
+        let mut len = self.hash.strict_encode(&mut e)?;
+        len += self.curve.strict_encode(&mut e)?;
         e.write_all(&self.sig)?;
-        Ok(1 + self.curve.cert_len() as usize)
+        Ok(len + self.curve.sig_len())
+    }
+}
+
+impl StrictDecode for SigCert {
+    fn strict_decode<D: Read>(
+        mut d: D,
+    ) -> Result<Self, strict_encoding::Error> {
+        let hash = HashAlgo::strict_decode(&mut d)?;
+        let curve = EcAlgo::strict_decode(&mut d)?;
+
+        let mut sig = vec![0u8; curve.sig_len()];
+        d.read_exact(&mut sig)?;
+
+        Ok(Self {
+            hash,
+            curve,
+            sig: Box::from(sig),
+        })
     }
 }
 
@@ -343,26 +364,7 @@ impl FromStr for SigCert {
         }
 
         let data = Vec::<u8>::from_base32(&encoded)?;
-
-        if data.len() <= 3 {
-            return Err(CertError::IncompleteData);
-        }
-
-        let hash = HashAlgo::decode(data[0]).ok_or(CertError::UnknownAlgo)?;
-        let curve =
-            EcAlgo::decode([data[1], data[2]]).ok_or(CertError::UnknownAlgo)?;
-
-        if data.len() != 3 + curve.sig_len() {
-            return Err(CertError::IncompleteData);
-        }
-        let sig = &data[3..];
-        let cert = Self {
-            hash,
-            curve,
-            sig: Box::from(sig),
-        };
-
-        Ok(cert)
+        Self::strict_deserialize(data).map_err(CertError::from)
     }
 }
 
