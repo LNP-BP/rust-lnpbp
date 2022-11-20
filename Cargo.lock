@@ -553,6 +553,7 @@ dependencies = [
  "lnpbp_bech32",
  "lnpbp_chain",
  "lnpbp_elgamal",
+ "lnpbp_identity",
  "serde",
  "serde_json",
  "serde_with",
@@ -599,7 +600,7 @@ dependencies = [
 
 [[package]]
 name = "lnpbp_identity"
-version = "0.1.0"
+version = "0.9.0-beta.1"
 dependencies = [
  "amplify 4.0.0-alpha.1",
  "bech32 0.9.1",

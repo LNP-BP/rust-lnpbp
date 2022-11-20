@@ -19,12 +19,14 @@ extern crate serde_crate as serde;
 
 use std::fmt::{Debug, Display};
 use std::io::{self, Read};
+use std::path::PathBuf;
 use std::str::FromStr;
 
 use amplify::hex::{FromHex, ToHex};
 use base58::{FromBase58, ToBase58};
 use clap::Parser;
-use lnpbp::bech32::Blob;
+use lnpbp::{bech32::Blob, id};
+use lnpbp_identity::{IdentityCert, SigCert};
 use serde::Serialize;
 
 #[derive(Parser, Clone, Debug)]
@@ -43,7 +45,11 @@ pub struct Opts {
 
 #[derive(Subcommand, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum Command {
-    /// Commands for working with consignments
+    /// Commands for working with LNP/BP identities
+    #[clap(subcommand)]
+    Identity(IdentityCommand),
+
+    /// Commands for converting data between encodings
     Convert {
         /// Original data; if none are given reads from STDIN
         data: Option<String>,
@@ -55,6 +61,116 @@ pub enum Command {
         /// Formatting for the output
         #[clap(short, long, default_value = "yaml")]
         output: Format,
+    },
+}
+
+#[derive(Subcommand, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub enum IdentityCommand {
+    /// Generate a new identity, saving it to the file
+    Create {
+        /// Curve algorithm to use foe the new identity
+        #[clap(short, long, default_value = "secp256k1-bip340-xonly")]
+        algo: id::CurveAlgo,
+
+        /// File to store the identity in
+        #[clap()]
+        file: PathBuf,
+    },
+
+    /// Read info about the identity from the file
+    Read {
+        /// File containing identity information
+        #[clap()]
+        file: PathBuf,
+    },
+
+    /// Sign a message, a file or data read from STDIN
+    Sign {
+        /// File containing identity information
+        #[clap()]
+        identity_file: PathBuf,
+
+        /// Message to sign
+        #[clap(short, long, conflicts_with = "file")]
+        message: Option<String>,
+
+        /// File to sign
+        #[clap()]
+        message_file: Option<PathBuf>,
+    },
+
+    /// Verify an identity certificate and optionally a signature against a
+    /// file, message or data read from STDIN
+    Verify {
+        /// An identity certificate to use
+        #[clap()]
+        cert: IdentityCert,
+
+        /// A signature to verify
+        #[clap()]
+        sig: Option<SigCert>,
+
+        /// Message to verify the signature
+        #[clap(short, long = "msg", conflicts_with = "file")]
+        message: Option<String>,
+
+        /// File to verify the signature
+        #[clap()]
+        file: Option<PathBuf>,
+    },
+
+    /// Encrypt a message
+    Encrypt {
+        /// Use ASCII armoring
+        #[clap(short, long = "ascii")]
+        armor: bool,
+
+        /// File containing local information
+        #[clap()]
+        identity_file: PathBuf,
+
+        /// An identity of the receiver
+        #[clap()]
+        cert: IdentityCert,
+
+        /// Message to encrypt
+        #[clap(short, long = "msg", conflicts_with = "file")]
+        message: Option<String>,
+
+        /// File to encrypt
+        #[clap()]
+        src_file: Option<PathBuf>,
+
+        /// Destination file to save the encrypted data to
+        #[clap()]
+        dst_file: Option<PathBuf>,
+    },
+
+    /// Decrypt a previously encrypted message
+    Decrypt {
+        /// The input data are ASCII armored
+        #[clap(short, long = "ascii")]
+        armor: bool,
+
+        /// File containing local information
+        #[clap()]
+        identity_file: PathBuf,
+
+        /// An identity of the receiver
+        #[clap()]
+        cert: IdentityCert,
+
+        /// Message to decrypt
+        #[clap(short, long = "msg", conflicts_with = "file")]
+        message: Option<String>,
+
+        /// File to decrypt
+        #[clap()]
+        src_file: Option<PathBuf>,
+
+        /// Destination file to save the decrypted data to
+        #[clap()]
+        dst_file: Option<PathBuf>,
     },
 }
 
