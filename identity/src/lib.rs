@@ -56,6 +56,18 @@ pub enum CertError {
     Utf8(FromUtf8Error),
 }
 
+#[derive(Clone, Eq, PartialEq, Debug, Display, Error, From)]
+pub enum VerifyError {
+    #[display(
+        "signature algorithm does not match digital identity certificate"
+    )]
+    AlgoMismatch,
+
+    #[display("invalid signature")]
+    #[from(secp256k1::Error)]
+    InvalidSig,
+}
+
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
 #[derive(StrictEncode, StrictDecode)]
 #[strict_encoding(by_value, repr = u8)]
@@ -363,6 +375,35 @@ impl SigCert {
             sig: Box::from(&sig[..]),
         }
     }
+
+    pub fn verify(
+        &self,
+        cert: &IdentityCert,
+        msg: impl AsRef<[u8]>,
+    ) -> Result<(), VerifyError> {
+        if cert.algo != self.curve {
+            return Err(VerifyError::AlgoMismatch);
+        }
+
+        match self.curve {
+            EcAlgo::Bip340 => {
+                let sig = secp256k1::schnorr::Signature::from_slice(&self.sig)
+                    .expect("broken signature data");
+                let msg = match self.hash {
+                    HashAlgo::Sha256d => {
+                        Message::from_hashed_data::<sha256d::Hash>(msg.as_ref())
+                    }
+                };
+                let pubkey =
+                    secp256k1::XOnlyPublicKey::from_slice(&cert.pubkey)
+                        .expect("broken pubkey");
+                sig.verify(&msg, &pubkey)?;
+            }
+            EcAlgo::Ed25519 => todo!("Ed25519 signature verification"),
+        }
+
+        Ok(())
+    }
 }
 
 impl StrictEncode for SigCert {
@@ -511,9 +552,30 @@ sig   a711 0f0e 0068 2f01 aa74 c96b 97b3 84e3 3b19 283f 101f 9a67 dd02 e9ac 2ba1
     }
 
     #[test]
-    fn sig_create() {
-        let _ = IdentitySigner::new_bip340();
-        // SigCert::bip340_sha256d(pair.secret_key(), "");
+    fn sign() {
+        let me = IdentitySigner::new_bip340();
+        let msg = "This is me";
+        let sig = me.sign(msg);
+        sig.verify(&me.cert, msg).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "InvalidSig)")]
+    fn wrong_sig_msg() {
+        let me = IdentitySigner::new_bip340();
+        let msg = "This is me";
+        let sig = me.sign(msg);
+        sig.verify(&me.cert, "This is not me").unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "InvalidSig)")]
+    fn wrong_sig_key() {
+        let me = IdentitySigner::new_bip340();
+        let other = IdentitySigner::new_bip340();
+        let msg = "This is me";
+        let sig = me.sign(msg);
+        sig.verify(&other.cert, msg).unwrap();
     }
 
     #[test]
