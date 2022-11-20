@@ -47,5 +47,5 @@ zip = ["lnpbp_bech32/zip"]
 all_msrv47 = ["serde", "elgamal", "zip"] # Used in testing against MSRV 1.47
 
 [workspace]
-members = [".", "bech32", "chain", "elgamal"]
-default-members = [".", "bech32", "chain", "elgamal"]
+members = [".", "bech32", "chain", "elgamal", "identity"]
+default-members = [".", "bech32", "chain", "elgamal", "identity"]
