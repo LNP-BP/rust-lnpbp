@@ -42,3 +42,5 @@ pub extern crate lnpbp_bech32 as bech32;
 pub extern crate lnpbp_chain as chain;
 #[cfg(feature = "elgamal")]
 pub extern crate lnpbp_elgamal as elgamal;
+#[cfg(feature = "identity")]
+pub extern crate lnpbp_identity as id;

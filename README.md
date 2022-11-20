@@ -60,7 +60,7 @@ The development of the libraries is supported by LNP/BP Standards Association.
 
 ### Clone and compile library
 
-Minimum supported rust compiler version (MSRV): 1.51.0 (if command-line tool is not used) and 1.54.0 (otherwise).
+Minimum supported rust compiler version (MSRV): 1.59.0.
 
 ```shell script
 git clone https://github.com/lnp-bp/rust-lnpbp

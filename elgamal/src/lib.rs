@@ -79,7 +79,8 @@ pub fn encrypt<C: Signing + Verification>(
     let mut hash = sha256::Hash::hash(&encryption_key.serialize());
 
     // Tweaking the encryption key with the blinding factor
-    let tweak = Scalar::from_be_bytes(blinding_key.secret_bytes()).expect("negligible probability");
+    let tweak = Scalar::from_be_bytes(blinding_key.secret_bytes())
+        .expect("negligible probability");
     encryption_key = encryption_key.add_exp_tweak(context, &tweak)?;
 
     // Pad the message to the round number of 30-byte chunks with the generated
@@ -152,7 +153,8 @@ pub fn decrypt<C: Verification>(
     }
 
     // Tweak the encryption key with the blinding factor
-    let tweak = Scalar::from_be_bytes(decryption_key.secret_bytes()).expect("negligible probability");
+    let tweak = Scalar::from_be_bytes(decryption_key.secret_bytes())
+        .expect("negligible probability");
     unblinding_key = unblinding_key.add_exp_tweak(context, &tweak)?;
     let encryption_key = unblinding_key;
 
@@ -237,8 +239,10 @@ mod test {
 
         let uk = unblinding_key.clone();
         let ek = encryption_key.clone();
-        let tweak1 = Scalar::from_be_bytes(blinding_key.secret_bytes()).unwrap();
-        let tweak2 = Scalar::from_be_bytes(decryption_key.secret_bytes()).unwrap();
+        let tweak1 =
+            Scalar::from_be_bytes(blinding_key.secret_bytes()).unwrap();
+        let tweak2 =
+            Scalar::from_be_bytes(decryption_key.secret_bytes()).unwrap();
         assert_eq!(
             ek.add_exp_tweak(&SECP256K1, &tweak1).unwrap(),
             uk.add_exp_tweak(&SECP256K1, &tweak2).unwrap()

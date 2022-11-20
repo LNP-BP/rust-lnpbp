@@ -207,9 +207,7 @@ hash_newtype!(
 );
 
 impl Default for AssetId {
-    fn default() -> Self {
-        AssetId::from_inner([0u8; 32])
-    }
+    fn default() -> Self { AssetId::from_inner([0u8; 32]) }
 }
 
 impl strict_encoding::Strategy for AssetId {
