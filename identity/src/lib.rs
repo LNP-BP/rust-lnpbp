@@ -15,13 +15,14 @@
 extern crate amplify;
 
 use std::fmt::{self, Debug, Display, Formatter};
+use std::io;
 use std::io::{Read, Write};
 use std::str::FromStr;
 use std::string::FromUtf8Error;
 
 use amplify::hex::ToHex;
 use bech32::{FromBase32, ToBase32};
-use bitcoin_hashes::{sha256, sha256d};
+use bitcoin_hashes::{sha256, sha256d, Hash};
 use secp256k1::{rand, Message, SECP256K1};
 use strict_encoding::{StrictDecode, StrictEncode};
 
@@ -209,7 +210,43 @@ impl IdentitySigner {
             EcAlgo::Bip340 => {
                 let sk = secp256k1::SecretKey::from_slice(&self.prvkey)
                     .expect("invalid private key");
-                SigCert::bip340_sha256d(sk, msg)
+                let pair = secp256k1::KeyPair::from_secret_key(&SECP256K1, &sk);
+                let msg =
+                    Message::from_hashed_data::<sha256d::Hash>(msg.as_ref());
+                let sig = pair.sign_schnorr(msg);
+                SigCert {
+                    hash: HashAlgo::Sha256d,
+                    curve: EcAlgo::Bip340,
+                    sig: Box::from(&sig[..]),
+                }
+            }
+            EcAlgo::Ed25519 => todo!("Ed25519 signatures"),
+        }
+    }
+
+    pub fn sign_stream(&self, mut input: impl Read) -> io::Result<SigCert> {
+        match self.cert.algo {
+            EcAlgo::Bip340 => {
+                let sk = secp256k1::SecretKey::from_slice(&self.prvkey)
+                    .expect("invalid private key");
+                let pair = secp256k1::KeyPair::from_secret_key(&SECP256K1, &sk);
+                let mut engine = sha256d::Hash::engine();
+                let mut buf = [0u8; 64];
+                loop {
+                    let len = input.read(&mut buf)?;
+                    if len == 0 {
+                        break;
+                    }
+                    engine.write_all(&buf[..len])?;
+                }
+                let hash = sha256d::Hash::from_engine(engine);
+                let msg = Message::from_slice(&hash[..]).expect("hash");
+                let sig = pair.sign_schnorr(msg);
+                Ok(SigCert {
+                    hash: HashAlgo::Sha256d,
+                    curve: EcAlgo::Bip340,
+                    sig: Box::from(&sig[..]),
+                })
             }
             EcAlgo::Ed25519 => todo!("Ed25519 signatures"),
         }
@@ -361,21 +398,6 @@ pub struct SigCert {
 }
 
 impl SigCert {
-    pub fn bip340_sha256d(
-        sk: secp256k1::SecretKey,
-        msg: impl AsRef<[u8]>,
-    ) -> Self {
-        let pair = secp256k1::KeyPair::from_secret_key(&SECP256K1, &sk);
-        let sig = pair.sign_schnorr(
-            Message::from_hashed_data::<sha256d::Hash>(msg.as_ref()),
-        );
-        SigCert {
-            hash: HashAlgo::Sha256d,
-            curve: EcAlgo::Bip340,
-            sig: Box::from(&sig[..]),
-        }
-    }
-
     pub fn verify(
         &self,
         cert: &IdentityCert,

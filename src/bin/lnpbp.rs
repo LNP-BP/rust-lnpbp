@@ -411,10 +411,8 @@ fn main() -> Result<(), Error> {
         }) => {
             let fd = fs::File::open(identity_file)?;
             let id = IdentitySigner::strict_decode(fd)?;
-            let mut input = file_str_or_stdin(message_file, message)?;
-            let mut data = vec![];
-            input.read_to_end(&mut data)?;
-            let sig = id.sign(data);
+            let input = file_str_or_stdin(message_file, message)?;
+            let sig = id.sign_stream(input)?;
             println!("{}", sig);
         }
         Command::Identity(IdentityCommand::Verify {
@@ -429,7 +427,7 @@ fn main() -> Result<(), Error> {
             sig.verify(&cert, data)?;
             println!("{}", "Signature is valid".green());
         }
-        Command::Identity(_) => todo!(),
+        Command::Identity(_) => todo!("elgamal encryption support"),
         Command::Convert {
             data,
             from,
