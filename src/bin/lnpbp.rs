@@ -18,18 +18,22 @@ extern crate amplify;
 extern crate serde_crate as serde;
 
 use amplify::hex;
-use std::fmt::{Debug, Display};
-use std::fs;
+use std::fmt::{Debug, Display, Formatter};
 use std::io::{self, Read, Write};
+use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::string::FromUtf8Error;
+use std::{fmt, fs};
 
 use amplify::hex::{FromHex, ToHex};
 use base58::{FromBase58, FromBase58Error, ToBase58};
 use clap::Parser;
+use colorize::AnsiColor;
 use lnpbp::{bech32, bech32::Blob, id};
-use lnpbp_identity::{EcAlgo, IdentityCert, IdentitySigner, SigCert};
+use lnpbp_identity::{
+    EcAlgo, IdentityCert, IdentitySigner, SigCert, VerifyError,
+};
 use serde::Serialize;
 use strict_encoding::{StrictDecode, StrictEncode};
 
@@ -83,7 +87,7 @@ pub enum IdentityCommand {
     /// Generate a new identity, saving it to the file
     Create {
         /// Curve algorithm to use foe the new identity
-        #[clap(short, long, default_value = "secp256k1-bip340-xonly")]
+        #[clap(short, long, default_value = "bip340")]
         algo: id::EcAlgo,
 
         /// File to store the identity in
@@ -92,7 +96,7 @@ pub enum IdentityCommand {
     },
 
     /// Read info about the identity from the file
-    Read {
+    Info {
         /// File containing identity information
         #[clap()]
         file: PathBuf,
@@ -105,11 +109,11 @@ pub enum IdentityCommand {
         identity_file: PathBuf,
 
         /// Message to sign
-        #[clap(short, long, conflicts_with = "file")]
+        #[clap(short, long)]
         message: Option<String>,
 
         /// File to sign
-        #[clap()]
+        #[clap(conflicts_with = "message")]
         message_file: Option<PathBuf>,
     },
 
@@ -122,15 +126,15 @@ pub enum IdentityCommand {
 
         /// A signature to verify
         #[clap()]
-        sig: Option<SigCert>,
+        sig: SigCert,
 
         /// Message to verify the signature
-        #[clap(short, long = "msg", conflicts_with = "file")]
+        #[clap(short, long = "msg")]
         message: Option<String>,
 
         /// File to verify the signature
-        #[clap()]
-        file: Option<PathBuf>,
+        #[clap(conflicts_with = "message")]
+        message_file: Option<PathBuf>,
     },
 
     /// Encrypt a message
@@ -248,7 +252,7 @@ impl FromStr for Format {
     }
 }
 
-#[derive(Debug, Display, Error, From)]
+#[derive(Display, Error, From)]
 #[display(inner)]
 pub enum Error {
     #[from]
@@ -287,6 +291,15 @@ pub enum Error {
 
     #[display("can't read data from {0} format")]
     UnsupportedFormat(Format),
+
+    #[from]
+    Signature(VerifyError),
+}
+
+impl Debug for Error {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        Display::fmt(self, f)
+    }
 }
 
 fn input_read<T>(data: Vec<u8>, format: Format) -> Result<T, Error>
@@ -378,13 +391,43 @@ fn main() -> Result<(), Error> {
             }
             let id = IdentitySigner::new_bip340();
             let fd = fs::File::create(file)?;
+            let mut perms = fd.metadata()?.permissions();
+            perms.set_mode(0o600);
+            fd.set_permissions(perms)?;
             id.strict_encode(fd)?;
             println!("{}", id.cert);
+            println!("{:?}", id.cert);
         }
-        Command::Identity(IdentityCommand::Read { file }) => {
+        Command::Identity(IdentityCommand::Info { file }) => {
             let fd = fs::File::open(file)?;
             let id = IdentitySigner::strict_decode(fd)?;
             println!("{}", id.cert);
+            println!("{:?}", id.cert);
+        }
+        Command::Identity(IdentityCommand::Sign {
+            identity_file,
+            message,
+            message_file,
+        }) => {
+            let fd = fs::File::open(identity_file)?;
+            let id = IdentitySigner::strict_decode(fd)?;
+            let mut input = file_str_or_stdin(message_file, message)?;
+            let mut data = vec![];
+            input.read_to_end(&mut data)?;
+            let sig = id.sign(data);
+            println!("{}", sig);
+        }
+        Command::Identity(IdentityCommand::Verify {
+            cert,
+            sig,
+            message,
+            message_file,
+        }) => {
+            let mut input = file_str_or_stdin(message_file, message)?;
+            let mut data = vec![];
+            input.read_to_end(&mut data)?;
+            sig.verify(&cert, data)?;
+            println!("{}", "Signature is valid".green());
         }
         Command::Identity(_) => todo!(),
         Command::Convert {
