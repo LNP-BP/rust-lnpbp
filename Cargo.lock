@@ -558,6 +558,7 @@ dependencies = [
  "serde_json",
  "serde_with",
  "serde_yaml 0.9.14",
+ "strict_encoding 2.0.0-alpha.2",
 ]
 
 [[package]]

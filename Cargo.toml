@@ -24,6 +24,7 @@ required-features = ["cli"]
 
 [dependencies]
 amplify = { version = "3.13.0", features = ["stringly_conversions", "std"] }
+strict_encoding = "2.0.0-alpha.2"
 lnpbp_bech32 = { version = "0.9.0-alpha.1", path = "bech32" }
 lnpbp_chain = { version = "0.9.0-alpha.1", path = "chain" }
 lnpbp_elgamal = { version = "0.9.0", path = "elgamal", optional = true }

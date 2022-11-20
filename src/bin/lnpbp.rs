@@ -17,17 +17,21 @@ extern crate clap;
 extern crate amplify;
 extern crate serde_crate as serde;
 
+use amplify::hex;
 use std::fmt::{Debug, Display};
-use std::io::{self, Read};
+use std::fs;
+use std::io::{self, Read, Write};
 use std::path::PathBuf;
 use std::str::FromStr;
+use std::string::FromUtf8Error;
 
 use amplify::hex::{FromHex, ToHex};
-use base58::{FromBase58, ToBase58};
+use base58::{FromBase58, FromBase58Error, ToBase58};
 use clap::Parser;
-use lnpbp::{bech32::Blob, id};
-use lnpbp_identity::{IdentityCert, SigCert};
+use lnpbp::{bech32, bech32::Blob, id};
+use lnpbp_identity::{EcAlgo, IdentityCert, IdentitySigner, SigCert};
 use serde::Serialize;
+use strict_encoding::{StrictDecode, StrictEncode};
 
 #[derive(Parser, Clone, Debug)]
 #[clap(
@@ -51,16 +55,26 @@ pub enum Command {
 
     /// Commands for converting data between encodings
     Convert {
-        /// Original data; if none are given reads from STDIN
-        data: Option<String>,
-
         /// Formatting of the input data
-        #[clap(short, long, default_value = "bech32")]
-        input: Format,
+        #[clap(short = 'f', long, default_value = "bech32")]
+        from: Format,
 
         /// Formatting for the output
-        #[clap(short, long, default_value = "yaml")]
-        output: Format,
+        #[clap(short = 't', long = "to", default_value = "yaml")]
+        into: Format,
+
+        /// Original data string
+        #[clap(short, long, conflicts_with = "file")]
+        data: Option<String>,
+
+        /// File with the source data. If no `--data` option is given reads
+        /// the data from STDIN
+        #[clap()]
+        input_file: Option<PathBuf>,
+
+        /// File to store the results of the conversion. Defaults to STDOUT
+        #[clap()]
+        output_file: Option<PathBuf>,
     },
 }
 
@@ -226,7 +240,7 @@ impl FromStr for Format {
             "base64" => Format::Base64,
             "yaml" => Format::Yaml,
             "json" => Format::Json,
-            "hex" => Format::Hexadecimal,
+            "hex" | "base32" => Format::Hexadecimal,
             "raw" | "bin" | "binary" => Format::Raw,
             "rust" => Format::Rust,
             other => return Err(format!("Unknown format: {}", other)),
@@ -234,53 +248,74 @@ impl FromStr for Format {
     }
 }
 
-fn input_read<T>(data: Option<String>, format: Format) -> Result<T, String>
+#[derive(Debug, Display, Error, From)]
+#[display(inner)]
+pub enum Error {
+    #[from]
+    Io(io::Error),
+
+    #[from]
+    Utf8(FromUtf8Error),
+
+    #[display("incorrect hex string due to {0}")]
+    #[from]
+    Hex(hex::Error),
+
+    #[display("incorrect bech32(m) string due to {0}")]
+    #[from]
+    Bech32(bech32::Error),
+
+    #[display("incorrect base58 string")]
+    #[from]
+    Base58(FromBase58Error),
+
+    #[display("incorrect base64 string due to {0}")]
+    #[from]
+    Base64(base64::DecodeError),
+
+    #[display("incorrect JSON encoding. Details: {0}")]
+    #[from]
+    Json(serde_json::Error),
+
+    #[display("incorrect YAML encoding. Details: {0}")]
+    #[from]
+    Yaml(serde_yaml::Error),
+
+    #[display("incorrect encoding of the binary data. Details: {0}")]
+    #[from]
+    StrictEncoding(strict_encoding::Error),
+
+    #[display("can't read data from {0} format")]
+    UnsupportedFormat(Format),
+}
+
+fn input_read<T>(data: Vec<u8>, format: Format) -> Result<T, Error>
 where
     T: From<Vec<u8>> + FromStr + for<'de> serde::Deserialize<'de>,
-    <T as FromStr>::Err: Display,
+    Error: From<<T as FromStr>::Err>,
 {
-    let data = data
-        .map(|d| d.as_bytes().to_vec())
-        .ok_or_else(String::default)
-        .or_else(|_| -> Result<Vec<u8>, String> {
-            let mut buf = Vec::new();
-            io::stdin()
-                .read_to_end(&mut buf)
-                .as_ref()
-                .map_err(io::Error::to_string)?;
-            Ok(buf)
-        })?;
-    let s = &String::from_utf8_lossy(&data);
+    match format {
+        Format::Base64 => return Ok(base64::decode(&data).map(T::from)?),
+        Format::Raw => return Ok(T::from(data)),
+        _ => {}
+    }
+
+    let s = &String::from_utf8(data)?;
     Ok(match format {
-        Format::Bech32 => T::from_str(s).map_err(|err| err.to_string())?,
-        Format::Base58 => {
-            T::from(s.from_base58().map_err(|err| {
-                format!("Incorrect Base58 encoding: {:?}", err)
-            })?)
-        }
-        Format::Base64 => T::from(
-            base64::decode(&data)
-                .map_err(|err| format!("Incorrect Base64 encoding: {}", err))?,
-        ),
-        Format::Yaml => {
-            serde_yaml::from_str(s).map_err(|err| err.to_string())?
-        }
-        Format::Json => {
-            serde_json::from_str(s).map_err(|err| err.to_string())?
-        }
-        Format::Hexadecimal => {
-            T::from(Vec::<u8>::from_hex(s).map_err(|err| err.to_string())?)
-        }
-        Format::Raw => T::from(data),
-        _ => return Err(format!("Can't read data from {} format", format)),
+        Format::Bech32 => T::from_str(s)?,
+        Format::Base58 => T::from(s.from_base58()?),
+        Format::Yaml => serde_yaml::from_str(s)?,
+        Format::Json => serde_json::from_str(s)?,
+        Format::Hexadecimal => T::from(Vec::<u8>::from_hex(s)?),
+        _ => return Err(Error::UnsupportedFormat(format)),
     })
 }
 
 fn output_write<T>(
-    mut f: impl io::Write,
+    mut f: impl Write,
     data: T,
     format: Format,
-) -> Result<(), String>
+) -> Result<(), Error>
 where
     T: AsRef<[u8]> + Debug + Display + Serialize,
 {
@@ -289,43 +324,81 @@ where
         Format::Bech32 => write!(f, "{}", data),
         Format::Base58 => write!(f, "{}", data.as_ref().to_base58()),
         Format::Base64 => write!(f, "{}", base64::encode(data.as_ref())),
-        Format::Yaml => write!(
-            f,
-            "{}",
-            serde_yaml::to_string(data.as_ref())
-                .as_ref()
-                .map_err(serde_yaml::Error::to_string)?
-        ),
-        Format::Json => write!(
-            f,
-            "{}",
-            serde_json::to_string(data.as_ref())
-                .as_ref()
-                .map_err(serde_json::Error::to_string)?
-        ),
+        Format::Yaml => write!(f, "{}", serde_yaml::to_string(data.as_ref())?),
+        Format::Json => write!(f, "{}", serde_json::to_string(data.as_ref())?),
         Format::Hexadecimal => write!(f, "{}", data.as_ref().to_hex()),
         Format::Rust => write!(f, "{:#04X?}", data.as_ref()),
         Format::Raw => f.write(data.as_ref()).map(|_| ()),
     }
-    .as_ref()
-    .map_err(io::Error::to_string)?;
-    Ok(())
+    .map_err(Error::from)
 }
 
-fn main() -> Result<(), String> {
+fn file_str_or_stdin(
+    file: Option<PathBuf>,
+    msg: Option<String>,
+) -> Result<Box<dyn Read>, io::Error> {
+    Ok(match (file, msg) {
+        (Some(path), None) => {
+            let fd = fs::File::open(path)?;
+            Box::new(fd)
+        }
+        (None, Some(msg)) => {
+            let cursor = io::Cursor::new(msg.into_bytes());
+            let reader = io::BufReader::new(cursor);
+            Box::new(reader)
+        }
+        (None, None) => {
+            let fd = io::stdin();
+            Box::new(fd)
+        }
+        (Some(_), Some(_)) => unreachable!("clap broken"),
+    })
+}
+
+fn file_or_stdout(file: Option<PathBuf>) -> Result<Box<dyn Write>, io::Error> {
+    Ok(match file {
+        Some(path) => {
+            let fd = fs::File::create(path)?;
+            Box::new(fd)
+        }
+        None => {
+            let fd = io::stdout();
+            Box::new(fd)
+        }
+    })
+}
+
+fn main() -> Result<(), Error> {
     let opts = Opts::parse();
 
     match opts.command {
-        Command::Identity(_) => {
-            todo!()
+        Command::Identity(IdentityCommand::Create { algo, file }) => {
+            if algo != EcAlgo::Bip340 {
+                todo!("other than Secp256k1 BIP340 algorithms")
+            }
+            let id = IdentitySigner::new_bip340();
+            let fd = fs::File::create(file)?;
+            id.strict_encode(fd)?;
+            println!("{}", id.cert);
         }
+        Command::Identity(IdentityCommand::Read { file }) => {
+            let fd = fs::File::open(file)?;
+            let id = IdentitySigner::strict_decode(fd)?;
+            println!("{}", id.cert);
+        }
+        Command::Identity(_) => todo!(),
         Command::Convert {
             data,
-            input,
-            output,
+            from,
+            into,
+            input_file,
+            output_file,
         } => {
-            let data: Blob = input_read(data, input)?;
-            output_write(io::stdout(), data, output)?;
+            let mut input = file_str_or_stdin(input_file, data)?;
+            let mut data = vec![];
+            input.read_to_end(&mut data)?;
+            let data: Blob = input_read(data, from)?;
+            output_write(file_or_stdout(output_file)?, data, into)?;
         }
     }
 
