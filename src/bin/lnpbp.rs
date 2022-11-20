@@ -70,7 +70,7 @@ pub enum IdentityCommand {
     Create {
         /// Curve algorithm to use foe the new identity
         #[clap(short, long, default_value = "secp256k1-bip340-xonly")]
-        algo: id::CurveAlgo,
+        algo: id::EcAlgo,
 
         /// File to store the identity in
         #[clap()]
@@ -316,6 +316,9 @@ fn main() -> Result<(), String> {
     let opts = Opts::parse();
 
     match opts.command {
+        Command::Identity(_) => {
+            todo!()
+        }
         Command::Convert {
             data,
             input,
