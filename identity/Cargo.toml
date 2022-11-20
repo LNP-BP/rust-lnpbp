@@ -1,6 +1,13 @@
 [package]
 name = "lnpbp_identity"
 version = "0.9.0-beta.1"
+license = "MIT"
+authors = ["Dr. Maxim Orlovsky <orlovsky@pandoracore.com>"]
+description = "LNP/BP identity standards implementation"
+repository = "https://github.com/LNP-BP/rust-lnpbp"
+homepage = "https://github.com/LNP-BP/rust-lnpbp/tree/master/identity"
+keywords = ["bitcoin", "lnp-bp", "identity", "ed25519", "secp256k1"]
+categories = ["cryptography"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
