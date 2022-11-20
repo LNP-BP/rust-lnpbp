@@ -36,7 +36,10 @@ pub enum CertError {
     #[from]
     Bech32(bech32::Error),
 
-    #[display("unrecognized certificate of `{0}` type; only `{1}1...` strings are supported")]
+    #[display(
+        "unrecognized certificate of `{0}` type; only `{1}1...` strings are \
+         supported"
+    )]
     InvalidHrp(String, &'static str),
 
     #[display("certificates require bech32m encoding")]
@@ -49,7 +52,10 @@ pub enum CertError {
     #[from(strict_encoding::Error)]
     IncompleteData,
 
-    #[display("certificate uses unknown cryptographic algorithm; try to update the tool version")]
+    #[display(
+        "certificate uses unknown cryptographic algorithm; try to update the \
+         tool version"
+    )]
     UnknownAlgo,
 
     #[display(inner)]
@@ -79,6 +85,7 @@ pub enum HashAlgo {
 }
 
 impl HashAlgo {
+    #[allow(clippy::len_without_is_empty)]
     pub fn len(self) -> u8 {
         match self {
             Self::Sha256d => 32,
@@ -110,9 +117,7 @@ pub enum EcAlgo {
 }
 
 impl EcAlgo {
-    pub fn cert_len(self) -> usize {
-        1 + self.pub_len() + self.sig_len()
-    }
+    pub fn cert_len(self) -> usize { 1 + self.pub_len() + self.sig_len() }
 
     pub fn prv_len(self) -> usize {
         match self {
@@ -143,9 +148,7 @@ impl EcAlgo {
         })
     }
 
-    pub fn encode(self) -> u8 {
-        self as u8
-    }
+    pub fn encode(self) -> u8 { self as u8 }
 }
 
 impl FromStr for EcAlgo {
@@ -197,7 +200,7 @@ impl StrictDecode for IdentitySigner {
 
 impl IdentitySigner {
     pub fn new_bip340() -> Self {
-        let pair = secp256k1::KeyPair::new(&SECP256K1, &mut rand::thread_rng());
+        let pair = secp256k1::KeyPair::new(SECP256K1, &mut rand::thread_rng());
         let cert = IdentityCert::from(pair);
         Self {
             cert,
@@ -210,7 +213,7 @@ impl IdentitySigner {
             EcAlgo::Bip340 => {
                 let sk = secp256k1::SecretKey::from_slice(&self.prvkey)
                     .expect("invalid private key");
-                let pair = secp256k1::KeyPair::from_secret_key(&SECP256K1, &sk);
+                let pair = secp256k1::KeyPair::from_secret_key(SECP256K1, &sk);
                 let msg =
                     Message::from_hashed_data::<sha256d::Hash>(msg.as_ref());
                 let sig = pair.sign_schnorr(msg);
@@ -229,7 +232,7 @@ impl IdentitySigner {
             EcAlgo::Bip340 => {
                 let sk = secp256k1::SecretKey::from_slice(&self.prvkey)
                     .expect("invalid private key");
-                let pair = secp256k1::KeyPair::from_secret_key(&SECP256K1, &sk);
+                let pair = secp256k1::KeyPair::from_secret_key(SECP256K1, &sk);
                 let mut engine = sha256d::Hash::engine();
                 let mut buf = [0u8; 64];
                 loop {
@@ -563,14 +566,20 @@ mod test {
 
         assert_eq!(format!("{}", cert), "crt1q9umuen7l8wthtz45p3ftn58pvrs9xlumvkuu2xet8egzkcklqte3fc3pu8qq6p0qx48fjttj7ecfcemry5r7yqlnfna6qhf4s46r2aw68wqc9spn4a465x54zy03gleun58fcz3tpxhqcg5nv4ssgyeysxq8t50zt_venice_vega_balloon");
         assert_eq!(format!("{:#}", cert), "8t50zt_venice_vega_balloon");
-        assert_eq!(format!("{:?}", cert), "\
+        assert_eq!(
+            format!("{:?}", cert),
+            "\
 nym   venice_vega_balloon
 fgp   8t50zt
 crv   bip340
-idk   79be 667e f9dc bbac 55a0 6295 ce87 0b07 029b fcdb 2dce 28d9 59f2 815b 16f8 1798
-sig   a711 0f0e 0068 2f01 aa74 c96b 97b3 84e3 3b19 283f 101f 9a67 dd02 e9ac 2ba1 abae
-      d1dc 0c16 019d 7b5d 50d4 a888 f8a3 f9e4 e874 e051 584d 7061 149b 2b08 2099 240c
-");
+idk   79be 667e f9dc bbac 55a0 6295 ce87 0b07 029b fcdb 2dce 28d9 59f2 815b \
+             16f8 1798
+sig   a711 0f0e 0068 2f01 aa74 c96b 97b3 84e3 3b19 283f 101f 9a67 dd02 e9ac \
+             2ba1 abae
+      d1dc 0c16 019d 7b5d 50d4 a888 f8a3 f9e4 e874 e051 584d 7061 149b 2b08 \
+             2099 240c
+"
+        );
     }
 
     #[test]
@@ -582,7 +591,7 @@ sig   a711 0f0e 0068 2f01 aa74 c96b 97b3 84e3 3b19 283f 101f 9a67 dd02 e9ac 2ba1
     }
 
     #[test]
-    #[should_panic(expected = "InvalidSig)")]
+    #[should_panic(expected = "InvalidSig")]
     fn wrong_sig_msg() {
         let me = IdentitySigner::new_bip340();
         let msg = "This is me";
@@ -591,7 +600,7 @@ sig   a711 0f0e 0068 2f01 aa74 c96b 97b3 84e3 3b19 283f 101f 9a67 dd02 e9ac 2ba1
     }
 
     #[test]
-    #[should_panic(expected = "InvalidSig)")]
+    #[should_panic(expected = "InvalidSig")]
     fn wrong_sig_key() {
         let me = IdentitySigner::new_bip340();
         let other = IdentitySigner::new_bip340();
@@ -605,11 +614,16 @@ sig   a711 0f0e 0068 2f01 aa74 c96b 97b3 84e3 3b19 283f 101f 9a67 dd02 e9ac 2ba1
         let sig = sig();
         assert_eq!(format!("{}", sig), "sig1qgqm0d5l8sjas4v2vk3tzqc5m2ltpkv208uf2chyh3fqmhwq3rdnu3ve0gkytrl7wl68075zxxukq9ff6gmd38w7hmtdas089jefkf2rsyasksse");
         assert_eq!(format!("{:#}", sig), "sig1qgqm0d5l8sjas4v2vk3tzqc5m2ltpkv208uf2chyh3fqmhwq3rdnu3ve0gkytrl7wl68075zxxukq9ff6gmd38w7hmtdas089jefkf2rsyasksse");
-        assert_eq!(format!("{:?}", sig), "\
+        assert_eq!(
+            format!("{:?}", sig),
+            "\
 dig   sha256d
 crv   bip340
-sig   b7b6 9f3c 25d8 558a 65a2 b103 14da beb0 d98a 79f8 9562 e4bc 520d ddc0 88db 3e45
-      997a 2c45 8ffe 77f4 77fa 8231 b960 1529 d236 d89d debe d6de c1e7 2cb2 9b25 4381
-");
+sig   b7b6 9f3c 25d8 558a 65a2 b103 14da beb0 d98a 79f8 9562 e4bc 520d ddc0 \
+             88db 3e45
+      997a 2c45 8ffe 77f4 77fa 8231 b960 1529 d236 d89d debe d6de c1e7 2cb2 \
+             9b25 4381
+"
+        );
     }
 }

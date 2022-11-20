@@ -17,7 +17,6 @@ extern crate clap;
 extern crate amplify;
 extern crate serde_crate as serde;
 
-use amplify::hex;
 use std::fmt::{Debug, Display, Formatter};
 use std::io::{self, Read, Write};
 use std::os::unix::fs::PermissionsExt;
@@ -26,11 +25,12 @@ use std::str::FromStr;
 use std::string::FromUtf8Error;
 use std::{fmt, fs};
 
-use amplify::hex::{FromHex, ToHex};
+use amplify::hex::{self, FromHex, ToHex};
 use base58::{FromBase58, FromBase58Error, ToBase58};
 use clap::Parser;
 use colorize::AnsiColor;
-use lnpbp::{bech32, bech32::Blob, id};
+use lnpbp::bech32::Blob;
+use lnpbp::{bech32, id};
 use lnpbp_identity::{
     EcAlgo, IdentityCert, IdentitySigner, SigCert, VerifyError,
 };

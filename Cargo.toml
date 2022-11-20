@@ -48,7 +48,6 @@ serde = ["serde_crate", "serde_with", "amplify/serde",
 identity = ["lnpbp_identity"]
 elgamal = ["lnpbp_elgamal"] # Provides ElGamal encryption module from this library
 zip = ["lnpbp_bech32/zip"]
-all_msrv47 = ["serde", "elgamal", "zip"] # Used in testing against MSRV 1.47
 
 [workspace]
 members = [".", "bech32", "chain", "elgamal", "identity"]
