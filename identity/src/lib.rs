@@ -14,15 +14,36 @@
 #[macro_use]
 extern crate amplify;
 
-use std::fmt::{self, Debug, Display, Formatter};
-use std::io::Write;
 use amplify::hex::ToHex;
 use bech32::ToBase32;
-use bitcoin_hashes::sha256;
+use bitcoin_hashes::{sha256, sha256d};
+use secp256k1::{Message, SECP256K1};
+use std::fmt::{self, Debug, Display, Formatter};
+use std::io::Write;
 use strict_encoding::{Error, StrictEncode};
 
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
-pub enum Algo {
+pub enum HashAlgo {
+    #[display("sha256d")]
+    Sha256d,
+}
+
+impl HashAlgo {
+    pub fn len(self) -> u8 {
+        match self {
+            Self::Sha256d => 32,
+        }
+    }
+
+    pub fn encode(self) -> u8 {
+        match self {
+            Self::Sha256d => 2,
+        }
+    }
+}
+
+#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
+pub enum CurveAlgo {
     #[display("secp256k1-{0}")]
     Secp256k1(EcSigs),
 
@@ -30,7 +51,11 @@ pub enum Algo {
     Edwards25519(TwistedSigs),
 }
 
-impl Algo {
+impl CurveAlgo {
+    pub fn bip340() -> Self {
+        CurveAlgo::Secp256k1(EcSigs::Bip340(Bip340Comp::XOnly))
+    }
+
     pub fn len(self) -> u8 {
         let inner_len = match self {
             Self::Secp256k1(inner) => inner.len(),
@@ -50,7 +75,7 @@ impl Algo {
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
 pub enum EcSigs {
     #[display("bip340-{0}")]
-    Bip340(Bip340Comp)
+    Bip340(Bip340Comp),
 }
 
 impl EcSigs {
@@ -71,7 +96,7 @@ impl EcSigs {
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
 pub enum TwistedSigs {
     #[display("ed-{0}")]
-    Ed(EdComp)
+    Ed(EdComp),
 }
 
 impl TwistedSigs {
@@ -92,7 +117,7 @@ impl TwistedSigs {
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
 pub enum Bip340Comp {
     #[display("xonly")]
-    XOnly
+    XOnly,
 }
 
 impl Bip340Comp {
@@ -112,7 +137,7 @@ impl Bip340Comp {
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug, Display)]
 pub enum EdComp {
     #[display("uncomp")]
-    Uncompressed
+    Uncompressed,
 }
 
 impl EdComp {
@@ -130,19 +155,19 @@ impl EdComp {
 }
 
 #[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-pub struct Certificate {
-    algo: Algo,
+pub struct IdentityCert {
+    algo: CurveAlgo,
     pubkey: Box<[u8]>,
-    sig: Box<[u8]>
+    sig: Box<[u8]>,
 }
 
-impl Certificate {
+impl IdentityCert {
     pub fn fingerprint(&self) -> String {
         format!("{:#}", self)
     }
 }
 
-impl StrictEncode for Certificate {
+impl StrictEncode for IdentityCert {
     fn strict_encode<E: Write>(&self, mut e: E) -> Result<usize, Error> {
         e.write_all(&self.algo.encode())?;
         e.write_all(&self.pubkey)?;
@@ -151,39 +176,25 @@ impl StrictEncode for Certificate {
     }
 }
 
-impl Debug for Certificate {
+impl Debug for IdentityCert {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        fn char4ws(v: &[u8]) -> String {
-            v.to_hex()
-                .chars()
-                .enumerate()
-                .flat_map(|(i, c)| {
-                    if i != 0 && i % 4 == 0 {
-                        Some(' ')
-                    } else {
-                        None
-                    }
-                        .into_iter()
-                        .chain(std::iter::once(c))
-                })
-                .collect::<String>()
-        }
-
         writeln!(f, "fgp   {}", self.fingerprint())?;
         writeln!(f, "alg   {}", self.algo)?;
-        writeln!(f, "idk   {}", char4ws(&self.pubkey))?;
-        writeln!(f, "sig   {}", char4ws(&self.sig))?;
+        writeln!(f, "idk   {}", bin_fmt(&self.pubkey))?;
+        writeln!(f, "sig   {}", bin_fmt(&self.sig))?;
 
         Ok(())
     }
 }
 
-impl Display for Certificate {
+impl Display for IdentityCert {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        let data = self.strict_serialize()
+        let data = self
+            .strict_serialize()
             .expect("strict encoding of certificate");
-        let s = bech32::encode("crt", data.to_base32(), bech32::Variant::Bech32m)
-            .expect("bech32 encoding of certificate");
+        let s =
+            bech32::encode("crt", data.to_base32(), bech32::Variant::Bech32m)
+                .expect("bech32 encoding of certificate");
 
         if f.alternate() {
             f.write_str(&s[s.len() - 6..])?;
@@ -197,34 +208,113 @@ impl Display for Certificate {
         crc32data.extend(self.algo.encode());
         crc32data.extend(&*self.pubkey);
         let crc32 = crc32fast::hash(&crc32data);
-        mnemonic::encode(crc32.to_be_bytes(), &mut mnemonic).expect("mnemonic encoding");
-        let mnemonic = String::from_utf8(mnemonic).expect("mnemonic library error");
+        mnemonic::encode(crc32.to_be_bytes(), &mut mnemonic)
+            .expect("mnemonic encoding");
+        let mnemonic =
+            String::from_utf8(mnemonic).expect("mnemonic library error");
         f.write_str(&mnemonic.replace('-', "_"))
     }
 }
 
-impl From<secp256k1::KeyPair> for Certificate {
+impl From<secp256k1::KeyPair> for IdentityCert {
     fn from(pair: secp256k1::KeyPair) -> Self {
         let pubkey = pair.x_only_public_key().0.serialize();
         let msg = secp256k1::Message::from_hashed_data::<sha256::Hash>(&pubkey);
         let sig = pair.sign_schnorr(msg);
-        Certificate {
-            algo: Algo::Secp256k1(EcSigs::Bip340(Bip340Comp::XOnly)),
+        IdentityCert {
+            algo: CurveAlgo::Secp256k1(EcSigs::Bip340(Bip340Comp::XOnly)),
             pubkey: Box::from(&pubkey[..]),
-            sig: Box::from(&sig[..])
+            sig: Box::from(&sig[..]),
         }
     }
 }
 
+#[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+pub struct SigCert {
+    hash: HashAlgo,
+    curve: CurveAlgo,
+    sig: Box<[u8]>,
+}
+
+impl SigCert {
+    pub fn bip340_sha256d(
+        sk: secp256k1::SecretKey,
+        msg: impl AsRef<[u8]>,
+    ) -> Self {
+        let pair = secp256k1::KeyPair::from_secret_key(&SECP256K1, &sk);
+        let sig = pair.sign_schnorr(
+            Message::from_hashed_data::<sha256d::Hash>(msg.as_ref()),
+        );
+        SigCert {
+            hash: HashAlgo::Sha256d,
+            curve: CurveAlgo::bip340(),
+            sig: Box::from(&sig[..]),
+        }
+    }
+}
+
+impl StrictEncode for SigCert {
+    fn strict_encode<E: Write>(&self, mut e: E) -> Result<usize, Error> {
+        e.write_all(&[self.hash.encode()])?;
+        e.write_all(&self.curve.encode())?;
+        e.write_all(&self.sig)?;
+        Ok(1 + self.curve.len() as usize)
+    }
+}
+
+impl Debug for SigCert {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        writeln!(f, "alg   {}", self.hash)?;
+        writeln!(f, "crv   {}", self.curve)?;
+        writeln!(f, "sig   {}", bin_fmt(&self.sig))?;
+
+        Ok(())
+    }
+}
+
+impl Display for SigCert {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let data = self
+            .strict_serialize()
+            .expect("strict encoding of signature");
+        let s =
+            bech32::encode("sig", data.to_base32(), bech32::Variant::Bech32m)
+                .expect("bech32 encoding of signature");
+
+        f.write_str(&s)
+    }
+}
+
+fn bin_fmt(v: &[u8]) -> String {
+    v.to_hex()
+        .chars()
+        .enumerate()
+        .flat_map(|(i, c)| {
+            match i {
+                0 => None,
+                i if i % 16 == 0 => Some('\n'),
+                i if i % 4 == 0 => Some(' '),
+                _ => None,
+            }
+            .into_iter()
+            .chain(std::iter::once(c))
+        })
+        .collect::<String>()
+}
+
 #[cfg(test)]
 mod test {
-    use secp256k1::{SECP256K1};
-    use crate::Certificate;
+    use crate::{IdentityCert, SigCert};
+    use secp256k1::SECP256K1;
 
     #[test]
-    fn test() {
-        let pair = secp256k1::KeyPair::from_seckey_slice(&SECP256K1, &secp256k1::ONE_KEY[..]).unwrap();
-        let cert = Certificate::from(pair);
+    fn cert_creation() {
+        let pair = secp256k1::KeyPair::from_seckey_slice(
+            &SECP256K1,
+            &secp256k1::ONE_KEY[..],
+        )
+        .unwrap();
+        let _cert = IdentityCert::from(pair);
         /*
         assert_eq!(format!("{}", cert), "crt1qyghn0nx0muaewav2ksx99wwsu9swq5mlndjmn3gm9vl9q2mzmup0xrdgswg9ate53t5hvppkl2xjem0y2sg5r738s7jqdlk4jd49v72c4t0f7e3a2yup6xhldv4c35hf5ncvas3r8ulwf4xx3ynqy3vwsc37avgyrl_game_accent_candle");
         assert_eq!(format!("{:#}", cert), "8wdwat_game_accent_candle");
@@ -235,5 +325,15 @@ mod test {
         sig   e4b4 1a37 317e 1de6 bd00 ec17 fcb6 940a cda0 5a21 586c 3134 b793 c0c2 d89f 8e09 2efc c7af 9829 78a0 9f19 8040 e680 66e2 859c 4a8e 8036 2d4e e659 5333 388e 6949
         ");
          */
+    }
+
+    #[test]
+    fn sig_display() {
+        let pair = secp256k1::KeyPair::from_seckey_slice(
+            &SECP256K1,
+            &secp256k1::ONE_KEY[..],
+        )
+        .unwrap();
+        let sig = SigCert::bip340_sha256d(pair.secret_key(), "");
     }
 }
