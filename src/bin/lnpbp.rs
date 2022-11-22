@@ -34,6 +34,7 @@ use lnpbp::{bech32, id};
 use lnpbp_identity::{
     EcAlgo, IdentityCert, IdentitySigner, SigCert, VerifyError,
 };
+use secp256k1::SECP256K1;
 use serde::Serialize;
 use strict_encoding::{StrictDecode, StrictEncode};
 
@@ -427,7 +428,29 @@ fn main() -> Result<(), Error> {
             sig.verify(&cert, data)?;
             println!("{}", "Signature is valid".green());
         }
-        Command::Identity(_) => todo!("elgamal encryption support"),
+        Command::Identity(IdentityCommand::Encrypt {
+            armor,
+            identity_file,
+            cert,
+            message,
+            src_file,
+            dst_file,
+        }) => {
+            let fd = fs::File::open(identity_file)?;
+            let id = IdentitySigner::strict_decode(fd)?;
+            let mut input = file_str_or_stdin(src_file, message)?;
+            let mut data = vec![];
+            input.read_to_end(&mut data)?;
+            lnpbp_elgamal::encrypt(SECP256K1, &data, cert.pubkey())?;
+        }
+        Command::Identity(IdentityCommand::Decrypt {
+            armor,
+            identity_file,
+            cert,
+            message,
+            src_file,
+            dst_file,
+        }) => {}
         Command::Convert {
             data,
             from,

@@ -107,7 +107,7 @@ impl From<Infallible> for Error {
     }
 }
 
-/// Type for wrapping Vec<u8> data in cases you need to do a convenient
+/// Type for wrapping `Vec<u8>` data in cases you need to do a convenient
 /// enum variant display derives with `#[display(inner)]`
 #[cfg_attr(
     feature = "serde",

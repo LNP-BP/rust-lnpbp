@@ -561,6 +561,7 @@ dependencies = [
  "lnpbp_chain",
  "lnpbp_elgamal",
  "lnpbp_identity",
+ "secp256k1 0.24.1",
  "serde",
  "serde_json",
  "serde_with",
