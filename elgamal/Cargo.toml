@@ -12,8 +12,8 @@ edition = "2021"
 
 [dependencies]
 amplify = "3.13.0"
-secp256k1 = "0.24.1"
+secp256k1 = "0.24.2"
 bitcoin_hashes = "0.11.0"
 
 [dev-dependencies]
-secp256k1 = { version = "0.24.1", features = ["rand-std", "global-context"] }
+secp256k1 = { version = "0.24.2", features = ["rand-std", "global-context"] }
