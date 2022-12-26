@@ -19,7 +19,6 @@ extern crate serde_crate as serde;
 
 use std::fmt::{Debug, Display, Formatter};
 use std::io::{self, Read, Write};
-use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::string::FromUtf8Error;
@@ -386,12 +385,17 @@ fn main() -> Result<(), Error> {
 
     match opts.command {
         Command::Identity(IdentityCommand::Create { algo, file }) => {
+            #[cfg(not(target_os = "windows"))]
+            use std::os::unix::fs::PermissionsExt;
+
             if algo != EcAlgo::Bip340 {
                 todo!("other than Secp256k1 BIP340 algorithms")
             }
             let id = IdentitySigner::new_bip340();
             let fd = fs::File::create(file)?;
+            #[allow(unused_mut)]
             let mut perms = fd.metadata()?.permissions();
+            #[cfg(not(target_os = "windows"))]
             perms.set_mode(0o600);
             fd.set_permissions(perms)?;
             id.strict_encode(fd)?;
